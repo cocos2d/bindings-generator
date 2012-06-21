@@ -4,6 +4,7 @@ from clang import cindex
 import sys
 import pdb
 import ConfigParser
+import yaml
 
 def parse_headers(headers, classes, args):
 	# print("will parse: " + str(headers) + " " + str(args))
@@ -25,8 +26,6 @@ def deep_iterate(cursor, classes=[], depth=0, force=False):
 	# get the canonical type
 	c = cursor.canonical
 	if c.kind == cindex.CursorKind.NAMESPACE or c.kind == cindex.CursorKind.CLASS_DECL:
-		# if c.displayname == "CCNode":
-		# 	pdb.set_trace()
 		if force or c.displayname in classes:
 			print cursor.location
 			if not force:

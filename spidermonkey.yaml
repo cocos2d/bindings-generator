@@ -1,0 +1,55 @@
+definitions:
+  # the names of the functions - we use this to generate the code and to register the functions in
+  # the javascript class
+  ifunction: "js_${generator.prefix}_${class_name}_${func_name}"
+  sfunction: "js_${generator.prefix}_${class_name}_${func_name}"
+conversions:
+  to_native:
+    # jsval to int
+    int: "JS_ValueToInt32(cx, ${in_value}, &${out_value})"
+    # jsval has to be a TypedArray, a UInt32Array with 2 elements
+    long long: |
+      do {
+      ${($level + 1) * '\t'}JSObject *tmp = JSVAL_TO_OBJECT(${in_value});
+      ${($level + 1) * '\t'}if (js_IsTypedArray(tmp) && JS_GetTypedArrayByteLength(tmp) == 4) {
+      ${($level + 2) * '\t'}uint32_t *data = (uint32_t *)JS_GetTypedArrayData(tmp);
+      ${($level + 2) * '\t'}${out_value} = (long long)(*data);
+      ${($level + 1) * '\t'}}
+      ${$level * '\t'}} while (0)
+    "std::string": |
+      do {
+      ${($level + 1) * '\t'}JSString *tmp = JS_ValueToString(cx, ${in_value});
+      ${($level + 1) * '\t'}${out_value} = JS_EncodeString(cx, tmp);
+      ${$level * '\t'}} while (0)
+    "char*": |
+      do {
+      ${($level + 1) * '\t'}JSString *tmp = JS_ValueToString(cx, ${in_value});
+      ${($level + 1) * '\t'}${out_value} = JS_EncodeString(cx, tmp);
+      ${$level * '\t'}} while (0)
+    bool: "JS_ValueToBoolean(cx, ${in_value}, (JSBool *)&${out_value})"
+    float: "${out_value} = JSVAL_TO_DOUBLE(${in_value})"
+    double: "${out_value} = JSVAL_TO_DOUBLE(${in_value})"
+
+  from_native:
+    # int to jsval
+    int: "JS_NewNumberValue(cx, ${in_value}, &${out_value})"
+    long long: |
+      do {
+      ${($level + 1) * '\t'}JSObject *tmp = js_CreateTypedArray(cx, js::TypedArray::TYPE_UINT32, 2);
+      ${($level + 1) * '\t'}uint32_t *data = (uint32_t *)JS_GetTypedArrayData(tmp);
+      ${($level + 1) * '\t'}*data = (uint32_t)(&${in_value});
+      ${($level + 1) * '\t'}${out_value} = OBJECT_TO_JSVAL(tmp);
+      ${$level * '\t'}} while (0)
+    "std::string": |
+      do {
+      ${($level + 1) * '\t'}JSString *str = JS_NewStringCopyZ(cx, ${in_value}.c_str());
+      ${($level + 1) * '\t'}${out_value} = STRING_TO_JSVAL(str);
+      ${$level * '\t'}} while (0)
+    "char*": |
+      do {
+      ${($level + 1) * '\t'}JSString *str = JS_NewStringCopyZ(cx, ${in_value});
+      ${($level + 1) * '\t'}${out_value} = STRING_TO_JSVAL(str);
+      ${$level * '\t'}} while (0)
+    bool: "${out_value} = BOOLEAN_TO_JSVAL(${in_value})"
+    float: "JS_NewNumberValue(cx, ${in_value}, &${out_value})"
+    double: "JS_NewNumberValue(cx, ${in_value}, &${out_value})"

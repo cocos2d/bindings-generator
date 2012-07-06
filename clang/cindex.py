@@ -1156,6 +1156,27 @@ class Cursor(Structure):
         Cursor_visit(self, Cursor_visit_callback(visitor), children)
         return iter(children)
 
+    def get_children_array(self):
+        """Return an iterator for accessing the children of this cursor."""
+
+        # FIXME: Expose iteration from CIndex, PR6125.
+        def visitor(child, parent, children):
+            # FIXME: Document this assertion in API.
+            # FIXME: There should just be an isNull method.
+            assert child != Cursor_null()
+
+            # Create reference to TU so it isn't GC'd before Cursor.
+            child._tu = self._tu
+            children.append(child)
+            return 1 # continue
+        children = []
+        Cursor_visit(self, Cursor_visit_callback(visitor), children)
+        return children
+
+    def is_method_static(self):
+        assert self.kind == CursorKind.CXX_METHOD
+        return Cursor_CXXMethod_isStatic(self)
+
     @staticmethod
     def from_result(res, fn, args):
         assert isinstance(res, Cursor)
@@ -2259,6 +2280,14 @@ Cursor_visit_callback = CFUNCTYPE(c_int, Cursor, Cursor, py_object)
 Cursor_visit = lib.clang_visitChildren
 Cursor_visit.argtypes = [Cursor, Cursor_visit_callback, py_object]
 Cursor_visit.restype = c_uint
+
+Cursor_CXXMethod_isStatic = lib.clang_CXXMethod_isStatic
+Cursor_CXXMethod_isStatic.argtypes = [Cursor]
+Cursor_CXXMethod_isStatic.restype = bool
+
+Cursor_CXXMethod_isVirtual = lib.clang_CXXMethod_isVirtual
+Cursor_CXXMethod_isVirtual.argtypes = [Cursor]
+Cursor_CXXMethod_isVirtual.restype = bool
 
 # Type Functions
 Type_get_canonical = lib.clang_getCanonicalType

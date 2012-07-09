@@ -60,9 +60,9 @@ default one, used for cocos2d-x
 # The templates
 
 The generator is using [Cheetah templates](http://www.cheetahtemplate.org/) to create a more
-flexible generator. The way it was thought, is that for every target environment, you should
-provide with a way to generate the same C/C++ functionality. Every template has access to the proper
-meta information for the code or generator (function, classes, etc.)
+flexible generator. The way it was thought, is that for every target environment, you should provide
+with a way to generate the same C/C++ functionality. Every template has access to the proper meta
+information for the code or generator (function, classes, etc.)
 
 Right now it's separated in the following set of templates:
 

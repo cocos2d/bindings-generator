@@ -37,7 +37,8 @@ conversions:
       do {
       ${($level + 1) * '\t'}JSObject *tmp = js_CreateTypedArray(cx, js::TypedArray::TYPE_UINT32, 2);
       ${($level + 1) * '\t'}uint32_t *data = (uint32_t *)JS_GetTypedArrayData(tmp);
-      ${($level + 1) * '\t'}*data = (uint32_t)(&${in_value});
+      ${($level + 1) * '\t'}data[0] = ((uint32_t *)(&${in_value}))[0];
+      ${($level + 1) * '\t'}data[1] = ((uint32_t *)(&${in_value}))[1];
       ${($level + 1) * '\t'}${out_value} = OBJECT_TO_JSVAL(tmp);
       ${$level * '\t'}} while (0)
     "std::string": |

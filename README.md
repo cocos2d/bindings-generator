@@ -30,18 +30,19 @@ The `.ini` file is a simple text file specifying the settings for the code gener
 default one, used for cocos2d-x
 
     [cocos2d-x]
-    name = cocos2dx
+    prefix = cocos2dx
     events  = CCNode#onEnter CCNode#onExit
     extra_arguments = -I../../cocos2dx/include -I../../cocos2dx/platform -I../../cocos2dx/platform/ios -I../../cocos2dx -I../../cocos2dx/kazmath/include -arch i386 -DTARGET_OS_IPHONE -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator5.1.sdk -x c++
     headers = ../../cocos2dx/include/cocos2d.h
     classes = CCSprite
-    structs_as_objects = ccColor3B
+    functions = my_free_function
 
 ## Required sections
 
-* name: the name of the project. Must be a valid identifier for the language of the target vm. Most
-  of the time, the name will be intermixed between the class name and the function name, since all
-  generated (probably) will be free functions, we do that in order to avoid name collition.
+* prefix: the prefix for the project. Must be a valid identifier for the language of the target vm.
+  Most of the time, the name will be intermixed between the class name and the function name, since
+  all generated (probably) will be free functions, we do that in order to avoid name collition. The
+  script will generate ${prefix}.cpp and ${prefix}.hpp as a result.
 * events: a list of identifiers in the form of ClassName#functionName that are events to be called
   from the native world to the target vm.
 * extra_arguments: extra arguments to pass to the clang interface. Basically you can think of this
@@ -50,6 +51,34 @@ default one, used for cocos2d-x
   name your header files as ".hpp".
 * headers: list of headers to parse. Usually you add a single header that in turn `#include`s the
   rest of the files.
-* classes: the classes that will be parsed.
+* classes: the classes that will be parsed. Right not is just a string, but it will accept regular
+  expressions
+* functions: space-separated list of free functions to be binded. Same as with classes, it will
+  support regular expressions.
+* skip: a space-separated list of `Classes::functions` or just `functions` to not generate any code.
 
 # The templates
+
+The generator is using [Cheetah templates](http://www.cheetahtemplate.org/) to create a more
+flexible generator. The way it is being though, is that for every target environment, you should
+provide with a way to generate the same C/C++ functionality. Every template has access to the proper
+meta information for the code or generator (function, classes, etc.)
+
+Right now it's separated in the following set of templates:
+
+* prelude.c/.h: The header of the generated files.
+* ifunction.c/.h: The template for an instance function
+* ifunction_overloaded.c: The template for the implementation of an overloaded function. An
+  overloaded function is exactly the same as a function, but it has an array of functions sharing
+  the same name. The current implementation for spidermonkey only works if the overloading is with
+  different number of arguments.
+* sfunction.c/.h: The template for a static function
+* sfunction_overloaded.c: The template for an overloaded static function
+* register.c: Here you should add the constructor/finalizer, the registration function (if needed)
+  and the footer of the header file. This is the last chunk being generated
+
+Templates are stored in the `templates/${target}` directory and follow the naming specified above.
+
+One final part of the puzzle is the `${target}.yaml` file, that contains specific type conversion
+snippets to be used by the templates. For instance, for spidermonkey, this is the place where we
+specify the conversion routines for the native types (to and from int, float, string, etc.)

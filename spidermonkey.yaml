@@ -3,6 +3,7 @@ definitions:
   # the javascript class
   ifunction: "js_${generator.prefix}_${class_name}_${func_name}"
   sfunction: "js_${generator.prefix}_${class_name}_${func_name}"
+  constructor: "${generator.prefix}_${class_name}_constructor"
 conversions:
   to_native:
     # jsval to int
@@ -11,7 +12,7 @@ conversions:
     long long: |
       do {
       ${($level + 1) * '\t'}JSObject *tmp = JSVAL_TO_OBJECT(${in_value});
-      ${($level + 1) * '\t'}if (js_IsTypedArray(tmp) && JS_GetTypedArrayByteLength(tmp) == 4) {
+      ${($level + 1) * '\t'}if (js_IsTypedArray(tmp) && JS_GetTypedArrayByteLength(tmp) == 8) {
       ${($level + 2) * '\t'}uint32_t *data = (uint32_t *)JS_GetTypedArrayData(tmp);
       ${($level + 2) * '\t'}${out_value} = (long long)(*data);
       ${($level + 1) * '\t'}}

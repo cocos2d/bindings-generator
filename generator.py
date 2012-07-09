@@ -122,8 +122,9 @@ class NativeFunction(object):
 		self.func_name = cursor.spelling
 		self.signature_name = self.func_name
 		self.arguments = []
-		self.static = cursor.is_method_static()
+		self.static = cursor.kind == cindex.CursorKind.CXX_METHOD and cursor.is_method_static()
 		self.implementations = []
+		self.is_constructor = False
 		result = cursor.result_type
 		# get the result
 		if result.kind == cindex.TypeKind.LVALUEREFERENCE:
@@ -147,10 +148,16 @@ class NativeFunction(object):
 			tpl = Template(file=path.join("templates", generator.target, "sfunction.c"),
 						   searchList=[current_class, self, {"generator": generator}])
 		else:
-			if config['definitions'].has_key('ifunction'):
-				tpl = Template(config['definitions']['ifunction'],
-						       searchList=[current_class, self, {"generator": generator}])
-				self.signature_name = str(tpl)
+			if not self.is_constructor:
+				if config['definitions'].has_key('ifunction'):
+					tpl = Template(config['definitions']['ifunction'],
+							       searchList=[current_class, self, {"generator": generator}])
+					self.signature_name = str(tpl)
+			else:
+				if config['definitions'].has_key('constructor'):
+					tpl = Template(config['definitions']['constructor'],
+								   searchList=[current_class, self, {"generator": generator}])
+					self.signature_name = str(tpl)
 			tpl = Template(file=path.join("templates", generator.target, "ifunction.c"),
 						   searchList=[current_class, self, {"generator": generator}])
 		generator.impl_file.write(str(tpl))
@@ -161,6 +168,7 @@ class NativeOverloadedFunction(object):
 		self.func_name = func_array[0].func_name
 		self.signature_name = self.func_name
 		self.min_args = 100
+		self.is_constructor = False
 		for m in func_array:
 			self.min_args = min(self.min_args, m.min_args)
 
@@ -182,10 +190,16 @@ class NativeOverloadedFunction(object):
 			tpl = Template(file=path.join("templates", generator.target, "sfunction_overloaded.c"),
 						   searchList=[current_class, self, {"generator": generator}])
 		else:
-			if config['definitions'].has_key('ifunction'):
-				tpl = Template(config['definitions']['ifunction'],
-							   searchList=[current_class, self, {"generator": generator}])
-				self.signature_name = str(tpl)
+			if not self.is_constructor:
+				if config['definitions'].has_key('ifunction'):
+					tpl = Template(config['definitions']['ifunction'],
+							       searchList=[current_class, self, {"generator": generator}])
+					self.signature_name = str(tpl)
+			else:
+				if config['definitions'].has_key('constructor'):
+					tpl = Template(config['definitions']['constructor'],
+								   searchList=[current_class, self, {"generator": generator}])
+					self.signature_name = str(tpl)
 			tpl = Template(file=path.join("templates", generator.target, "ifunction_overloaded.c"),
 						   searchList=[current_class, self, {"generator": generator}])
 		generator.impl_file.write(str(tpl))
@@ -310,6 +324,19 @@ class NativeClass(object):
 							previous_m.append(m)
 						else:
 							self.methods[m.func_name] = NativeOverloadedFunction([m, previous_m])
+		elif cursor.kind == cindex.CursorKind.CONSTRUCTOR:
+			m = NativeFunction(cursor)
+			m.is_constructor = True
+			if not self.methods.has_key('constructor'):
+				self.methods['constructor'] = m
+			else:
+				previous_m = self.methods['constructor']
+				if isinstance(previous_m, NativeOverloadedFunction):
+					previous_m.append(m)
+				else:
+					m = NativeOverloadedFunction([m, previous_m])
+					m.is_constructor = True
+					self.methods['constructor'] = m
 		else:
 			print >> sys.stderr, "unknown cursor: %s - %s" % (cursor.kind, cursor.displayname)
 

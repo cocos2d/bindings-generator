@@ -19,7 +19,7 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 #for func in $implementations
 	#set arg_list = ""
 	#set arg_array = []
-	#if $func.min_args > 0
+	#if $func.min_args >= 0
 	if (argc == ${func.min_args}) {
 		#set count = 0
 		#for $arg in $func.arguments

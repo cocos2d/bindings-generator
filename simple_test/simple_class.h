@@ -25,15 +25,18 @@ public:
 	// these methods are simple, can be defined inline
 	int getSomeField() {
 		return m_someField;
-	};
+	}
 	int getSomeOtherField() {
 		return m_someOtherField;
-	};
+	}
 	char *getAnotherMoreComplexField() {
 		return m_anotherMoreComplexField;
 	}
 	void setSomeField(int f) {
 		m_someField = f;
+	}
+	void setSomeField() {
+
 	}
 	void setSomeOtherField(int f) {
 		m_someOtherField = f;
@@ -41,6 +44,10 @@ public:
 	void setAnotherMoreComplexField(const char *str);
 
 	long long thisReturnsALongLong();
+
+	static void func();
+	static void func(int a);
+	static void func(float b);
 
 	void receivesLongLong(long long someId);
 	std::string returnsAString();

@@ -96,38 +96,6 @@ public:
 	};
 
 	/**
-	 * Register an object as a member of the GC's root set, preventing
-	 * them from being GC'ed
-	 */
-	static JSBool addRootJS(JSContext *cx, uint32_t argc, jsval *vp)
-	{
-		if (argc == 1) {
-			JSObject *o = NULL;
-			if (JS_ConvertArguments(cx, argc, JS_ARGV(cx, vp), "o", &o) == JS_TRUE) {
-				if (JS_AddObjectRoot(cx, &o) == JS_FALSE) {
-					js_log("something went wrong when setting an object to the root");
-				}
-			}
-		}
-		return JS_TRUE;
-	};
-
-	/**
-	 * removes an object from the GC's root, allowing them to be GC'ed if no
-	 * longer referenced.
-	 */
-	static JSBool removeRootJS(JSContext *cx, uint32_t argc, jsval *vp)
-	{
-		if (argc == 1) {
-			JSObject *o = NULL;
-			if (JS_ConvertArguments(cx, argc, JS_ARGV(cx, vp), "o", &o) == JS_TRUE) {
-				JS_RemoveObjectRoot(cx, &o);
-			}
-		}
-		return JS_TRUE;
-	};
-
-	/**
 	 * Force a cycle of GC
 	 * @param cx
 	 * @param argc

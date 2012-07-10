@@ -103,4 +103,8 @@ ScriptingCore::~ScriptingCore()
 	JS_DestroyContext(cx);
 	JS_DestroyRuntime(rt);
 	JS_ShutDown();
+	if (_js_log_buf) {
+		free(_js_log_buf);
+		_js_log_buf = NULL;
+	}
 }

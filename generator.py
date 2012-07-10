@@ -10,60 +10,47 @@ from Cheetah.Template import Template
 from os import path
 
 def native_name_from_kind(ntype):
-	kind = ntype.kind
-	if kind == cindex.TypeKind.VOID:
-		return "void"
-	elif kind == cindex.TypeKind.BOOL:
-		return "bool"
-	elif kind == cindex.TypeKind.CHAR_U or kind == cindex.TypeKind.UCHAR:
-		return "unsigned char"
-	elif kind == cindex.TypeKind.CHAR16 or kind == cindex.TypeKind.CHAR32:
-		return "char"
-	elif kind == cindex.TypeKind.USHORT:
-		return "unsigned short"
-	elif kind == cindex.TypeKind.UINT:
-		return "unsigned int"
-	elif kind == cindex.TypeKind.ULONG:
-		return "unsigned long"
-	elif kind == cindex.TypeKind.ULONGLONG:
-		return "unsigned long long"
-	elif kind == cindex.TypeKind.CHAR_S or kind == cindex.TypeKind.SCHAR:
-		return "char"
-	elif kind == cindex.TypeKind.WCHAR:
-		return "wchar_t"
-	elif kind == cindex.TypeKind.SHORT:
-		return "short"
-	elif kind == cindex.TypeKind.INT:
-		return "int"
-	elif kind == cindex.TypeKind.LONG:
-		return "long"
-	elif kind == cindex.TypeKind.LONGLONG:
-		return "long long"
-	elif kind == cindex.TypeKind.FLOAT:
-		return "float"
-	elif kind == cindex.TypeKind.DOUBLE:
-		return "double"
-	elif kind == cindex.TypeKind.LONGDOUBLE:
-		return "long double"
-	elif kind == cindex.TypeKind.NULLPTR:
-		return "NULL"
-	elif kind == cindex.TypeKind.OBJCID:
-		return "id"
-	elif kind == cindex.TypeKind.OBJCCLASS:
-		return "Class"
-	elif kind == cindex.TypeKind.OBJCSEL:
-		return "SEL"
-	elif kind == cindex.TypeKind.ENUM:
-		return "int"
-	elif kind == cindex.TypeKind.UNEXPOSED:
-		# might be an std::string
-		decl = ntype.get_declaration()
-		parent = decl.semantic_parent
-		if decl.spelling == "string" and parent and parent.spelling == "std":
-			return "std::string"
-	else:
-		print >> sys.stderr, "Unknown type: " + str(kind)
-		return "??"
+
+    type_map = {
+        cindex.TypeKind.VOID        : "void",
+        cindex.TypeKind.BOOL        : "bool",
+        cindex.TypeKind.CHAR_U      : "unsigned char",
+        cindex.TypeKind.UCHAR       : "unsigned char",
+        cindex.TypeKind.CHAR16      : "char",
+        cindex.TypeKind.CHAR32      : "char",
+        cindex.TypeKind.USHORT      : "unsigned short",
+        cindex.TypeKind.UINT        : "unsigned int",
+        cindex.TypeKind.ULONG       : "unsigned long",
+        cindex.TypeKind.ULONGLONG   : "unsigned long long",
+        cindex.TypeKind.CHAR_S      : "char",
+        cindex.TypeKind.SCHAR       : "char",
+        cindex.TypeKind.WCHAR       : "wchar_t",
+        cindex.TypeKind.SHORT       : "short",
+        cindex.TypeKind.INT         : "int",
+        cindex.TypeKind.LONG        : "long",
+        cindex.TypeKind.LONGLONG    : "long long",
+        cindex.TypeKind.FLOAT       : "float",
+        cindex.TypeKind.DOUBLE      : "double",
+        cindex.TypeKind.LONGDOUBLE  : "long double",
+        cindex.TypeKind.NULLPTR     : "NULL",
+        cindex.TypeKind.OBJCID      : "id",
+        cindex.TypeKind.OBJCCLASS   : "class",
+        cindex.TypeKind.OBJCSEL     : "SEL",
+        cindex.TypeKind.ENUM        : "int",
+    }
+
+    kind = ntype.kind
+    if kind in type_map:
+        return type_map[kind]
+    elif kind == cindex.TypeKind.UNEXPOSED:
+        # might be an std::string
+        decl = ntype.get_declaration()
+        parent = decl.semantic_parent
+        if decl.spelling == "string" and parent and parent.spelling == "std":
+            return "std::string"
+    else:
+        print >> sys.stderr, "Unknown type: " + str(kind)
+        return "??"
 		# pdb.set_trace()
 
 class NativeType(object):

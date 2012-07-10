@@ -7,6 +7,7 @@ import ConfigParser
 import yaml
 import re
 from Cheetah.Template import Template
+import os
 from os import path
 
 type_map = {
@@ -397,20 +398,13 @@ class Generator(object):
 def main():
 	from optparse import OptionParser, OptionGroup
 
-	global opts
-
 	parser = OptionParser("usage: %prog [options] {configfile}")
 	parser.add_option("-s", action="store", type="string", dest="section",
 						help="sets a specific section to be converted")
 	parser.add_option("-t", action="store", type="string", dest="target",
 						help="specifies the target vm. Will search for TARGET.yaml")
+
 	(opts, args) = parser.parse_args()
-
-	if not opts.target:
-		parser.error("Target is required")
-
-	if not opts.section:
-		parser.error("Section is required")
 
 	if len(args) == 0:
 		parser.error('invalid number of arguments')
@@ -418,18 +412,46 @@ def main():
 	config = ConfigParser.SafeConfigParser()
 	config.read(args[0])
 
-	# generate_code(classes.split(" "), clang_args, opts.target)
-	# parse_headers(None, classes.split(" "), clang_args)
-	gen_opts = {
-		'prefix': config.get(opts.section, 'prefix'),
-		'headers': config.get(opts.section, 'headers'),
-		'classes': config.get(opts.section, 'classes').split(' '),
-		'clang_args': (config.get(opts.section, 'extra_arguments') or "").split(" "),
-		'target': opts.target,
-		'skip': config.get(opts.section, 'skip')
-	}
-	generator = Generator(gen_opts)
-	generator.generate_code()
+	if (0 == len(config.sections())):
+		raise Exception("No sections defined in config file")
+
+	sections = []
+	if opts.section:
+		if (opts.section in config.sections()):
+			sections = []
+			sections.append(opts.section)
+		else:
+			raise Exception("Section not found in config file")
+	else:
+		print("processing all sections")
+		sections = config.sections()
+
+	# find available targets
+	if (os.path.isdir("templates")):
+		targets = [entry for entry in os.listdir("templates")
+				   if (os.path.isdir(os.path.join("templates", entry)))]
+		if 0 == len(targets):
+			raise Exception("No targets defined")
+
+	if opts.target:
+		if (opts.target in targets):
+			targets = []
+			targets.append(opts.target)
+
+	for t in targets:
+		print "\n.... Generating bindings for target", t
+		for s in sections:
+			print "\n.... .... Processing section", s, "\n"
+			gen_opts = {
+				'prefix': config.get(s, 'prefix'),
+				'headers': config.get(s, 'headers'),
+				'classes': config.get(s, 'classes').split(' '),
+				'clang_args': (config.get(s, 'extra_arguments') or "").split(" "),
+				'target': t,
+				'skip': config.get(s, 'skip')
+				}
+			generator = Generator(gen_opts)
+			generator.generate_code()
 
 if __name__ == '__main__':
 	main()

@@ -351,7 +351,7 @@ class Generator(object):
 		self.headers = opts['headers']
 		self.classes = opts['classes']
 		self.clang_args = opts['clang_args']
-		self.target = opts['target']
+		self.target = "targets/" + opts['target']
 		self.skip = opts['skip'] or ''
 		self.impl_file = None
 		self.head_file = None
@@ -427,9 +427,10 @@ def main():
 		sections = config.sections()
 
 	# find available targets
-	if (os.path.isdir("templates")):
-		targets = [entry for entry in os.listdir("templates")
-				   if (os.path.isdir(os.path.join("templates", entry)))]
+	targets = []
+	if (os.path.isdir("targets")):
+		targets = [entry for entry in os.listdir("targets")
+				   if (os.path.isdir(os.path.join("targets", entry)))]
 		if 0 == len(targets):
 			raise Exception("No targets defined")
 

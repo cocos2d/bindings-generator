@@ -10,47 +10,58 @@ from Cheetah.Template import Template
 from os import path
 
 type_map = {
-    cindex.TypeKind.VOID        : "void",
-    cindex.TypeKind.BOOL        : "bool",
-    cindex.TypeKind.CHAR_U      : "unsigned char",
-    cindex.TypeKind.UCHAR       : "unsigned char",
-    cindex.TypeKind.CHAR16      : "char",
-    cindex.TypeKind.CHAR32      : "char",
-    cindex.TypeKind.USHORT      : "unsigned short",
-    cindex.TypeKind.UINT        : "unsigned int",
-    cindex.TypeKind.ULONG       : "unsigned long",
-    cindex.TypeKind.ULONGLONG   : "unsigned long long",
-    cindex.TypeKind.CHAR_S      : "char",
-    cindex.TypeKind.SCHAR       : "char",
-    cindex.TypeKind.WCHAR       : "wchar_t",
-    cindex.TypeKind.SHORT       : "short",
-    cindex.TypeKind.INT         : "int",
-    cindex.TypeKind.LONG        : "long",
-    cindex.TypeKind.LONGLONG    : "long long",
-    cindex.TypeKind.FLOAT       : "float",
-    cindex.TypeKind.DOUBLE      : "double",
-    cindex.TypeKind.LONGDOUBLE  : "long double",
-    cindex.TypeKind.NULLPTR     : "NULL",
-    cindex.TypeKind.OBJCID      : "id",
-    cindex.TypeKind.OBJCCLASS   : "class",
-    cindex.TypeKind.OBJCSEL     : "SEL",
-    cindex.TypeKind.ENUM        : "int",
+	cindex.TypeKind.VOID        : "void",
+	cindex.TypeKind.BOOL        : "bool",
+	cindex.TypeKind.CHAR_U      : "unsigned char",
+	cindex.TypeKind.UCHAR       : "unsigned char",
+	cindex.TypeKind.CHAR16      : "char",
+	cindex.TypeKind.CHAR32      : "char",
+	cindex.TypeKind.USHORT      : "unsigned short",
+	cindex.TypeKind.UINT        : "unsigned int",
+	cindex.TypeKind.ULONG       : "unsigned long",
+	cindex.TypeKind.ULONGLONG   : "unsigned long long",
+	cindex.TypeKind.CHAR_S      : "char",
+	cindex.TypeKind.SCHAR       : "char",
+	cindex.TypeKind.WCHAR       : "wchar_t",
+	cindex.TypeKind.SHORT       : "short",
+	cindex.TypeKind.INT         : "int",
+	cindex.TypeKind.LONG        : "long",
+	cindex.TypeKind.LONGLONG    : "long long",
+	cindex.TypeKind.FLOAT       : "float",
+	cindex.TypeKind.DOUBLE      : "double",
+	cindex.TypeKind.LONGDOUBLE  : "long double",
+	cindex.TypeKind.NULLPTR     : "NULL",
+	cindex.TypeKind.OBJCID      : "id",
+	cindex.TypeKind.OBJCCLASS   : "class",
+	cindex.TypeKind.OBJCSEL     : "SEL",
+	cindex.TypeKind.ENUM        : "int",
 }
 
 def native_name_from_kind(ntype):
-    kind = ntype.kind
-    if kind in type_map:
-        return type_map[kind]
-    elif kind == cindex.TypeKind.UNEXPOSED:
-        # might be an std::string
-        decl = ntype.get_declaration()
-        parent = decl.semantic_parent
-        if decl.spelling == "string" and parent and parent.spelling == "std":
-            return "std::string"
-    else:
-        print >> sys.stderr, "Unknown type: " + str(kind)
-        return "??"
+	kind = ntype.kind
+	if kind in type_map:
+		return type_map[kind]
+	elif kind == cindex.TypeKind.UNEXPOSED:
+		# might be an std::string
+		decl = ntype.get_declaration()
+		parent = decl.semantic_parent
+		if decl.spelling == "string" and parent and parent.spelling == "std":
+			return "std::string"
+	else:
+		print >> sys.stderr, "Unknown type: " + str(kind)
+		return "??"
 		# pdb.set_trace()
+
+def build_namespace(cursor, name = []):
+	'''
+	build the full namespace for a specific cursor
+	'''
+	if cursor:
+		parent = cursor.semantic_parent
+		if parent and parent.kind == cindex.CursorKind.NAMESPACE:
+			name += [parent.displayname]
+			build_namespace(parent, name)
+	return "::".join(name)
 
 class NativeType(object):
 	def __init__(self, ntype):
@@ -60,7 +71,12 @@ class NativeType(object):
 			pointee = ntype.get_pointee()
 			self.is_pointer = True
 			if pointee.kind == cindex.TypeKind.RECORD:
-				self.name = pointee.get_declaration().displayname
+				decl = pointee.get_declaration()
+				ns = build_namespace(decl)
+				if len(ns) > 0:
+					self.name = ns + "::" + decl.displayname
+				else:
+					self.name = decl.displayname
 			else:
 				self.name = native_name_from_kind(pointee)
 			self.name += "*"
@@ -124,28 +140,28 @@ class NativeFunction(object):
 	def generate_code(self, generator, current_class=None):
 		config = generator.config
 		tpl = Template(file=path.join("templates", generator.target, "function.h"),
-					   searchList=[current_class, self, {"generator": generator}])
+						searchList=[current_class, self, {"generator": generator}])
 		generator.head_file.write(str(tpl))
 		if self.static:
 			if config['definitions'].has_key('sfunction'):
 				tpl = Template(config['definitions']['sfunction'],
-							   searchList=[current_class, self, {"generator": generator}])
+									 searchList=[current_class, self, {"generator": generator}])
 				self.signature_name = str(tpl)
 			tpl = Template(file=path.join("templates", generator.target, "sfunction.c"),
-						   searchList=[current_class, self, {"generator": generator}])
+							searchList=[current_class, self, {"generator": generator}])
 		else:
 			if not self.is_constructor:
 				if config['definitions'].has_key('ifunction'):
 					tpl = Template(config['definitions']['ifunction'],
-							       searchList=[current_class, self, {"generator": generator}])
+									searchList=[current_class, self, {"generator": generator}])
 					self.signature_name = str(tpl)
 			else:
 				if config['definitions'].has_key('constructor'):
 					tpl = Template(config['definitions']['constructor'],
-								   searchList=[current_class, self, {"generator": generator}])
+									searchList=[current_class, self, {"generator": generator}])
 					self.signature_name = str(tpl)
 			tpl = Template(file=path.join("templates", generator.target, "ifunction.c"),
-						   searchList=[current_class, self, {"generator": generator}])
+							searchList=[current_class, self, {"generator": generator}])
 		generator.impl_file.write(str(tpl))
 
 class NativeOverloadedFunction(object):
@@ -166,28 +182,28 @@ class NativeOverloadedFunction(object):
 		config = generator.config
 		static = self.implementations[0].static
 		tpl = Template(file=path.join("templates", generator.target, "function.h"),
-					   searchList=[current_class, self, {"generator": generator}])
+						searchList=[current_class, self, {"generator": generator}])
 		generator.head_file.write(str(tpl))
 		if static:
 			if config['definitions'].has_key('sfunction'):
 				tpl = Template(config['definitions']['sfunction'],
-							   searchList=[current_class, self, {"generator": generator}])
+								searchList=[current_class, self, {"generator": generator}])
 				self.signature_name = str(tpl)
 			tpl = Template(file=path.join("templates", generator.target, "sfunction_overloaded.c"),
-						   searchList=[current_class, self, {"generator": generator}])
+							searchList=[current_class, self, {"generator": generator}])
 		else:
 			if not self.is_constructor:
 				if config['definitions'].has_key('ifunction'):
 					tpl = Template(config['definitions']['ifunction'],
-							       searchList=[current_class, self, {"generator": generator}])
+									searchList=[current_class, self, {"generator": generator}])
 					self.signature_name = str(tpl)
 			else:
 				if config['definitions'].has_key('constructor'):
 					tpl = Template(config['definitions']['constructor'],
-								   searchList=[current_class, self, {"generator": generator}])
+									searchList=[current_class, self, {"generator": generator}])
 					self.signature_name = str(tpl)
 			tpl = Template(file=path.join("templates", generator.target, "ifunction_overloaded.c"),
-						   searchList=[current_class, self, {"generator": generator}])
+							searchList=[current_class, self, {"generator": generator}])
 		generator.impl_file.write(str(tpl))
 
 
@@ -378,16 +394,15 @@ class Generator(object):
 			self._deep_iterate(node, depth+1, force)
 
 def main():
-	from clang import cindex
 	from optparse import OptionParser, OptionGroup
 
 	global opts
 
 	parser = OptionParser("usage: %prog [options] {configfile}")
 	parser.add_option("-s", action="store", type="string", dest="section",
-					  help="sets a specific section to be converted")
+						help="sets a specific section to be converted")
 	parser.add_option("-t", action="store", type="string", dest="target",
-					  help="specifies the target vm. Will search for TARGET.yaml")
+						help="specifies the target vm. Will search for TARGET.yaml")
 	(opts, args) = parser.parse_args()
 
 	if not opts.target:

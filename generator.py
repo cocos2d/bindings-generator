@@ -90,6 +90,7 @@ class NativeType(object):
 											 "out_value": out_value,
 											 "level": indent_level}])
 			return str(tpl).rstrip()
+
 		return "#pragma error NO CONVERSION FROM NATIVE FOR " + self.name
 
 	def to_native(self, generator, in_value, out_value, indent_level=0):
@@ -139,7 +140,7 @@ class NativeFunction(object):
 
 	def generate_code(self, generator, current_class=None):
 		config = generator.config
-		tpl = Template(file=path.join("templates", generator.target, "function.h"),
+		tpl = Template(file=path.join(generator.target, "templates", "function.h"),
 						searchList=[current_class, self, {"generator": generator}])
 		generator.head_file.write(str(tpl))
 		if self.static:
@@ -147,7 +148,7 @@ class NativeFunction(object):
 				tpl = Template(config['definitions']['sfunction'],
 									 searchList=[current_class, self, {"generator": generator}])
 				self.signature_name = str(tpl)
-			tpl = Template(file=path.join("templates", generator.target, "sfunction.c"),
+			tpl = Template(file=path.join(generator.target, "templates", "sfunction.c"),
 							searchList=[current_class, self, {"generator": generator}])
 		else:
 			if not self.is_constructor:
@@ -160,7 +161,7 @@ class NativeFunction(object):
 					tpl = Template(config['definitions']['constructor'],
 									searchList=[current_class, self, {"generator": generator}])
 					self.signature_name = str(tpl)
-			tpl = Template(file=path.join("templates", generator.target, "ifunction.c"),
+			tpl = Template(file=path.join(generator.target, "templates", "ifunction.c"),
 							searchList=[current_class, self, {"generator": generator}])
 		generator.impl_file.write(str(tpl))
 
@@ -181,7 +182,7 @@ class NativeOverloadedFunction(object):
 	def generate_code(self, generator, current_class=None):
 		config = generator.config
 		static = self.implementations[0].static
-		tpl = Template(file=path.join("templates", generator.target, "function.h"),
+		tpl = Template(file=path.join(generator.target, "templates", "function.h"),
 						searchList=[current_class, self, {"generator": generator}])
 		generator.head_file.write(str(tpl))
 		if static:
@@ -189,7 +190,7 @@ class NativeOverloadedFunction(object):
 				tpl = Template(config['definitions']['sfunction'],
 								searchList=[current_class, self, {"generator": generator}])
 				self.signature_name = str(tpl)
-			tpl = Template(file=path.join("templates", generator.target, "sfunction_overloaded.c"),
+			tpl = Template(file=path.join(generator.target, "templates", "sfunction_overloaded.c"),
 							searchList=[current_class, self, {"generator": generator}])
 		else:
 			if not self.is_constructor:
@@ -202,7 +203,7 @@ class NativeOverloadedFunction(object):
 					tpl = Template(config['definitions']['constructor'],
 									searchList=[current_class, self, {"generator": generator}])
 					self.signature_name = str(tpl)
-			tpl = Template(file=path.join("templates", generator.target, "ifunction_overloaded.c"),
+			tpl = Template(file=path.join(generator.target, "templates", "ifunction_overloaded.c"),
 							searchList=[current_class, self, {"generator": generator}])
 		generator.impl_file.write(str(tpl))
 
@@ -268,9 +269,9 @@ class NativeClass(object):
 		@param: generator the generator
 		'''
 		config = generator.config
-		prelude_h = Template(file=path.join("templates", generator.target, "prelude.h"),
+		prelude_h = Template(file=path.join(generator.target, "templates", "prelude.h"),
 							 searchList=[{"generator": generator}, self])
-		prelude_c = Template(file=path.join("templates", generator.target, "prelude.c"),
+		prelude_c = Template(file=path.join(generator.target, "templates", "prelude.c"),
 							 searchList=[{"generator": generator}, self])
 		generator.head_file.write(str(prelude_h))
 		generator.impl_file.write(str(prelude_c))
@@ -280,7 +281,7 @@ class NativeClass(object):
 		for m in self.static_methods_clean(generator):
 			m['impl'].generate_code(generator, self)
 		# generate register section
-		register = Template(file=path.join("templates", generator.target, "register.c"),
+		register = Template(file=path.join(generator.target, "templates", "register.c"),
 							searchList=[{"generator": generator}, self])
 		generator.impl_file.write(str(register))
 		# FIXME: this should be in a footer.h
@@ -356,7 +357,7 @@ class Generator(object):
 
 	def generate_code(self):
 		# must read the yaml file first
-		stream = file(self.target + ".yaml", "r")
+		stream = file(path.join(self.target, "conversions.yaml"), "r")
 		data = yaml.load(stream)
 		self.config = data
 		self.impl_file = open(self.prefix + ".cpp", "w+")

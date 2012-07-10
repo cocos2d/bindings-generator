@@ -8,6 +8,7 @@ conversions:
   to_native:
     # jsval to int
     int: "JS_ValueToInt32(cx, ${in_value}, &${out_value})"
+    unsigned int: "JS_ValueToInt32(cx, ${in_value}, &${out_value})"
     # jsval has to be a TypedArray, a UInt32Array with 2 elements
     long long: |
       do {
@@ -30,10 +31,16 @@ conversions:
     bool: "JS_ValueToBoolean(cx, ${in_value}, (JSBool *)&${out_value})"
     float: "${out_value} = JSVAL_TO_DOUBLE(${in_value})"
     double: "${out_value} = JSVAL_TO_DOUBLE(${in_value})"
+    object: |
+      do {
+      ${($level + 1) * '\t'}void *_tmp = JS_GetInstancePrivate(cx, ${in_value}, ${jsclass}, NULL);
+      ${($level + 1) * '\t'}${out_value} = (${native_type})_tmp;
+      ${($level) * '\t'} while (0)
 
   from_native:
     # int to jsval
     int: "JS_NewNumberValue(cx, ${in_value}, &${out_value})"
+    unsigned int: "JS_NewNumberValue(cx, ${in_value}, &${out_value})"
     long long: |
       do {
       ${($level + 1) * '\t'}JSObject *tmp = js_CreateTypedArray(cx, js::TypedArray::TYPE_UINT32, 2);
@@ -55,3 +62,16 @@ conversions:
     bool: "${out_value} = BOOLEAN_TO_JSVAL(${in_value})"
     float: "JS_NewNumberValue(cx, ${in_value}, &${out_value})"
     double: "JS_NewNumberValue(cx, ${in_value}, &${out_value})"
+    object: |
+      do {
+      ${($level + 1) * '\t'}JSObject *_tmp = NATIVE_JS_HASHTABLE_GET(${in_value});
+      ${($level + 1) * '\t'}if (_tmp) {
+      ${($level + 2) * '\t'}${out_value} = OBJECT_TO_JSVAL(_tmp);
+      ${($level + 1) * '\t'}} else {
+      ${($level + 2) * '\t'}// create a new js obj of that class
+      ${($level + 2) * '\t'}_tmp = JS_NewObject(cx, ${jsclass}, ${jsproto}, NULL);
+      ${($level + 2) * '\t'}JS_SetPrivate(_tmp, ${in_value});
+      ${($level + 2) * '\t'}${out_value} = OBJECT_TO_JSVAL(_tmp);
+      ${($level + 2) * '\t'}NATIVE_JS_HASHTABLE_SET(${in_value}, _tmp);
+      ${($level + 1) * '\t'}}
+      ${($level) * '\t'} while (0)

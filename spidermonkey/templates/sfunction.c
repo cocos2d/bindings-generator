@@ -30,3 +30,4 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 #end if
 	return JS_TRUE;
 }
+

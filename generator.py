@@ -53,58 +53,81 @@ def native_name_from_kind(ntype):
 		return "??"
 		# pdb.set_trace()
 
-def build_namespace(cursor, name = []):
+def build_namespace(cursor, namespaces = []):
 	'''
 	build the full namespace for a specific cursor
 	'''
 	if cursor:
 		parent = cursor.semantic_parent
 		if parent and parent.kind == cindex.CursorKind.NAMESPACE:
-			name += [parent.displayname]
-			build_namespace(parent, name)
-	return "::".join(name)
+			namespaces += [parent.displayname]
+			build_namespace(parent, namespaces)
+	return "::".join(namespaces)
 
 class NativeType(object):
 	def __init__(self, ntype):
 		self.type = ntype
 		self.is_pointer = False
+		self.is_object = False
+		self.namespaced_name = ""
 		if ntype.kind == cindex.TypeKind.POINTER:
 			pointee = ntype.get_pointee()
 			self.is_pointer = True
 			if pointee.kind == cindex.TypeKind.RECORD:
 				decl = pointee.get_declaration()
-				ns = build_namespace(decl)
+				self.is_object = True
+				self.name = decl.displayname
+				ns = build_namespace(decl, [])
 				if len(ns) > 0:
-					self.name = ns + "::" + decl.displayname
+					self.namespaced_name = ns + "::" + decl.displayname
 				else:
-					self.name = decl.displayname
+					self.namespaced_name = self.name
 			else:
 				self.name = native_name_from_kind(pointee)
+				self.namespaced_name = self.name
 			self.name += "*"
+			self.namespaced_name += "*"
 		else:
-			self.name = native_name_from_kind(ntype)
+			if ntype.kind == cindex.TypeKind.RECORD:
+				decl = ntype.get_declaration()
+				self.is_object = True
+				self.name = decl.displayname
+				ns = build_namespace(decl, [])
+				if len(ns) > 0:
+					self.namespaced_name = ns + "::" + decl.displayname
+				else:
+					self.namespaced_name = self.name
+			else:
+				self.name = native_name_from_kind(ntype)
+				self.namespaced_name = self.name
 
-	def from_native(self, generator, in_value, out_value, indent_level=0):
-		if generator.config['conversions']['from_native'].has_key(self.name):
-			tpl = generator.config['conversions']['from_native'][self.name]
+	def from_native(self, generator, in_value, out_value, class_name=None, indent_level=0):
+		name = "object" if self.is_object else self.name
+		if generator.config['conversions']['from_native'].has_key(name):
+			tpl = generator.config['conversions']['from_native'][name]
 			tpl = Template(tpl, searchList=[{"in_value": in_value,
 											 "out_value": out_value,
+											 "generator": generator,
+											 "class_name": class_name,
 											 "level": indent_level}])
 			return str(tpl).rstrip()
 
-		return "#pragma error NO CONVERSION FROM NATIVE FOR " + self.name
+		return "#pragma error NO CONVERSION FROM NATIVE FOR " + name
 
-	def to_native(self, generator, in_value, out_value, indent_level=0):
-		if generator.config['conversions']['to_native'].has_key(self.name):
-			tpl = generator.config['conversions']['to_native'][self.name]
+	def to_native(self, generator, in_value, out_value, class_name=None, indent_level=0):
+		name = "object" if self.is_object else self.name
+		if generator.config['conversions']['to_native'].has_key(name):
+			tpl = generator.config['conversions']['to_native'][name]
 			tpl = Template(tpl, searchList=[{"in_value": in_value,
 											 "out_value": out_value,
+											 "generator": generator,
+											 "class_name": class_name,
 											 "level": indent_level}])
 			return str(tpl).rstrip()
-		return "#pragma error NO CONVERSION TO NATIVE FOR " + self.name
+		return "#pragma error NO CONVERSION TO NATIVE FOR " + name
 
 	def __str__(self):
-		return self.name
+		return self.namespaced_name
 
 class NativeField(object):
 	def __init__(self, cursor):
@@ -214,11 +237,15 @@ class NativeClass(object):
 		# the cursor to the implementation
 		self.cursor = cursor
 		self.class_name = cursor.displayname
+		self.namespaced_class_name = self.class_name
 		self.parents = []
 		self.fields = []
 		self.methods = {}
 		self.static_methods = {}
 		self.parse()
+		ns = build_namespace(cursor, [])
+		if len(ns) > 0:
+			self.namespaced_class_name = ns + "::" + self.class_name
 
 	def parse(self):
 		'''
@@ -234,12 +261,15 @@ class NativeClass(object):
 		list_of_skips = generator.skip.split(" ")
 		for name, impl in self.methods.iteritems():
 			should_skip = False
-			for it in list_of_skips:
-				if it.find("::") > 0:
-					klass_name, method_name = it.split("::")
-					if klass_name == self.class_name and method_name == name:
-						should_skip = True
-						break
+			if name == 'constructor':
+				should_skip = True
+			else:
+				for it in list_of_skips:
+					if it.find("::") > 0:
+						klass_name, method_name = it.split("::")
+						if klass_name == self.class_name and method_name == name:
+							should_skip = True
+							break
 			if not should_skip:
 				ret += [{"name": name, "impl": impl}]
 		return ret
@@ -349,7 +379,7 @@ class Generator(object):
 		self.index = cindex.Index.create()
 		self.outdir = opts['outdir']
 		self.prefix = opts['prefix']
-		self.headers = opts['headers']
+		self.headers = opts['headers'].split(' ')
 		self.classes = opts['classes']
 		self.clang_args = opts['clang_args']
 		self.target = "targets/" + opts['target']
@@ -371,19 +401,19 @@ class Generator(object):
 		self.head_file.close()
 
 	def _parse_headers(self):
-		# print("will parse: " + str(headers) + " " + str(args))
-		tu = self.index.parse(self.headers, self.clang_args)
-		if len(tu.diagnostics) > 0:
-			is_fatal = False
-			for d in tu.diagnostics:
-				if d.severity >= cindex.Diagnostic.Error:
-					is_fatal = True
-				print(d.category_name + ": " + str(d.location))
-				print("  " + d.spelling)
-			if is_fatal:
-				print("*** Found errors - can not continue")
-				return
-		self._deep_iterate(tu.cursor)
+		for header in self.headers:
+			tu = self.index.parse(header, self.clang_args)
+			if len(tu.diagnostics) > 0:
+				is_fatal = False
+				for d in tu.diagnostics:
+					if d.severity >= cindex.Diagnostic.Error:
+						is_fatal = True
+					print(d.category_name + ": " + str(d.location))
+					print("  " + d.spelling)
+				if is_fatal:
+					print("*** Found errors - can not continue")
+					return
+			self._deep_iterate(tu.cursor)
 
 	def _deep_iterate(self, cursor, depth=0, force=False):
 		# get the canonical type

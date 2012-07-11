@@ -9,6 +9,7 @@
 #ifndef __SCRIPTING_CORE_H__
 #define __SCRIPTING_CORE_H__
 
+#include <assert.h>
 #include "jsapi.h"
 #include "uthash.h"
 

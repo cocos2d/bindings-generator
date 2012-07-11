@@ -8,18 +8,21 @@
 
 #include <iostream>
 #include <stdio.h>
+#include <stdlib.h>
 #include "ScriptingCore.h"
+#include "cocos2d.h"
 
+js_proxy_t *_js_global_ht = NULL
 char *_js_log_buf = NULL;
 
 void js_log(const char *format, ...) {
 	if (_js_log_buf == NULL) {
-		_js_log_buf = (char *)calloc(sizeof(char) * 257);
+		_js_log_buf = (char *)calloc(sizeof(char), 257);
 	}
 	va_list vl;
 	va_start(vl, format);
 	int len = vsnprintf(_js_log_buf, 256, format, vl);
-	va_end(ap);
+	va_end(vl);
 	if (len)
 		fprintf(stderr, "JS: %s\n", _js_log_buf);
 }

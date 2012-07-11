@@ -10,8 +10,31 @@
 #define __SCRIPTING_CORE_H__
 
 #include "jsapi.h"
+#include "uthash.h"
 
 void js_log(const char *format, ...);
+
+typedef struct js_proxy {
+	void *ptr;
+	JSObject *obj;
+	UT_hash_handle hh;
+} js_proxy_t;
+
+extern js_proxy_t *_js_global_ht;
+
+#define JS_NEW_PROXY(p, native_obj, js_obj) \
+do { \
+	p = (js_proxy_t *)malloc(sizeof(js_proxy_t)); \
+	assert(p); \
+	p->ptr = native_obj; \
+	p->obj = js_obj; \
+	HASH_ADD_PTR(_js_global_ht, ptr, p); \
+} while(0) \
+
+#define JS_GET_PROXY(p, native_obj) \
+do { \
+	HASH_FIND_PTR(_js_global_ht, native_obj, p); \
+} while (0)
 
 class ScriptingCore
 {

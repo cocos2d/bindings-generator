@@ -1,1 +1,0 @@
-js_${project}_${class_name}_constructor(JSContext *cx, uintN argc, jsval *vp);

@@ -1,7 +1,7 @@
 #set has_constructor = False
 #if $methods.has_key('constructor')
 #set has_constructor = True
-${methods.constructor.generate_code($generator, {"class_name": $class_name})}
+${methods.constructor.generate_code($generator, {"namespaced_class_name": $namespaced_class_name, "class_name": $class_name})}
 #else
 JSBool dummy_constructor(JSContext *cx, uint32_t argc, jsval *vp);
 JSBool dummy_constructor(JSContext *cx, uint32_t argc, jsval *vp) {
@@ -16,17 +16,17 @@ void ${generator.prefix}_${class_name}_finalize(JSContext *cx, JSObject *obj) {
 }
 
 void register_${generator.prefix}_${class_name}(JSContext *cx, JSObject *global, const char *name) {
-	${generator.prefix}_${class_name}_class = (JSClass *)calloc(1, sizeof(JSClass));
-	${generator.prefix}_${class_name}_class->name = name;
-	${generator.prefix}_${class_name}_class->addProperty = JS_PropertyStub;
-	${generator.prefix}_${class_name}_class->delProperty = JS_PropertyStub;
-	${generator.prefix}_${class_name}_class->getProperty = JS_PropertyStub;
-	${generator.prefix}_${class_name}_class->setProperty = JS_StrictPropertyStub;
-	${generator.prefix}_${class_name}_class->enumerate = JS_EnumerateStub;
-	${generator.prefix}_${class_name}_class->resolve = JS_ResolveStub;
-	${generator.prefix}_${class_name}_class->convert = JS_ConvertStub;
-	${generator.prefix}_${class_name}_class->finalize = ${generator.prefix}_${class_name}_finalize;
-	${generator.prefix}_${class_name}_class->flags = JSCLASS_HAS_PRIVATE;
+	js_${generator.prefix}_${class_name}_class = (JSClass *)calloc(1, sizeof(JSClass));
+	js_${generator.prefix}_${class_name}_class->name = name;
+	js_${generator.prefix}_${class_name}_class->addProperty = JS_PropertyStub;
+	js_${generator.prefix}_${class_name}_class->delProperty = JS_PropertyStub;
+	js_${generator.prefix}_${class_name}_class->getProperty = JS_PropertyStub;
+	js_${generator.prefix}_${class_name}_class->setProperty = JS_StrictPropertyStub;
+	js_${generator.prefix}_${class_name}_class->enumerate = JS_EnumerateStub;
+	js_${generator.prefix}_${class_name}_class->resolve = JS_ResolveStub;
+	js_${generator.prefix}_${class_name}_class->convert = JS_ConvertStub;
+	js_${generator.prefix}_${class_name}_class->finalize = ${generator.prefix}_${class_name}_finalize;
+	js_${generator.prefix}_${class_name}_class->flags = JSCLASS_HAS_PRIVATE;
 
 	#if len($fields) > 0
 	static JSPropertySpec properties[] = {
@@ -60,12 +60,12 @@ void register_${generator.prefix}_${class_name}(JSContext *cx, JSObject *global,
 	JSFunctionSpec *st_funcs = NULL;
 	#end if
 
-	${generator.prefix}_${class_name}_prototype = JS_InitClass(
+	js_${generator.prefix}_${class_name}_prototype = JS_InitClass(
 		cx, global,
 		NULL, // parent proto
-		${generator.prefix}_${class_name}_class,
+		js_${generator.prefix}_${class_name}_class,
 #if has_constructor
-		${generator.prefix}_${class_name}_constructor, 0, // constructor
+		js_${generator.prefix}_${class_name}_constructor, 0, // constructor
 #else
 		dummy_constructor, 0, // no constructor
 #end if

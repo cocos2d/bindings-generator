@@ -17,11 +17,11 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 		#set $arg_list = ", ".join($arg_array)
 		#end if
 		#if str($func.ret_type) != "void"
-		${func.ret_type} ret = ${class_name}::${func.func_name}($arg_list);
-		jsval jsret; ${func.ret_type.from_native($generator, "ret", "jsret", 2)};
+		${func.ret_type} ret = ${namespaced_class_name}::${func.func_name}($arg_list);
+		jsval jsret; ${func.ret_type.from_native($generator, "ret", "jsret", $class_name, $class_name, 2)};
 		JS_SET_RVAL(cx, vp, jsret);
 		#else
-		${class_name}::${func.func_name}($arg_list);
+		${namespaced_class_name}::${func.func_name}($arg_list);
 		#end if
 		return JS_TRUE;
 	}

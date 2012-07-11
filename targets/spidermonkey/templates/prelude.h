@@ -11,8 +11,8 @@ enum js_fields_${generator.prefix}_${class_name} {
 };
 #end if
 
-extern JSClass  *${generator.prefix}_${class_name}_class;
-extern JSObject *${generator.prefix}_${class_name}_prototype;
+extern JSClass  *js_${generator.prefix}_${class_name}_class;
+extern JSObject *js_${generator.prefix}_${class_name}_prototype;
 
 JSBool ${generator.prefix}_${class_name}_constructor(JSContext *cx, uint32_t argc, jsval *vp);
 void ${generator.prefix}_${class_name}_finalize(JSContext *cx, JSObject *obj);

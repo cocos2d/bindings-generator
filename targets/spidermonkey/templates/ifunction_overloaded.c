@@ -7,10 +7,10 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 							 ${generator.prefix}_${class_name}_class,
 							 ${generator.prefix}_${class_name}_prototype,
 							 NULL); // <~ parent proto - not yet added!
-	${class_name}* obj = NULL;
+	${namespaced_class_name}* obj = NULL;
 #else
 	JSObject *obj = JS_THIS_OBJECT(cx, vp);
-	${class_name}* cobj = (${class_name} *)JS_GetInstancePrivate(cx, obj, &js_${generator.prefix}_${class_name}_class, argv);
+	${namespaced_class_name}* cobj = (${namespaced_class_name} *)JS_GetInstancePrivate(cx, obj, js_${generator.prefix}_${class_name}_class, argv);
 	if (!cobj) {
 		return JS_FALSE;
 	}
@@ -24,18 +24,18 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 		#set count = 0
 		#for $arg in $func.arguments
 		${arg} arg${count};
-		${arg.to_native($generator, "argv[" + str(count) + "]", "arg" + str(count), 2)};
+		${arg.to_native($generator, "argv[" + str(count) + "]", "arg" + str(count), $class_name, 2)};
 			#set $arg_array += ["arg"+str(count)]
 			#set $count = $count + 1
 		#end for
 		#set $arg_list = ", ".join($arg_array)
 	#end if
 	#if $is_constructor
-		cobj = new ${func_name}(${arg_list});
+		cobj = new ${namespaced_class_name}(${arg_list});
 	#else
 		#if str($func.ret_type) != "void"
 		${func.ret_type} ret = cobj->${func.func_name}($arg_list);
-		jsval jsret; ${func.ret_type.from_native($generator, "ret", "jsret", 2)};
+		jsval jsret; ${func.ret_type.from_native($generator, "ret", "jsret", $class_name, 2)};
 		JS_SET_RVAL(cx, vp, jsret);
 		#else
 		cobj->${func.func_name}($arg_list);

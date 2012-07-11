@@ -407,7 +407,7 @@ def main():
 	parser.add_option("-t", action="store", type="string", dest="target",
 						help="specifies the target vm. Will search for TARGET.yaml")
 	parser.add_option("-o", action="store", type="string", dest="outdir",
-						help="specifies the target vm. Will search for TARGET.yaml")
+						help="specifies the output directory for generated C++ code")
 
 	(opts, args) = parser.parse_args()
 

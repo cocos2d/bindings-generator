@@ -347,6 +347,7 @@ class NativeClass(object):
 class Generator(object):
 	def __init__(self, opts):
 		self.index = cindex.Index.create()
+		self.outdir = opts['outdir']
 		self.prefix = opts['prefix']
 		self.headers = opts['headers']
 		self.classes = opts['classes']
@@ -361,8 +362,10 @@ class Generator(object):
 		stream = file(path.join(self.target, "conversions.yaml"), "r")
 		data = yaml.load(stream)
 		self.config = data
-		self.impl_file = open(self.prefix + ".cpp", "w+")
-		self.head_file = open(self.prefix + ".hpp", "w+")
+		implfilepath = os.path.join(self.outdir, self.prefix + ".cpp")
+		headfilepath = os.path.join(self.outdir, self.prefix + ".hpp")
+		self.impl_file = open(implfilepath, "w+")
+		self.head_file = open(headfilepath, "w+")
 		self._parse_headers()
 		self.impl_file.close()
 		self.head_file.close()
@@ -403,6 +406,8 @@ def main():
 						help="sets a specific section to be converted")
 	parser.add_option("-t", action="store", type="string", dest="target",
 						help="specifies the target vm. Will search for TARGET.yaml")
+	parser.add_option("-o", action="store", type="string", dest="outdir",
+						help="specifies the target vm. Will search for TARGET.yaml")
 
 	(opts, args) = parser.parse_args()
 
@@ -439,6 +444,13 @@ def main():
 			targets = []
 			targets.append(opts.target)
 
+	if opts.outdir:
+		outdir = opts.outdir
+	else:
+		outdir = "gen"
+	if not os.path.exists(outdir):
+		os.makedirs(outdir)
+
 	for t in targets:
 		print "\n.... Generating bindings for target", t
 		for s in sections:
@@ -449,6 +461,7 @@ def main():
 				'classes': config.get(s, 'classes').split(' '),
 				'clang_args': (config.get(s, 'extra_arguments') or "").split(" "),
 				'target': t,
+				'outdir': outdir,
 				'skip': config.get(s, 'skip')
 				}
 			generator = Generator(gen_opts)

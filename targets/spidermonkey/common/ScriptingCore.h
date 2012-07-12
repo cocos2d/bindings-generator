@@ -10,8 +10,8 @@
 #define __SCRIPTING_CORE_H__
 
 #include <assert.h>
-#include "jsapi.h"
-#include "uthash.h"
+#include <uthash.h>
+#include <jsapi.h>
 
 void js_log(const char *format, ...);
 

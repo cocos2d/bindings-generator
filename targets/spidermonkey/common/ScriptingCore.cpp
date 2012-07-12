@@ -10,7 +10,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "ScriptingCore.h"
-#include "cocos2d.h"
 
 js_proxy_t *_js_global_ht = NULL;
 char *_js_log_buf = NULL;
@@ -84,12 +83,15 @@ void ScriptingCore::runScript(const char *path)
 //	std::string dpath("/Users/rabarca/Desktop/testjs/testjs/");
 	std::string dpath("");
 	dpath += path;
-	const char *realPath = cocos2d::CCFileUtils::fullPathFromRelativePath(dpath.c_str());
+	const char *realPath = NULL;
+    //cocos2d::CCFileUtils::fullPathFromRelativePath(dpath.c_str());
 #else
-	const char *realPath = cocos2d::CCFileUtils::fullPathFromRelativePath(path);
+	const char *realPath = NULL;
+    //cocos2d::CCFileUtils::fullPathFromRelativePath(path);
 #endif
 	unsigned char *content = NULL;
-	size_t contentSize = cocos2d::CCFileUtils::ccLoadFileIntoMemory(realPath, &content);
+	size_t contentSize = 0;
+    //cocos2d::CCFileUtils::ccLoadFileIntoMemory(realPath, &content);
 	if (content && contentSize) {
 		JSBool ok;
 		jsval rval;

@@ -404,20 +404,46 @@ class Generator(object):
 		self.head_file = None
 		self.skip_classes = {}
 		self.generated_classes = {}
-		list_of_skips = re.split(",\n?", opts['skip'])
-		for skip in list_of_skips:
-			class_name, methods = skip.split("::")
-			self.skip_classes[class_name] = []
-			match = re.match("\[([^]]+)\]", methods)
-			if match:
-				self.skip_classes[class_name] = match.group(1).split(" ")
-			else:
-				raise Exception("invalid list of skip methods")
+		if opts['skip']:
+			list_of_skips = re.split(",\n?", opts['skip'])
+			for skip in list_of_skips:
+				class_name, methods = skip.split("::")
+				self.skip_classes[class_name] = []
+				match = re.match("\[([^]]+)\]", methods)
+				if match:
+					self.skip_classes[class_name] = match.group(1).split(" ")
+				else:
+					raise Exception("invalid list of skip methods")
 
 	def should_skip(self, class_name, method_name):
 		if self.skip_classes.has_key(class_name):
 			return method_name in self.skip_classes[class_name]
 		return False
+
+	def sorted_classes(self):
+		'''
+		sorted classes in order of inheritance
+		'''
+		sorted_list = []
+		for class_name in self.classes:
+			nclass = self.generated_classes[class_name]
+			sorted_list += self._sorted_parents(nclass)
+		# remove dupes from the list
+		no_dupes = []
+		[no_dupes.append(i) for i in sorted_list if not no_dupes.count(i)]
+		return no_dupes
+
+	def _sorted_parents(self, nclass):
+		'''
+		returns the sorted list of parents for a native class
+		'''
+		sorted_parents = []
+		for p in nclass.parents:
+			if p.class_name in self.classes:
+				sorted_parents += self._sorted_parents(p)
+		if nclass.class_name in self.classes:
+			sorted_parents += [nclass.class_name]
+		return sorted_parents
 
 	def generate_code(self):
 		# must read the yaml file first

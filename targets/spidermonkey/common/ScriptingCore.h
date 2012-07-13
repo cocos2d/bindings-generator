@@ -23,6 +23,15 @@ typedef struct js_proxy {
 
 extern js_proxy_t *_js_global_ht;
 
+typedef struct js_type_class {
+	uint32_t type;
+	JSClass *jsclass;
+	JSObject *proto;
+	UT_hash_handle hh;
+} js_type_class_t;
+
+extern js_type_class_t *_js_global_type_ht;
+
 #define JS_NEW_PROXY(p, native_obj, js_obj) \
 do { \
 	p = (js_proxy_t *)malloc(sizeof(js_proxy_t)); \

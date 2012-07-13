@@ -10,7 +10,7 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 		#set count = 0
 		#for $arg in $func.arguments
 		${arg} arg${count};
-		${arg.to_native($generator, "argv[" + str(count) + "]", "arg" + str(count), 2)};
+		${arg.to_native($generator, "argv[" + str(count) + "]", "arg" + str(count), $class_name, 2)};
 		#set $arg_array += ["arg"+str(count)]
 		#set $count = $count + 1
 		#end for
@@ -18,7 +18,8 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 		#end if
 		#if str($func.ret_type) != "void"
 		${func.ret_type} ret = ${namespaced_class_name}::${func.func_name}($arg_list);
-		jsval jsret; ${func.ret_type.from_native($generator, "ret", "jsret", $class_name, $class_name, 2)};
+		jsval jsret;
+		${func.ret_type.from_native($generator, "ret", "jsret", $class_name, 2)};
 		JS_SET_RVAL(cx, vp, jsret);
 		#else
 		${namespaced_class_name}::${func.func_name}($arg_list);

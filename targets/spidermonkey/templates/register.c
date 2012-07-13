@@ -1,34 +1,30 @@
 #set has_constructor = False
-#if $methods.has_key('constructor')
+#if $current_class.methods.has_key('constructor')
 #set has_constructor = True
-${methods.constructor.generate_code($generator, {"namespaced_class_name": $namespaced_class_name, "class_name": $class_name})}
-#else
-JSBool dummy_constructor(JSContext *cx, uint32_t argc, jsval *vp);
-JSBool dummy_constructor(JSContext *cx, uint32_t argc, jsval *vp) {
-	return JS_FALSE;
-}
+${current_class.methods.constructor.generate_code($current_class)}
 #end if
 
-#set methods = $methods_clean($generator)
-#set st_methods = $static_methods_clean($generator)
+#set generator = $current_class.generator
+#set methods = $current_class.methods_clean()
+#set st_methods = $current_class.static_methods_clean()
 
-void ${generator.prefix}_${class_name}_finalize(JSContext *cx, JSObject *obj) {
+void ${generator.prefix}_${current_class.class_name}_finalize(JSContext *cx, JSObject *obj) {
 }
 
-void register_${generator.prefix}_${class_name}(JSContext *cx, JSObject *global, const char *name) {
-	js_${generator.prefix}_${class_name}_class = (JSClass *)calloc(1, sizeof(JSClass));
-	js_${generator.prefix}_${class_name}_class->name = name;
-	js_${generator.prefix}_${class_name}_class->addProperty = JS_PropertyStub;
-	js_${generator.prefix}_${class_name}_class->delProperty = JS_PropertyStub;
-	js_${generator.prefix}_${class_name}_class->getProperty = JS_PropertyStub;
-	js_${generator.prefix}_${class_name}_class->setProperty = JS_StrictPropertyStub;
-	js_${generator.prefix}_${class_name}_class->enumerate = JS_EnumerateStub;
-	js_${generator.prefix}_${class_name}_class->resolve = JS_ResolveStub;
-	js_${generator.prefix}_${class_name}_class->convert = JS_ConvertStub;
-	js_${generator.prefix}_${class_name}_class->finalize = ${generator.prefix}_${class_name}_finalize;
-	js_${generator.prefix}_${class_name}_class->flags = JSCLASS_HAS_PRIVATE;
+void register_${generator.prefix}_${current_class.class_name}(JSContext *cx, JSObject *global) {
+	js_${generator.prefix}_${current_class.class_name}_class = (JSClass *)calloc(1, sizeof(JSClass));
+	js_${generator.prefix}_${current_class.class_name}_class->name = "${current_class.target_class_name}";
+	js_${generator.prefix}_${current_class.class_name}_class->addProperty = JS_PropertyStub;
+	js_${generator.prefix}_${current_class.class_name}_class->delProperty = JS_PropertyStub;
+	js_${generator.prefix}_${current_class.class_name}_class->getProperty = JS_PropertyStub;
+	js_${generator.prefix}_${current_class.class_name}_class->setProperty = JS_StrictPropertyStub;
+	js_${generator.prefix}_${current_class.class_name}_class->enumerate = JS_EnumerateStub;
+	js_${generator.prefix}_${current_class.class_name}_class->resolve = JS_ResolveStub;
+	js_${generator.prefix}_${current_class.class_name}_class->convert = JS_ConvertStub;
+	js_${generator.prefix}_${current_class.class_name}_class->finalize = ${generator.prefix}_${current_class.class_name}_finalize;
+	js_${generator.prefix}_${current_class.class_name}_class->flags = JSCLASS_HAS_PRIVATE;
 
-	#if len($fields) > 0
+	#if len($current_class.fields) > 0
 	static JSPropertySpec properties[] = {
 		{0, 0, 0, 0, 0}
 	};
@@ -60,12 +56,12 @@ void register_${generator.prefix}_${class_name}(JSContext *cx, JSObject *global,
 	JSFunctionSpec *st_funcs = NULL;
 	#end if
 
-	js_${generator.prefix}_${class_name}_prototype = JS_InitClass(
+	js_${generator.prefix}_${current_class.class_name}_prototype = JS_InitClass(
 		cx, global,
 		NULL, // parent proto
-		js_${generator.prefix}_${class_name}_class,
+		js_${generator.prefix}_${current_class.class_name}_class,
 #if has_constructor
-		js_${generator.prefix}_${class_name}_constructor, 0, // constructor
+		js_${generator.prefix}_${current_class.class_name}_constructor, 0, // constructor
 #else
 		dummy_constructor, 0, // no constructor
 #end if
@@ -73,4 +69,16 @@ void register_${generator.prefix}_${class_name}(JSContext *cx, JSObject *global,
 		funcs,
 		NULL, // no static properties
 		st_funcs);
+
+	// add the proto and JSClass to the type->js info hash table
+	js_type_class_t *p;
+	uint32_t type = ${current_class.namespaced_class_name}::OBJECT_TYPE;
+	HASH_FIND_INT(_js_global_type_ht, &type, p);
+	if (!p) {
+		p = (js_type_class_t *)malloc(sizeof(js_type_class_t));
+		p->type = type;
+		p->jsclass = js_${generator.prefix}_${current_class.class_name}_class;
+		p->proto = js_${generator.prefix}_${current_class.class_name}_prototype;
+		HASH_ADD_INT(_js_global_type_ht, type, p);
+	}
 }

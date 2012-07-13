@@ -33,9 +33,8 @@ conversions:
     double: "${out_value} = JSVAL_TO_DOUBLE(${in_value})"
     object: |
       do {
-      ${($level + 1) * '\t'}void *_tmp = JS_GetInstancePrivate(cx, ${in_value}, ${jsclass}, NULL);
-      ${($level + 1) * '\t'}${out_value} = (${native_type})_tmp;
-      ${($level) * '\t'} while (0)
+      ${($level + 1) * '\t'}${out_value} = JS_GetInstancePrivate(cx, ${in_value}, js_${generator.prefix}_${class_name}_class, NULL);
+      ${($level + 0) * '\t'}} while (0)
 
   from_native:
     # int to jsval
@@ -70,7 +69,11 @@ conversions:
       ${($level + 2) * '\t'}${out_value} = OBJECT_TO_JSVAL(p->obj);
       ${($level + 1) * '\t'}} else {
       ${($level + 2) * '\t'}// create a new js obj of that class
-      ${($level + 2) * '\t'}JSObject *_tmp = JS_NewObject(cx, js_${generator.prefix}_${class_name}_class, js_${generator.prefix}_${class_name}_prototype, NULL);
+      ${($level + 2) * '\t'}js_type_class_t *p;
+      ${($level + 2) * '\t'}uint32_t type = ${in_value}->getObjectType();
+      ${($level + 2) * '\t'}HASH_FIND_INT(_js_global_type_ht, &type, p);
+      ${($level + 2) * '\t'}assert(p);
+      ${($level + 2) * '\t'}JSObject *_tmp = JS_NewObject(cx, p->jsclass, p->proto, NULL);
       ${($level + 2) * '\t'}JS_SetPrivate(_tmp, ${in_value});
       ${($level + 2) * '\t'}${out_value} = OBJECT_TO_JSVAL(_tmp);
       ${($level + 2) * '\t'}js_proxy_t *p;

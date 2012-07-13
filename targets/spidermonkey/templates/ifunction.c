@@ -15,6 +15,7 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 	}
 #end if
 
+
 #set arg_list = ""
 #set arg_array = []
 #if $min_args > 0
@@ -54,4 +55,5 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 #end if
 	return JS_TRUE;
 }
+
 

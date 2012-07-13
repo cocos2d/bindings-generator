@@ -127,7 +127,7 @@ class NativeType(object):
 			tpl = Template(tpl, searchList=[convert_opts])
 			return str(tpl).rstrip()
 
-		return "#pragma error NO CONVERSION FROM NATIVE FOR " + name
+		return "#pragma warning NO CONVERSION FROM NATIVE FOR " + name
 
 	def to_native(self, convert_opts):
 		assert(convert_opts.has_key('generator'))
@@ -142,7 +142,7 @@ class NativeType(object):
 			tpl = generator.config['conversions']['to_native'][name]
 			tpl = Template(tpl, searchList=[convert_opts])
 			return str(tpl).rstrip()
-		return "#pragma error NO CONVERSION TO NATIVE FOR " + name
+		return "#pragma warning NO CONVERSION TO NATIVE FOR " + name
 
 	def __str__(self):
 		return self.namespaced_name
@@ -270,7 +270,6 @@ class NativeClass(object):
 		else:
 			self.target_class_name = self.class_name
 		self.namespaced_class_name = namespaced_name(cursor)
-
 		self.parse()
 
 	def parse(self):
@@ -339,10 +338,15 @@ class NativeClass(object):
 
 		@param: cursor the cursor to analyze
 		'''
-		if cursor.kind == cindex.CursorKind.CXX_BASE_SPECIFIER:
+		if cursor.kind == cindex.CursorKind.CXX_BASE_SPECIFIER and not self.class_name in self.generator.base_objects:
 			parent = cursor.get_definition()
 			if parent:
-				self.parents += [NativeClass(parent, self.generator)]
+				if not self.generator.generated_classes.has_key(parent.displayname):
+					parent = NativeClass(parent, self.generator)
+					self.generator.generated_classes[parent.class_name] = parent
+				else:
+					parent = self.generator.generated_classes[parent.displayname]
+				self.parents += [parent]
 		elif cursor.kind == cindex.CursorKind.FIELD_DECL:
 			self.fields += [NativeField(cursor)]
 		elif cursor.kind == cindex.CursorKind.CXX_METHOD:
@@ -367,7 +371,7 @@ class NativeClass(object):
 							previous_m.append(m)
 						else:
 							self.methods[m.func_name] = NativeOverloadedFunction([m, previous_m])
-		elif cursor.kind == cindex.CursorKind.CONSTRUCTOR:
+		elif cursor.kind == cindex.CursorKind.CONSTRUCTOR and not self.class_name in self.generator.abstract_classes:
 			m = NativeFunction(cursor)
 			m.is_constructor = True
 			if not self.methods.has_key('constructor'):
@@ -390,6 +394,8 @@ class Generator(object):
 		self.prefix = opts['prefix']
 		self.headers = opts['headers'].split(' ')
 		self.classes = opts['classes']
+		self.base_objects = opts['base_objects'].split(' ')
+		self.abstract_classes = opts['abstract_classes'].split(' ')
 		self.clang_args = opts['clang_args']
 		self.target = os.path.join("targets", opts['target'])
 		self.remove_prefix = opts['remove_prefix']
@@ -397,7 +403,7 @@ class Generator(object):
 		self.impl_file = None
 		self.head_file = None
 		self.skip_classes = {}
-		self.generated_classes = []
+		self.generated_classes = {}
 		list_of_skips = re.split(",\n?", opts['skip'])
 		for skip in list_of_skips:
 			class_name, methods = skip.split("::")
@@ -457,19 +463,20 @@ class Generator(object):
 					return
 			self._deep_iterate(tu.cursor)
 
-	def _deep_iterate(self, cursor, depth=0, force=False):
+	def _deep_iterate(self, cursor, depth=0):
 		# get the canonical type
 		is_class = False
 		if cursor.kind == cindex.CursorKind.CLASS_DECL:
-			if force or (cursor == cursor.canonical and cursor.displayname in self.classes):
-				nclass = NativeClass(cursor, self)
-				nclass.generate_code()
-				self.generated_classes += [nclass]
+			if cursor == cursor.type.get_declaration() and cursor.displayname in self.classes:
+				if not self.generated_classes.has_key(cursor.displayname):
+					nclass = NativeClass(cursor, self)
+					nclass.generate_code()
+					self.generated_classes[cursor.displayname] = nclass
 				return
 
 		for node in cursor.get_children():
 			# print("%s %s - %s" % (">" * depth, node.displayname, node.kind))
-			self._deep_iterate(node, depth+1, force)
+			self._deep_iterate(node, depth+1)
 
 def main():
 	from optparse import OptionParser, OptionGroup
@@ -537,6 +544,8 @@ def main():
 				'outdir': outdir,
 				'remove_prefix': config.get(s, 'remove_prefix'),
 				'target_ns': config.get(s, 'target_namespace'),
+				'base_objects': config.get(s, 'base_objects'),
+				'abstract_classes': config.get(s, 'abstract_classes'),
 				'skip': config.get(s, 'skip')
 				}
 			generator = Generator(gen_opts)

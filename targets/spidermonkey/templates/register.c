@@ -8,10 +8,10 @@ ${current_class.methods.constructor.generate_code($current_class)}
 #set methods = $current_class.methods_clean()
 #set st_methods = $current_class.static_methods_clean()
 
-void ${generator.prefix}_${current_class.class_name}_finalize(JSContext *cx, JSObject *obj) {
+void js_${generator.prefix}_${current_class.class_name}_finalize(JSContext *cx, JSObject *obj) {
 }
 
-void register_${generator.prefix}_${current_class.class_name}(JSContext *cx, JSObject *global) {
+void js_register_${generator.prefix}_${current_class.class_name}(JSContext *cx, JSObject *global) {
 	js_${generator.prefix}_${current_class.class_name}_class = (JSClass *)calloc(1, sizeof(JSClass));
 	js_${generator.prefix}_${current_class.class_name}_class->name = "${current_class.target_class_name}";
 	js_${generator.prefix}_${current_class.class_name}_class->addProperty = JS_PropertyStub;
@@ -21,7 +21,7 @@ void register_${generator.prefix}_${current_class.class_name}(JSContext *cx, JSO
 	js_${generator.prefix}_${current_class.class_name}_class->enumerate = JS_EnumerateStub;
 	js_${generator.prefix}_${current_class.class_name}_class->resolve = JS_ResolveStub;
 	js_${generator.prefix}_${current_class.class_name}_class->convert = JS_ConvertStub;
-	js_${generator.prefix}_${current_class.class_name}_class->finalize = ${generator.prefix}_${current_class.class_name}_finalize;
+	js_${generator.prefix}_${current_class.class_name}_class->finalize = js_${generator.prefix}_${current_class.class_name}_finalize;
 	js_${generator.prefix}_${current_class.class_name}_class->flags = JSCLASS_HAS_PRIVATE;
 
 	#if len($current_class.fields) > 0
@@ -82,3 +82,4 @@ void register_${generator.prefix}_${current_class.class_name}(JSContext *cx, JSO
 		HASH_ADD_INT(_js_global_type_ht, type, p);
 	}
 }
+

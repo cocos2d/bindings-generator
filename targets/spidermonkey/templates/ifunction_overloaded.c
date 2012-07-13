@@ -24,7 +24,12 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 		#set count = 0
 		#for $arg in $func.arguments
 		${arg} arg${count};
-		${arg.to_native($generator, "argv[" + str(count) + "]", "arg" + str(count), $class_name, 2)};
+		${arg.to_native({"generator": $generator,
+						 "in_value": "argv[" + str(count) + "]",
+						 "out_value": "arg" + str(count),
+						 "class_name": $class_name,
+						 "level": 2,
+						 "ntype": str($arg)})};
 			#set $arg_array += ["arg"+str(count)]
 			#set $count = $count + 1
 		#end for
@@ -35,7 +40,10 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 	#else
 		#if str($func.ret_type) != "void"
 		${func.ret_type} ret = cobj->${func.func_name}($arg_list);
-		jsval jsret; ${func.ret_type.from_native($generator, "ret", "jsret", $class_name, 2)};
+		jsval jsret; ${func.ret_type.from_native({"generator": $generator,
+												  "in_value": "ret",
+												  "out_value": "jsret",
+												  "level": 2})};
 		JS_SET_RVAL(cx, vp, jsret);
 		#else
 		cobj->${func.func_name}($arg_list);

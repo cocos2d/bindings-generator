@@ -12,6 +12,7 @@
 #include "ScriptingCore.h"
 
 js_proxy_t *_js_global_ht = NULL;
+js_type_class_t *_js_global_type_ht = NULL;
 char *_js_log_buf = NULL;
 
 void js_log(const char *format, ...) {

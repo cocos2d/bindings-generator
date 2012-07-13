@@ -9,6 +9,7 @@ conversions:
     # jsval to int
     int: "JS_ValueToInt32(cx, ${in_value}, &${out_value})"
     unsigned int: "JS_ValueToInt32(cx, ${in_value}, (int32_t *)&${out_value})"
+    unsigned char: "JS_ValueToInt32(cx, ${in_value}, (int32_t *)&${out_value})"
     # jsval has to be a TypedArray, a UInt32Array with 2 elements
     long long: |
       do {
@@ -33,7 +34,25 @@ conversions:
     double: "${out_value} = JSVAL_TO_DOUBLE(${in_value})"
     object: |
       do {
-      ${($level + 1) * '\t'}${out_value} = JS_GetInstancePrivate(cx, ${in_value}, js_${generator.prefix}_${class_name}_class, NULL);
+      ${($level + 1) * '\t'}${out_value} = (${ntype})JS_GetInstancePrivate(cx, JSVAL_TO_OBJECT(${in_value}), js_${generator.prefix}_${class_name}_class, NULL);
+      ${($level + 0) * '\t'}} while (0)
+    CCPoint: |
+      do {
+      ${($level + 1) * '\t'}JSObject *tmp;
+      ${($level + 1) * '\t'}if (!JS_ValueToObject(cx, ${in_value}, &tmp)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!js_IsTypedArray(tmp)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_GetTypedArrayByteLength(tmp) == sizeof(float) * 2) return JS_FALSE;
+      ${($level + 1) * '\t'}float *arr = (float *)JS_GetTypedArrayData(tmp);
+      ${($level + 1) * '\t'}${out_value} = cocos2d::CCPoint(arr[0], arr[1]);
+      ${($level + 0) * '\t'}} while (0)
+    CCRect: |
+      do {
+      ${($level + 1) * '\t'}JSObject *tmp;
+      ${($level + 1) * '\t'}if (!JS_ValueToObject(cx, ${in_value}, &tmp)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!js_IsTypedArray(tmp)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_GetTypedArrayByteLength(tmp) == sizeof(float) * 4) return JS_FALSE;
+      ${($level + 1) * '\t'}float *arr = (float *)JS_GetTypedArrayData(tmp);
+      ${($level + 1) * '\t'}${out_value} = cocos2d::CCRect(arr[0], arr[1], arr[2], arr[3]);
       ${($level + 0) * '\t'}} while (0)
 
   from_native:
@@ -76,7 +95,15 @@ conversions:
       ${($level + 2) * '\t'}JSObject *_tmp = JS_NewObject(cx, p->jsclass, p->proto, NULL);
       ${($level + 2) * '\t'}JS_SetPrivate(_tmp, ${in_value});
       ${($level + 2) * '\t'}${out_value} = OBJECT_TO_JSVAL(_tmp);
-      ${($level + 2) * '\t'}js_proxy_t *p;
-      ${($level + 2) * '\t'}JS_NEW_PROXY(p, ${in_value}, _tmp);
+      ${($level + 2) * '\t'}js_proxy_t *pp;
+      ${($level + 2) * '\t'}JS_NEW_PROXY(pp, ${in_value}, _tmp);
       ${($level + 1) * '\t'}}
       ${($level) * '\t'}} while (0)
+    CCPoint: |
+      do {
+      ${($level + 1) * '\t'}JSObject *tmp = js_CreateTypedArray(cx, js::TypedArray::TYPE_FLOAT32, 2);
+      ${($level + 1) * '\t'}float *data = (float *)JS_GetTypedArrayData(tmp);
+      ${($level + 1) * '\t'}data[0] = ${in_value}.x;
+      ${($level + 1) * '\t'}data[1] = ${in_value}.y;
+      ${($level + 1) * '\t'}${out_value} = OBJECT_TO_JSVAL(tmp);
+      ${($level + 0) * '\t'}} while (0)

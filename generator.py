@@ -67,6 +67,12 @@ def build_namespace(cursor, namespaces = []):
 			build_namespace(parent, namespaces)
 	return "::".join(namespaces)
 
+def namespaced_name(declaration_cursor):
+	ns = build_namespace(declaration_cursor, [])
+	if len(ns) > 0:
+		return ns + "::" + declaration_cursor.displayname
+	return declaration_cursor.displayname
+
 class NativeType(object):
 	def __init__(self, ntype):
 		self.type = ntype
@@ -80,52 +86,61 @@ class NativeType(object):
 				decl = pointee.get_declaration()
 				self.is_object = True
 				self.name = decl.displayname
-				ns = build_namespace(decl, [])
-				if len(ns) > 0:
-					self.namespaced_name = ns + "::" + decl.displayname
-				else:
-					self.namespaced_name = self.name
+				self.namespaced_name = namespaced_name(decl)
 			else:
 				self.name = native_name_from_kind(pointee)
 				self.namespaced_name = self.name
 			self.name += "*"
 			self.namespaced_name += "*"
+		elif ntype.kind == cindex.TypeKind.LVALUEREFERENCE:
+			pointee = ntype.get_pointee()
+			if pointee.kind == cindex.TypeKind.RECORD:
+				decl = pointee.get_declaration()
+				self.is_object = True
+				self.name = decl.displayname
+				self.namespaced_name = namespaced_name(decl)
+			else:
+				print >> sys.stderr, "LVALUE to somthing I don't know"
+
 		else:
 			if ntype.kind == cindex.TypeKind.RECORD:
 				decl = ntype.get_declaration()
 				self.is_object = True
 				self.name = decl.displayname
-				ns = build_namespace(decl, [])
-				if len(ns) > 0:
-					self.namespaced_name = ns + "::" + decl.displayname
-				else:
-					self.namespaced_name = self.name
+				self.namespaced_name = namespaced_name(decl)
 			else:
 				self.name = native_name_from_kind(ntype)
 				self.namespaced_name = self.name
 
-	def from_native(self, generator, in_value, out_value, class_name=None, indent_level=0):
-		name = "object" if self.is_object else self.name
+	def from_native(self, convert_opts):
+		assert(convert_opts.has_key('generator'))
+		generator = convert_opts['generator']
+		name = self.name
+		if self.is_object:
+			if self.is_pointer:
+				name = "object"
+			elif not generator.config['conversions']['from_native'].has_key(name):
+				name = "object"
+
 		if generator.config['conversions']['from_native'].has_key(name):
 			tpl = generator.config['conversions']['from_native'][name]
-			tpl = Template(tpl, searchList=[{"in_value": in_value,
-											 "out_value": out_value,
-											 "generator": generator,
-											 "class_name": class_name,
-											 "level": indent_level}])
+			tpl = Template(tpl, searchList=[convert_opts])
 			return str(tpl).rstrip()
 
 		return "#pragma error NO CONVERSION FROM NATIVE FOR " + name
 
-	def to_native(self, generator, in_value, out_value, class_name=None, indent_level=0):
-		name = "object" if self.is_object else self.name
+	def to_native(self, convert_opts):
+		assert(convert_opts.has_key('generator'))
+		generator = convert_opts['generator']
+		name = self.name
+		if self.is_object:
+			if self.is_pointer:
+				name = "object"
+			elif not generator.config['conversions']['to_native'].has_key(name):
+				name = "object"
 		if generator.config['conversions']['to_native'].has_key(name):
 			tpl = generator.config['conversions']['to_native'][name]
-			tpl = Template(tpl, searchList=[{"in_value": in_value,
-											 "out_value": out_value,
-											 "generator": generator,
-											 "class_name": class_name,
-											 "level": indent_level}])
+			tpl = Template(tpl, searchList=[convert_opts])
 			return str(tpl).rstrip()
 		return "#pragma error NO CONVERSION TO NATIVE FOR " + name
 
@@ -161,7 +176,7 @@ class NativeFunction(object):
 			result = result.get_pointee()
 		self.ret_type = NativeType(cursor.result_type)
 		# parse the arguments
-		# if self.func_name == "initWithLabel":
+		# if self.func_name == "spriteWithFile":
 		# 	pdb.set_trace()
 		for arg in cursor.type.argument_types():
 			self.arguments += [NativeType(arg)]
@@ -209,8 +224,8 @@ class NativeOverloadedFunction(object):
 		self.min_args = min(self.min_args, func.min_args)
 		self.implementations += [func]
 
-	def generate_code(self, current_class=None, generator=None):
-		gen = current_class.generator if current_class else generator
+	def generate_code(self, current_class=None):
+		gen = current_class.generator
 		config = gen.config
 		static = self.implementations[0].static
 		tpl = Template(file=os.path.join(gen.target, "templates", "function.h"),
@@ -254,9 +269,7 @@ class NativeClass(object):
 			self.target_class_name = re.sub(generator.remove_prefix, '', self.class_name)
 		else:
 			self.target_class_name = self.class_name
-		ns = build_namespace(cursor, [])
-		if len(ns) > 0:
-			self.namespaced_class_name = ns + "::" + self.class_name
+		self.namespaced_class_name = namespaced_name(cursor)
 
 		self.parse()
 
@@ -271,18 +284,13 @@ class NativeClass(object):
 		clean list of methods (without the ones that should be skipped)
 		'''
 		ret = []
-		list_of_skips = self.generator.skip.split(" ")
 		for name, impl in self.methods.iteritems():
 			should_skip = False
 			if name == 'constructor':
 				should_skip = True
 			else:
-				for it in list_of_skips:
-					if it.find("::") > 0:
-						klass_name, method_name = it.split("::")
-						if klass_name == self.class_name and method_name == name:
-							should_skip = True
-							break
+				if self.generator.should_skip(self.class_name, name):
+					should_skip = True
 			if not should_skip:
 				ret += [{"name": name, "impl": impl}]
 		return ret
@@ -292,15 +300,8 @@ class NativeClass(object):
 		clean list of static methods (without the ones that should be skipped)
 		'''
 		ret = []
-		list_of_skips = self.generator.skip.split(" ")
 		for name, impl in self.static_methods.iteritems():
-			should_skip = False
-			for it in list_of_skips:
-				if it.find("::") > 0:
-					klass_name, method_name = it.split("::")
-					if klass_name == self.class_name and method_name == name:
-						should_skip = True
-						break
+			should_skip = self.generator.should_skip(self.class_name, name)
 			if not should_skip:
 				ret += [{"name": name, "impl": impl}]
 		return ret
@@ -317,7 +318,6 @@ class NativeClass(object):
 							 searchList=[{"current_class": self}])
 		self.generator.head_file.write(str(prelude_h))
 		self.generator.impl_file.write(str(prelude_c))
-		list_of_skips = self.generator.skip.split(" ")
 		for m in self.methods_clean():
 			m['impl'].generate_code(self)
 		for m in self.static_methods_clean():
@@ -326,8 +326,6 @@ class NativeClass(object):
 		register = Template(file=os.path.join(self.generator.target, "templates", "register.c"),
 							searchList=[{"current_class": self}])
 		self.generator.impl_file.write(str(register))
-		# FIXME: this should be in a footer.h
-		self.generator.head_file.write("\n#endif\n")
 
 	def _deep_iterate(self, cursor=None):
 		for node in cursor.get_children():
@@ -394,10 +392,26 @@ class Generator(object):
 		self.classes = opts['classes']
 		self.clang_args = opts['clang_args']
 		self.target = os.path.join("targets", opts['target'])
-		self.skip = opts['skip'] or ''
 		self.remove_prefix = opts['remove_prefix']
+		self.target_ns = opts['target_ns']
 		self.impl_file = None
 		self.head_file = None
+		self.skip_classes = {}
+		self.generated_classes = []
+		list_of_skips = re.split(",\n?", opts['skip'])
+		for skip in list_of_skips:
+			class_name, methods = skip.split("::")
+			self.skip_classes[class_name] = []
+			match = re.match("\[([^]]+)\]", methods)
+			if match:
+				self.skip_classes[class_name] = match.group(1).split(" ")
+			else:
+				raise Exception("invalid list of skip methods")
+
+	def should_skip(self, class_name, method_name):
+		if self.skip_classes.has_key(class_name):
+			return method_name in self.skip_classes[class_name]
+		return False
 
 	def generate_code(self):
 		# must read the yaml file first
@@ -450,6 +464,7 @@ class Generator(object):
 			if force or (cursor == cursor.canonical and cursor.displayname in self.classes):
 				nclass = NativeClass(cursor, self)
 				nclass.generate_code()
+				self.generated_classes += [nclass]
 				return
 
 		for node in cursor.get_children():
@@ -521,6 +536,7 @@ def main():
 				'target': t,
 				'outdir': outdir,
 				'remove_prefix': config.get(s, 'remove_prefix'),
+				'target_ns': config.get(s, 'target_namespace'),
 				'skip': config.get(s, 'skip')
 				}
 			generator = Generator(gen_opts)

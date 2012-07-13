@@ -58,7 +58,11 @@ void js_register_${generator.prefix}_${current_class.class_name}(JSContext *cx, 
 
 	js_${generator.prefix}_${current_class.class_name}_prototype = JS_InitClass(
 		cx, global,
+#if len($current_class.parents) > 0
+		js_${generator.prefix}_${current_class.parents[0].class_name}_prototype,
+#else
 		NULL, // parent proto
+#end if
 		js_${generator.prefix}_${current_class.class_name}_class,
 #if has_constructor
 		js_${generator.prefix}_${current_class.class_name}_constructor, 0, // constructor

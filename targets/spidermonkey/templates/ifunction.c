@@ -1,7 +1,9 @@
 ## ===== instance function implementation template
 JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 {
+#if $min_args > 0
 	jsval *argv = JS_ARGV(cx, vp);
+#end if
 #if $is_constructor
 	JSObject *obj = JS_NewObject(cx,
 							 js_${generator.prefix}_${class_name}_class,
@@ -9,7 +11,7 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 							 NULL); // <~ parent proto - not yet added!
 #else
 	JSObject *obj = JS_THIS_OBJECT(cx, vp);
-	${namespaced_class_name}* cobj = (${namespaced_class_name} *)JS_GetInstancePrivate(cx, obj, js_${generator.prefix}_${class_name}_class, argv);
+	${namespaced_class_name}* cobj = (${namespaced_class_name} *)JS_GetPrivate(obj);
 	if (!cobj) {
 		return JS_FALSE;
 	}

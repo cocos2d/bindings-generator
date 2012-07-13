@@ -34,7 +34,7 @@ conversions:
     double: "${out_value} = JSVAL_TO_DOUBLE(${in_value})"
     object: |
       do {
-      ${($level + 1) * '\t'}${out_value} = (${ntype})JS_GetInstancePrivate(cx, JSVAL_TO_OBJECT(${in_value}), js_${generator.prefix}_${class_name}_class, NULL);
+      ${($level + 1) * '\t'}${out_value} = (${ntype})JS_GetPrivate(JSVAL_TO_OBJECT(${in_value}));
       ${($level + 0) * '\t'}} while (0)
     CCPoint: |
       do {
@@ -54,6 +54,16 @@ conversions:
       ${($level + 1) * '\t'}float *arr = (float *)JS_GetTypedArrayData(tmp);
       ${($level + 1) * '\t'}${out_value} = cocos2d::CCRect(arr[0], arr[1], arr[2], arr[3]);
       ${($level + 0) * '\t'}} while (0)
+    CCSize: |
+      do {
+      ${($level + 1) * '\t'}JSObject *tmp;
+      ${($level + 1) * '\t'}if (!JS_ValueToObject(cx, ${in_value}, &tmp)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!js_IsTypedArray(tmp)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_GetTypedArrayByteLength(tmp) == sizeof(float) * 2) return JS_FALSE;
+      ${($level + 1) * '\t'}float *arr = (float *)JS_GetTypedArrayData(tmp);
+      ${($level + 1) * '\t'}${out_value} = cocos2d::CCSize(arr[0], arr[1]);
+      ${($level + 0) * '\t'}} while (0)
+
 
   from_native:
     # int to jsval
@@ -105,5 +115,23 @@ conversions:
       ${($level + 1) * '\t'}float *data = (float *)JS_GetTypedArrayData(tmp);
       ${($level + 1) * '\t'}data[0] = ${in_value}.x;
       ${($level + 1) * '\t'}data[1] = ${in_value}.y;
+      ${($level + 1) * '\t'}${out_value} = OBJECT_TO_JSVAL(tmp);
+      ${($level + 0) * '\t'}} while (0)
+    CCRect: |
+      do {
+      ${($level + 1) * '\t'}JSObject *tmp = js_CreateTypedArray(cx, js::TypedArray::TYPE_FLOAT32, 4);
+      ${($level + 1) * '\t'}float *data = (float *)JS_GetTypedArrayData(tmp);
+      ${($level + 1) * '\t'}data[0] = ${in_value}.origin.x;
+      ${($level + 1) * '\t'}data[1] = ${in_value}.origin.y;
+      ${($level + 1) * '\t'}data[2] = ${in_value}.size.width;
+      ${($level + 1) * '\t'}data[3] = ${in_value}.size.height;
+      ${($level + 1) * '\t'}${out_value} = OBJECT_TO_JSVAL(tmp);
+      ${($level + 0) * '\t'}} while (0)
+    CCSize: |
+      do {
+      ${($level + 1) * '\t'}JSObject *tmp = js_CreateTypedArray(cx, js::TypedArray::TYPE_FLOAT32, 2);
+      ${($level + 1) * '\t'}float *data = (float *)JS_GetTypedArrayData(tmp);
+      ${($level + 1) * '\t'}data[0] = ${in_value}.width;
+      ${($level + 1) * '\t'}data[1] = ${in_value}.height;
       ${($level + 1) * '\t'}${out_value} = OBJECT_TO_JSVAL(tmp);
       ${($level + 0) * '\t'}} while (0)

@@ -10,7 +10,7 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 	${namespaced_class_name}* obj = NULL;
 #else
 	JSObject *obj = JS_THIS_OBJECT(cx, vp);
-	${namespaced_class_name}* cobj = (${namespaced_class_name} *)JS_GetInstancePrivate(cx, obj, js_${generator.prefix}_${class_name}_class, argv);
+	${namespaced_class_name}* cobj = (${namespaced_class_name} *)JS_GetPrivate(obj);
 	if (!cobj) {
 		return JS_FALSE;
 	}

@@ -8,8 +8,8 @@ void register_all_${prefix}() {
 	obj = ns;
 	#end if
 
-	#for jsclass in $generated_classes
-	js_register_${prefix}_${jsclass.class_name}(cx, obj);
+	#for jsclass in $classes
+	js_register_${prefix}_${jsclass}(cx, obj);
 	#end for
 }
 

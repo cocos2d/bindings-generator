@@ -6,9 +6,8 @@ import pdb
 import ConfigParser
 import yaml
 import re
-from Cheetah.Template import Template
 import os
-from os import path
+from Cheetah.Template import Template
 
 type_map = {
 	cindex.TypeKind.VOID        : "void",
@@ -35,11 +34,11 @@ type_map = {
 	cindex.TypeKind.OBJCID      : "id",
 	cindex.TypeKind.OBJCCLASS   : "class",
 	cindex.TypeKind.OBJCSEL     : "SEL",
-	cindex.TypeKind.ENUM        : "int",
+	cindex.TypeKind.ENUM        : "int"
 }
 
 def native_name_from_kind(ntype):
-	kind = ntype.kind
+	kind = ntype.get_canonical().kind
 	if kind in type_map:
 		return type_map[kind]
 	elif kind == cindex.TypeKind.UNEXPOSED:
@@ -48,8 +47,12 @@ def native_name_from_kind(ntype):
 		parent = decl.semantic_parent
 		if decl.spelling == "string" and parent and parent.spelling == "std":
 			return "std::string"
+		else:
+			# print >> sys.stderr, "probably a function pointer: " + str(decl.spelling)
+			return decl.spelling
 	else:
-		print >> sys.stderr, "Unknown type: " + str(kind)
+		name = ntype.get_declaration().spelling
+		print >> sys.stderr, "Unknown type: " + str(kind) + " " + str(name)
 		return "??"
 		# pdb.set_trace()
 
@@ -158,36 +161,39 @@ class NativeFunction(object):
 			result = result.get_pointee()
 		self.ret_type = NativeType(cursor.result_type)
 		# parse the arguments
+		# if self.func_name == "initWithLabel":
+		# 	pdb.set_trace()
 		for arg in cursor.type.argument_types():
 			self.arguments += [NativeType(arg)]
 		self.min_args = len(self.arguments)
 
-	def generate_code(self, generator, current_class=None):
-		config = generator.config
-		tpl = Template(file=path.join(generator.target, "templates", "function.h"),
-						searchList=[current_class, self, {"generator": generator}])
-		generator.head_file.write(str(tpl))
+	def generate_code(self, current_class=None, generator=None):
+		gen = current_class.generator if current_class else generator
+		config = gen.config
+		tpl = Template(file=os.path.join(gen.target, "templates", "function.h"),
+						searchList=[current_class, self])
+		gen.head_file.write(str(tpl))
 		if self.static:
 			if config['definitions'].has_key('sfunction'):
 				tpl = Template(config['definitions']['sfunction'],
-									 searchList=[current_class, self, {"generator": generator}])
+									 searchList=[current_class, self])
 				self.signature_name = str(tpl)
-			tpl = Template(file=path.join(generator.target, "templates", "sfunction.c"),
-							searchList=[current_class, self, {"generator": generator}])
+			tpl = Template(file=os.path.join(gen.target, "templates", "sfunction.c"),
+							searchList=[current_class, self])
 		else:
 			if not self.is_constructor:
 				if config['definitions'].has_key('ifunction'):
 					tpl = Template(config['definitions']['ifunction'],
-									searchList=[current_class, self, {"generator": generator}])
+									searchList=[current_class, self])
 					self.signature_name = str(tpl)
 			else:
 				if config['definitions'].has_key('constructor'):
 					tpl = Template(config['definitions']['constructor'],
-									searchList=[current_class, self, {"generator": generator}])
+									searchList=[current_class, self])
 					self.signature_name = str(tpl)
-			tpl = Template(file=path.join(generator.target, "templates", "ifunction.c"),
-							searchList=[current_class, self, {"generator": generator}])
-		generator.impl_file.write(str(tpl))
+			tpl = Template(file=os.path.join(gen.target, "templates", "ifunction.c"),
+							searchList=[current_class, self])
+		gen.impl_file.write(str(tpl))
 
 class NativeOverloadedFunction(object):
 	def __init__(self, func_array):
@@ -203,37 +209,38 @@ class NativeOverloadedFunction(object):
 		self.min_args = min(self.min_args, func.min_args)
 		self.implementations += [func]
 
-	def generate_code(self, generator, current_class=None):
-		config = generator.config
+	def generate_code(self, current_class=None, generator=None):
+		gen = current_class.generator if current_class else generator
+		config = gen.config
 		static = self.implementations[0].static
-		tpl = Template(file=path.join(generator.target, "templates", "function.h"),
-						searchList=[current_class, self, {"generator": generator}])
-		generator.head_file.write(str(tpl))
+		tpl = Template(file=os.path.join(gen.target, "templates", "function.h"),
+						searchList=[current_class, self])
+		gen.head_file.write(str(tpl))
 		if static:
 			if config['definitions'].has_key('sfunction'):
 				tpl = Template(config['definitions']['sfunction'],
-								searchList=[current_class, self, {"generator": generator}])
+								searchList=[current_class, self])
 				self.signature_name = str(tpl)
-			tpl = Template(file=path.join(generator.target, "templates", "sfunction_overloaded.c"),
-							searchList=[current_class, self, {"generator": generator}])
+			tpl = Template(file=os.path.join(gen.target, "templates", "sfunction_overloaded.c"),
+							searchList=[current_class, self])
 		else:
 			if not self.is_constructor:
 				if config['definitions'].has_key('ifunction'):
 					tpl = Template(config['definitions']['ifunction'],
-									searchList=[current_class, self, {"generator": generator}])
+									searchList=[current_class, self])
 					self.signature_name = str(tpl)
 			else:
 				if config['definitions'].has_key('constructor'):
 					tpl = Template(config['definitions']['constructor'],
-									searchList=[current_class, self, {"generator": generator}])
+									searchList=[current_class, self])
 					self.signature_name = str(tpl)
-			tpl = Template(file=path.join(generator.target, "templates", "ifunction_overloaded.c"),
-							searchList=[current_class, self, {"generator": generator}])
-		generator.impl_file.write(str(tpl))
+			tpl = Template(file=os.path.join(gen.target, "templates", "ifunction_overloaded.c"),
+							searchList=[current_class, self])
+		gen.impl_file.write(str(tpl))
 
 
 class NativeClass(object):
-	def __init__(self, cursor):
+	def __init__(self, cursor, generator):
 		# the cursor to the implementation
 		self.cursor = cursor
 		self.class_name = cursor.displayname
@@ -242,10 +249,16 @@ class NativeClass(object):
 		self.fields = []
 		self.methods = {}
 		self.static_methods = {}
-		self.parse()
+		self.generator = generator
+		if generator.remove_prefix:
+			self.target_class_name = re.sub(generator.remove_prefix, '', self.class_name)
+		else:
+			self.target_class_name = self.class_name
 		ns = build_namespace(cursor, [])
 		if len(ns) > 0:
 			self.namespaced_class_name = ns + "::" + self.class_name
+
+		self.parse()
 
 	def parse(self):
 		'''
@@ -253,12 +266,12 @@ class NativeClass(object):
 		'''
 		self._deep_iterate(self.cursor)
 
-	def methods_clean(self, generator):
+	def methods_clean(self):
 		'''
 		clean list of methods (without the ones that should be skipped)
 		'''
 		ret = []
-		list_of_skips = generator.skip.split(" ")
+		list_of_skips = self.generator.skip.split(" ")
 		for name, impl in self.methods.iteritems():
 			should_skip = False
 			if name == 'constructor':
@@ -274,12 +287,12 @@ class NativeClass(object):
 				ret += [{"name": name, "impl": impl}]
 		return ret
 
-	def static_methods_clean(self, generator):
+	def static_methods_clean(self):
 		'''
 		clean list of static methods (without the ones that should be skipped)
 		'''
 		ret = []
-		list_of_skips = generator.skip.split(" ")
+		list_of_skips = self.generator.skip.split(" ")
 		for name, impl in self.static_methods.iteritems():
 			should_skip = False
 			for it in list_of_skips:
@@ -292,31 +305,29 @@ class NativeClass(object):
 				ret += [{"name": name, "impl": impl}]
 		return ret
 
-	def generate_code(self, generator):
+	def generate_code(self):
 		'''
 		actually generate the code. it uses the current target templates/rules in order to
 		generate the right code
-
-		@param: generator the generator
 		'''
-		config = generator.config
-		prelude_h = Template(file=path.join(generator.target, "templates", "prelude.h"),
-							 searchList=[{"generator": generator}, self])
-		prelude_c = Template(file=path.join(generator.target, "templates", "prelude.c"),
-							 searchList=[{"generator": generator}, self])
-		generator.head_file.write(str(prelude_h))
-		generator.impl_file.write(str(prelude_c))
-		list_of_skips = generator.skip.split(" ")
-		for m in self.methods_clean(generator):
-			m['impl'].generate_code(generator, self)
-		for m in self.static_methods_clean(generator):
-			m['impl'].generate_code(generator, self)
+		config = self.generator.config
+		prelude_h = Template(file=os.path.join(self.generator.target, "templates", "prelude.h"),
+							 searchList=[{"current_class": self}])
+		prelude_c = Template(file=os.path.join(self.generator.target, "templates", "prelude.c"),
+							 searchList=[{"current_class": self}])
+		self.generator.head_file.write(str(prelude_h))
+		self.generator.impl_file.write(str(prelude_c))
+		list_of_skips = self.generator.skip.split(" ")
+		for m in self.methods_clean():
+			m['impl'].generate_code(self)
+		for m in self.static_methods_clean():
+			m['impl'].generate_code(self)
 		# generate register section
-		register = Template(file=path.join(generator.target, "templates", "register.c"),
-							searchList=[{"generator": generator}, self])
-		generator.impl_file.write(str(register))
+		register = Template(file=os.path.join(self.generator.target, "templates", "register.c"),
+							searchList=[{"current_class": self}])
+		self.generator.impl_file.write(str(register))
 		# FIXME: this should be in a footer.h
-		generator.head_file.write("\n#endif\n")
+		self.generator.head_file.write("\n#endif\n")
 
 	def _deep_iterate(self, cursor=None):
 		for node in cursor.get_children():
@@ -333,7 +344,7 @@ class NativeClass(object):
 		if cursor.kind == cindex.CursorKind.CXX_BASE_SPECIFIER:
 			parent = cursor.get_definition()
 			if parent:
-				self.parents += [NativeClass(parent)]
+				self.parents += [NativeClass(parent, self.generator)]
 		elif cursor.kind == cindex.CursorKind.FIELD_DECL:
 			self.fields += [NativeField(cursor)]
 		elif cursor.kind == cindex.CursorKind.CXX_METHOD:
@@ -371,8 +382,8 @@ class NativeClass(object):
 					m = NativeOverloadedFunction([m, previous_m])
 					m.is_constructor = True
 					self.methods['constructor'] = m
-		else:
-			print >> sys.stderr, "unknown cursor: %s - %s" % (cursor.kind, cursor.displayname)
+		# else:
+			# print >> sys.stderr, "unknown cursor: %s - %s" % (cursor.kind, cursor.displayname)
 
 class Generator(object):
 	def __init__(self, opts):
@@ -382,21 +393,38 @@ class Generator(object):
 		self.headers = opts['headers'].split(' ')
 		self.classes = opts['classes']
 		self.clang_args = opts['clang_args']
-		self.target = "targets/" + opts['target']
+		self.target = os.path.join("targets", opts['target'])
 		self.skip = opts['skip'] or ''
+		self.remove_prefix = opts['remove_prefix']
 		self.impl_file = None
 		self.head_file = None
 
 	def generate_code(self):
 		# must read the yaml file first
-		stream = file(path.join(self.target, "conversions.yaml"), "r")
+		stream = file(os.path.join(self.target, "conversions.yaml"), "r")
 		data = yaml.load(stream)
 		self.config = data
 		implfilepath = os.path.join(self.outdir, self.prefix + ".cpp")
 		headfilepath = os.path.join(self.outdir, self.prefix + ".hpp")
 		self.impl_file = open(implfilepath, "w+")
 		self.head_file = open(headfilepath, "w+")
+
+		layout_h = Template(file=os.path.join(self.target, "templates", "layout_head.h"),
+							 searchList=[self])
+		layout_c = Template(file=os.path.join(self.target, "templates", "layout_head.c"),
+							 searchList=[self])
+		self.head_file.write(str(layout_h))
+		self.impl_file.write(str(layout_c))
+
 		self._parse_headers()
+
+		layout_h = Template(file=os.path.join(self.target, "templates", "layout_foot.h"),
+							 searchList=[self])
+		layout_c = Template(file=os.path.join(self.target, "templates", "layout_foot.c"),
+							 searchList=[self])
+		self.head_file.write(str(layout_h))
+		self.impl_file.write(str(layout_c))
+
 		self.impl_file.close()
 		self.head_file.close()
 
@@ -420,8 +448,8 @@ class Generator(object):
 		is_class = False
 		if cursor.kind == cindex.CursorKind.CLASS_DECL:
 			if force or (cursor == cursor.canonical and cursor.displayname in self.classes):
-				nclass = NativeClass(cursor)
-				nclass.generate_code(self)
+				nclass = NativeClass(cursor, self)
+				nclass.generate_code()
 				return
 
 		for node in cursor.get_children():
@@ -492,6 +520,7 @@ def main():
 				'clang_args': (config.get(s, 'extra_arguments') or "").split(" "),
 				'target': t,
 				'outdir': outdir,
+				'remove_prefix': config.get(s, 'remove_prefix'),
 				'skip': config.get(s, 'skip')
 				}
 			generator = Generator(gen_opts)

@@ -41,7 +41,7 @@ def native_name_from_kind(ntype):
 	kind = ntype.get_canonical().kind
 	if kind in type_map:
 		return type_map[kind]
-	elif kind == cindex.TypeKind.UNEXPOSED:
+	elif kind == cindex.TypeKind.RECORD:
 		# might be an std::string
 		decl = ntype.get_declaration()
 		parent = decl.semantic_parent
@@ -143,6 +143,12 @@ class NativeType(object):
 			tpl = Template(tpl, searchList=[convert_opts])
 			return str(tpl).rstrip()
 		return "#pragma warning NO CONVERSION TO NATIVE FOR " + name
+
+	def to_string(self, generator):
+		conversions = generator.config['conversions']
+		if conversions.has_key('native_types') and conversions['native_types'].has_key(self.namespaced_name):
+			return conversions['native_types'][self.namespaced_name]
+		return self.namespaced_name
 
 	def __str__(self):
 		return self.namespaced_name

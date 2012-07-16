@@ -74,6 +74,7 @@ void js_register_${generator.prefix}_${current_class.class_name}(JSContext *cx, 
 		NULL, // no static properties
 		st_funcs);
 
+#if has_constructor
 	// add the proto and JSClass to the type->js info hash table
 	js_type_class_t *p;
 	uint32_t type = ${current_class.namespaced_class_name}::OBJECT_TYPE;
@@ -85,5 +86,6 @@ void js_register_${generator.prefix}_${current_class.class_name}(JSContext *cx, 
 		p->proto = js_${generator.prefix}_${current_class.class_name}_prototype;
 		HASH_ADD_INT(_js_global_type_ht, type, p);
 	}
+#end if
 }
 

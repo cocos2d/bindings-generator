@@ -7,7 +7,7 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 	jsval *argv = JS_ARGV(cx, vp);
 	#set $count = 0
 	#for $arg in $arguments
-	${arg} arg${count};
+	${arg.to_string($generator)} arg${count};
 		#set $count = $count + 1
 	#end for
 	if (argc >= ${min_args}) {

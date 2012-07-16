@@ -23,7 +23,7 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 	if (argc == ${func.min_args}) {
 		#set count = 0
 		#for $arg in $func.arguments
-		${arg} arg${count};
+		${arg.to_string($generator)} arg${count};
 		${arg.to_native({"generator": $generator,
 						 "in_value": "argv[" + str(count) + "]",
 						 "out_value": "arg" + str(count),

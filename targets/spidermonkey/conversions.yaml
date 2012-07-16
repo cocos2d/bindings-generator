@@ -5,6 +5,11 @@ definitions:
   sfunction: "js_${generator.prefix}_${class_name}_${func_name}"
   constructor: "js_${generator.prefix}_${class_name}_constructor"
 conversions:
+  # some times you want to use a special native type when converting from spidermonkey to native
+  # the most common case would be from JS-boolean to bool. Using "bool" will fail here since we
+  # pass the address to the conversion method, and a JSBool is defined as an integer in spidermonkey
+  native_types:
+    bool: 'JSBool'
   to_native:
     # jsval to int
     int: "JS_ValueToInt32(cx, ${in_value}, &${out_value})"
@@ -29,7 +34,7 @@ conversions:
       ${($level + 1) * '\t'}JSString *tmp = JS_ValueToString(cx, ${in_value});
       ${($level + 1) * '\t'}${out_value} = JS_EncodeString(cx, tmp);
       ${$level * '\t'}} while (0)
-    bool: "JS_ValueToBoolean(cx, ${in_value}, (JSBool *)&${out_value})"
+    bool: "JS_ValueToBoolean(cx, ${in_value}, &${out_value})"
     float: "${out_value} = JSVAL_TO_DOUBLE(${in_value})"
     double: "${out_value} = JSVAL_TO_DOUBLE(${in_value})"
     object: |

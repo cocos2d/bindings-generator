@@ -34,13 +34,17 @@ type_map = {
 	cindex.TypeKind.OBJCID      : "id",
 	cindex.TypeKind.OBJCCLASS   : "class",
 	cindex.TypeKind.OBJCSEL     : "SEL",
-	cindex.TypeKind.ENUM        : "int"
+	# cindex.TypeKind.ENUM        : "int"
 }
 
-def native_name_from_kind(ntype):
+def native_name_from_type(ntype, underlying=False):
 	kind = ntype.get_canonical().kind
-	if kind in type_map:
-		return type_map[kind]
+	const = "const " if ntype.is_const_qualified() else ""
+	if not underlying and kind == cindex.TypeKind.ENUM:
+		decl = ntype.get_declaration()
+		return namespaced_name(decl)
+	elif kind in type_map:
+		return const + type_map[kind]
 	elif kind == cindex.TypeKind.RECORD:
 		# might be an std::string
 		decl = ntype.get_declaration()
@@ -49,7 +53,7 @@ def native_name_from_kind(ntype):
 			return "std::string"
 		else:
 			# print >> sys.stderr, "probably a function pointer: " + str(decl.spelling)
-			return decl.spelling
+			return const + decl.spelling
 	else:
 		name = ntype.get_declaration().spelling
 		print >> sys.stderr, "Unknown type: " + str(kind) + " " + str(name)
@@ -79,6 +83,7 @@ class NativeType(object):
 		self.is_pointer = False
 		self.is_object = False
 		self.namespaced_name = ""
+		self.name = ""
 		if ntype.kind == cindex.TypeKind.POINTER:
 			pointee = ntype.get_pointee()
 			self.is_pointer = True
@@ -88,19 +93,19 @@ class NativeType(object):
 				self.name = decl.displayname
 				self.namespaced_name = namespaced_name(decl)
 			else:
-				self.name = native_name_from_kind(pointee)
+				self.name = native_name_from_type(pointee)
 				self.namespaced_name = self.name
 			self.name += "*"
 			self.namespaced_name += "*"
 		elif ntype.kind == cindex.TypeKind.LVALUEREFERENCE:
 			pointee = ntype.get_pointee()
+			decl = pointee.get_declaration()
+			self.namespaced_name = namespaced_name(decl)
 			if pointee.kind == cindex.TypeKind.RECORD:
-				decl = pointee.get_declaration()
-				self.is_object = True
 				self.name = decl.displayname
-				self.namespaced_name = namespaced_name(decl)
+				self.is_object = True
 			else:
-				print >> sys.stderr, "LVALUE to somthing I don't know"
+				self.name = native_name_from_type(pointee)
 
 		else:
 			if ntype.kind == cindex.TypeKind.RECORD:
@@ -109,7 +114,7 @@ class NativeType(object):
 				self.name = decl.displayname
 				self.namespaced_name = namespaced_name(decl)
 			else:
-				self.name = native_name_from_kind(ntype)
+				self.name = native_name_from_type(ntype)
 				self.namespaced_name = self.name
 
 	def from_native(self, convert_opts):
@@ -271,6 +276,7 @@ class NativeClass(object):
 		self.methods = {}
 		self.static_methods = {}
 		self.generator = generator
+		self._current_visibility = cindex.AccessSpecifierKind.PRIVATE
 		if generator.remove_prefix:
 			self.target_class_name = re.sub(generator.remove_prefix, '', self.class_name)
 		else:
@@ -355,9 +361,11 @@ class NativeClass(object):
 				self.parents += [parent]
 		elif cursor.kind == cindex.CursorKind.FIELD_DECL:
 			self.fields += [NativeField(cursor)]
+		elif cursor.kind == cindex.CursorKind.CXX_ACCESS_SPEC_DECL:
+			self._current_visibility = cursor.get_access_specifier()
 		elif cursor.kind == cindex.CursorKind.CXX_METHOD:
 			# skip if variadic
-			if not cursor.type.is_function_variadic():
+			if self._current_visibility == cindex.AccessSpecifierKind.PUBLIC and not cursor.type.is_function_variadic():
 				m = NativeFunction(cursor)
 				if m.static:
 					if not self.static_methods.has_key(m.func_name):
@@ -377,7 +385,7 @@ class NativeClass(object):
 							previous_m.append(m)
 						else:
 							self.methods[m.func_name] = NativeOverloadedFunction([m, previous_m])
-		elif cursor.kind == cindex.CursorKind.CONSTRUCTOR and not self.class_name in self.generator.abstract_classes:
+		elif self._current_visibility == cindex.AccessSpecifierKind.PUBLIC and cursor.kind == cindex.CursorKind.CONSTRUCTOR and not self.class_name in self.generator.abstract_classes:
 			m = NativeFunction(cursor)
 			m.is_constructor = True
 			if not self.methods.has_key('constructor'):

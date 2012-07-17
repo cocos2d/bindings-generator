@@ -32,7 +32,7 @@ std::string SimpleNativeClass::returnsAString() {
 	return myString;
 }
 
-char *SimpleNativeClass::returnsACString() {
+const char *SimpleNativeClass::returnsACString() {
 	return "this is a c-string";
 }
 

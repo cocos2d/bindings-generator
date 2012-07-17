@@ -4,10 +4,10 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 	jsval *argv = JS_ARGV(cx, vp);
 #if $is_constructor
 	JSObject *obj = JS_NewObject(cx,
-							 ${generator.prefix}_${class_name}_class,
-							 ${generator.prefix}_${class_name}_prototype,
+							 js_${generator.prefix}_${class_name}_class,
+							 js_${generator.prefix}_${class_name}_prototype,
 							 NULL); // <~ parent proto - not yet added!
-	${namespaced_class_name}* obj = NULL;
+	${namespaced_class_name}* cobj = NULL;
 #else
 	JSObject *obj = JS_THIS_OBJECT(cx, vp);
 	${namespaced_class_name}* cobj = (${namespaced_class_name} *)JS_GetPrivate(obj);

@@ -354,6 +354,62 @@ class FixIt(object):
     def __repr__(self):
         return "<FixIt range %r, value %r>" % (self.range, self.value)
 
+### Access Specifier Kinds ###
+
+class AccessSpecifierKind(object):
+    """
+    An AccessSpecifierKind describes the kind of access specifier a cursor
+    points to.
+    """
+
+    _kinds = []
+    _name_map = None
+
+    def __init__(self, value):
+        if value >= len(AccessSpecifierKind._kinds):
+            AccessSpecifierKind._kinds += [None] * (value - len(AccessSpecifierKind._kinds) + 1)
+        if AccessSpecifierKind._kinds[value] is not None:
+            raise ValueError,'AccessSpecifierKind already loaded'
+        self.value = value
+        AccessSpecifierKind._kinds[value] = self
+        AccessSpecifierKind._name_map = None
+
+    def from_param(self):
+        return self.value
+
+    @property
+    def name(self):
+        """Get the enumeration name of this access specifier kind"""
+        if self._name_map is None:
+            self._name_map = {}
+            for key,value in AccessSpecifierKind.__dict__.items():
+                if isinstance(value,AccessSpecifierKind):
+                    self._name_map[value] = key
+        return self._name_map[self]
+
+    @staticmethod
+    def from_id(id):
+        if id >= len(AccessSpecifierKind._kinds) or AccessSpecifierKind._kinds[id] is None:
+            raise ValueError,'Unknown access specifier kind'
+        return AccessSpecifierKind._kinds[id]
+
+    @staticmethod
+    def get_all_kinds():
+        """Return all AccessSpecifierKind enumeration instances."""
+        return filter(None, AccessSpecifierKind._kinds)
+
+    def __repr__(self):
+        return 'AccessSpecifierKind.%s' % (self.name,)
+
+###
+# Declaration Kinds
+
+AccessSpecifierKind.INVALID = AccessSpecifierKind(0)
+AccessSpecifierKind.PUBLIC = AccessSpecifierKind(1)
+AccessSpecifierKind.PROTECTED = AccessSpecifierKind(2)
+AccessSpecifierKind.PRIVATE = AccessSpecifierKind(3)
+
+
 ### Cursor Kinds ###
 
 class CursorKind(object):
@@ -1176,6 +1232,10 @@ class Cursor(Structure):
     def is_method_static(self):
         assert self.kind == CursorKind.CXX_METHOD
         return Cursor_CXXMethod_isStatic(self)
+
+    def get_access_specifier(self):
+        assert self.kind == CursorKind.CXX_ACCESS_SPEC_DECL
+        return Cursor_getCXXAccessSpecifier(self)
 
     @staticmethod
     def from_result(res, fn, args):
@@ -2288,6 +2348,10 @@ Cursor_CXXMethod_isStatic.restype = bool
 Cursor_CXXMethod_isVirtual = lib.clang_CXXMethod_isVirtual
 Cursor_CXXMethod_isVirtual.argtypes = [Cursor]
 Cursor_CXXMethod_isVirtual.restype = bool
+
+Cursor_getCXXAccessSpecifier = lib.clang_getCXXAccessSpecifier
+Cursor_getCXXAccessSpecifier.argtypes = [Cursor]
+Cursor_getCXXAccessSpecifier.restype = AccessSpecifierKind.from_id
 
 # Type Functions
 Type_get_canonical = lib.clang_getCanonicalType

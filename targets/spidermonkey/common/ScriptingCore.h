@@ -43,7 +43,7 @@ do { \
 
 #define JS_GET_PROXY(p, native_obj) \
 do { \
-	HASH_FIND_PTR(_js_global_ht, native_obj, p); \
+	HASH_FIND_PTR(_js_global_ht, &native_obj, p); \
 } while (0)
 
 class ScriptingCore

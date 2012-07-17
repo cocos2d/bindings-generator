@@ -23,6 +23,15 @@ long long SimpleNativeClass::thisReturnsALongLong() {
 	return __id++;
 }
 
+void SimpleNativeClass::func() {
+}
+
+void SimpleNativeClass::func(int a) {
+}
+
+void SimpleNativeClass::func(int a, float b) {
+}
+
 void SimpleNativeClass::receivesLongLong(long long someId) {
 	return someId + 1;
 }

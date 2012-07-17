@@ -51,7 +51,7 @@ public:
 
 	static void func();
 	static void func(int a);
-	static void func(float b);
+	static void func(int a, float b);
 
 	void receivesLongLong(long long someId);
 	std::string returnsAString();

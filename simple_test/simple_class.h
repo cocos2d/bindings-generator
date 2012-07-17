@@ -22,6 +22,8 @@ public:
     virtual uint32_t getObjectType() {
         return SimpleNativeClass::OBJECT_TYPE;
     };
+
+    SimpleNativeClass();
 	SimpleNativeClass(int m) : m_someField(m) {};
 	SimpleNativeClass(int m1, int m2) : m_someField(m1), m_someOtherField(m2) {};
 	~SimpleNativeClass();
@@ -53,7 +55,7 @@ public:
 	static void func(int a);
 	static void func(int a, float b);
 
-	void receivesLongLong(long long someId);
+	long long receivesLongLong(long long someId);
 	std::string returnsAString();
 	const char *returnsACString();
 

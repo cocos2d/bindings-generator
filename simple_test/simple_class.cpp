@@ -32,7 +32,7 @@ void SimpleNativeClass::func(int a) {
 void SimpleNativeClass::func(int a, float b) {
 }
 
-void SimpleNativeClass::receivesLongLong(long long someId) {
+long long SimpleNativeClass::receivesLongLong(long long someId) {
 	return someId + 1;
 }
 

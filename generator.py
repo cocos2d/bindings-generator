@@ -37,6 +37,8 @@ type_map = {
 	# cindex.TypeKind.ENUM        : "int"
 }
 
+INVALID_NATIVE_TYPE = "??"
+
 def native_name_from_type(ntype, underlying=False):
 	kind = ntype.get_canonical().kind
 	const = "const " if ntype.is_const_qualified() else ""
@@ -57,7 +59,7 @@ def native_name_from_type(ntype, underlying=False):
 	else:
 		name = ntype.get_declaration().spelling
 		print >> sys.stderr, "Unknown type: " + str(kind) + " " + str(name)
-		return "??"
+		return INVALID_NATIVE_TYPE
 		# pdb.set_trace()
 
 def build_namespace(cursor, namespaces = []):
@@ -67,8 +69,9 @@ def build_namespace(cursor, namespaces = []):
 	if cursor:
 		parent = cursor.semantic_parent
 		if parent and parent.kind == cindex.CursorKind.NAMESPACE:
-			namespaces += [parent.displayname]
+			namespaces.append(parent.displayname)
 			build_namespace(parent, namespaces)
+	namespaces.reverse()
 	return "::".join(namespaces)
 
 def namespaced_name(declaration_cursor):
@@ -82,6 +85,7 @@ class NativeType(object):
 		self.type = ntype
 		self.is_pointer = False
 		self.is_object = False
+		self.not_supported = False
 		self.namespaced_name = ""
 		self.name = ""
 		if ntype.kind == cindex.TypeKind.POINTER:
@@ -116,6 +120,9 @@ class NativeType(object):
 			else:
 				self.name = native_name_from_type(ntype)
 				self.namespaced_name = self.name
+		# mark argument as not supported
+		if self.name == INVALID_NATIVE_TYPE:
+			self.not_supported = True
 
 	def from_native(self, convert_opts):
 		assert(convert_opts.has_key('generator'))
@@ -181,6 +188,7 @@ class NativeFunction(object):
 		self.static = cursor.kind == cindex.CursorKind.CXX_METHOD and cursor.is_method_static()
 		self.implementations = []
 		self.is_constructor = False
+		self.not_supported = False
 		result = cursor.result_type
 		# get the result
 		if result.kind == cindex.TypeKind.LVALUEREFERENCE:
@@ -190,7 +198,11 @@ class NativeFunction(object):
 		# if self.func_name == "spriteWithFile":
 		# 	pdb.set_trace()
 		for arg in cursor.type.argument_types():
-			self.arguments += [NativeType(arg)]
+			nt = NativeType(arg)
+			self.arguments.append(nt)
+			# mark the function as not supported if at least one argument is not supported
+			if nt.not_supported:
+				self.not_supported = True
 		self.min_args = len(self.arguments)
 
 	def generate_code(self, current_class=None, generator=None):
@@ -233,7 +245,7 @@ class NativeOverloadedFunction(object):
 
 	def append(self, func):
 		self.min_args = min(self.min_args, func.min_args)
-		self.implementations += [func]
+		self.implementations.append(func)
 
 	def generate_code(self, current_class=None):
 		gen = current_class.generator
@@ -303,7 +315,7 @@ class NativeClass(object):
 				if self.generator.should_skip(self.class_name, name):
 					should_skip = True
 			if not should_skip:
-				ret += [{"name": name, "impl": impl}]
+				ret.append({"name": name, "impl": impl})
 		return ret
 
 	def static_methods_clean(self):
@@ -314,7 +326,7 @@ class NativeClass(object):
 		for name, impl in self.static_methods.iteritems():
 			should_skip = self.generator.should_skip(self.class_name, name)
 			if not should_skip:
-				ret += [{"name": name, "impl": impl}]
+				ret.append({"name": name, "impl": impl})
 		return ret
 
 	def generate_code(self):
@@ -352,21 +364,24 @@ class NativeClass(object):
 		'''
 		if cursor.kind == cindex.CursorKind.CXX_BASE_SPECIFIER and not self.class_name in self.generator.base_objects:
 			parent = cursor.get_definition()
-			if parent:
+			if parent and self.generator.in_listed_classes(parent.displayname):
 				if not self.generator.generated_classes.has_key(parent.displayname):
 					parent = NativeClass(parent, self.generator)
 					self.generator.generated_classes[parent.class_name] = parent
 				else:
 					parent = self.generator.generated_classes[parent.displayname]
-				self.parents += [parent]
+				self.parents.append(parent)
 		elif cursor.kind == cindex.CursorKind.FIELD_DECL:
-			self.fields += [NativeField(cursor)]
+			self.fields.append(NativeField(cursor))
 		elif cursor.kind == cindex.CursorKind.CXX_ACCESS_SPEC_DECL:
 			self._current_visibility = cursor.get_access_specifier()
 		elif cursor.kind == cindex.CursorKind.CXX_METHOD:
 			# skip if variadic
 			if self._current_visibility == cindex.AccessSpecifierKind.PUBLIC and not cursor.type.is_function_variadic():
 				m = NativeFunction(cursor)
+				# bail if the function is not supported (at least one arg not supported)
+				if m.not_supported:
+					return
 				if m.static:
 					if not self.static_methods.has_key(m.func_name):
 						self.static_methods[m.func_name] = m
@@ -429,9 +444,38 @@ class Generator(object):
 				else:
 					raise Exception("invalid list of skip methods")
 
-	def should_skip(self, class_name, method_name):
-		if self.skip_classes.has_key(class_name):
-			return method_name in self.skip_classes[class_name]
+	def should_skip(self, class_name, method_name, verbose=False):
+		if class_name == "*" and self.skip_classes.has_key("*"):
+			for func in self.skip_classes["*"]:
+				if re.match(func, method_name):
+					return True
+		else:
+			for key in self.skip_classes.iterkeys():
+				if key == "*" or re.match("^" + key + "$", class_name):
+					if verbose:
+						print "%s in skip_classes" % (class_name)
+					if len(self.skip_classes[key]) == 1 and self.skip_classes[key][0] == "*":
+						if verbose:
+							print "%s will be skipped completely" % (class_name)
+						return True
+					if method_name != None:
+						for func in self.skip_classes[key]:
+							if re.match(func, method_name):
+								if verbose:
+									print "%s will skip method %s" % (class_name, method_name)
+								return True
+		if verbose:
+			print "%s will be accepted (%s, %s)" % (class_name, key, self.skip_classes[key])
+		return False
+
+	def in_listed_classes(self, class_name):
+		"""
+		returns True if the class is in the list of required classes and it's not in the skip list
+		"""
+		for key in self.classes:
+			md = re.match("^" + key + "$", class_name)
+			if md and not self.should_skip(class_name, None):
+				return True
 		return False
 
 	def sorted_classes(self):
@@ -439,7 +483,7 @@ class Generator(object):
 		sorted classes in order of inheritance
 		'''
 		sorted_list = []
-		for class_name in self.classes:
+		for class_name in self.generated_classes.iterkeys():
 			nclass = self.generated_classes[class_name]
 			sorted_list += self._sorted_parents(nclass)
 		# remove dupes from the list
@@ -453,10 +497,10 @@ class Generator(object):
 		'''
 		sorted_parents = []
 		for p in nclass.parents:
-			if p.class_name in self.classes:
+			if p.class_name in self.generated_classes.keys():
 				sorted_parents += self._sorted_parents(p)
-		if nclass.class_name in self.classes:
-			sorted_parents += [nclass.class_name]
+		if nclass.class_name in self.generated_classes.keys():
+			sorted_parents.append(nclass.class_name)
 		return sorted_parents
 
 	def generate_code(self):
@@ -507,7 +551,7 @@ class Generator(object):
 		# get the canonical type
 		is_class = False
 		if cursor.kind == cindex.CursorKind.CLASS_DECL:
-			if cursor == cursor.type.get_declaration() and cursor.displayname in self.classes:
+			if cursor == cursor.type.get_declaration() and self.in_listed_classes(cursor.displayname):
 				if not self.generated_classes.has_key(cursor.displayname):
 					nclass = NativeClass(cursor, self)
 					nclass.generate_code()

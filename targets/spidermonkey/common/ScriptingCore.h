@@ -10,8 +10,8 @@
 #define __SCRIPTING_CORE_H__
 
 #include <assert.h>
-#include <uthash.h>
-#include <jsapi.h>
+#include "uthash.h"
+#include "jsapi.h"
 
 void js_log(const char *format, ...);
 
@@ -24,9 +24,10 @@ typedef struct js_proxy {
 extern js_proxy_t *_js_global_ht;
 
 typedef struct js_type_class {
-	uint32_t type;
+	const char* type;
 	JSClass *jsclass;
 	JSObject *proto;
+	JSObject *parentProto;
 	UT_hash_handle hh;
 } js_type_class_t;
 
@@ -45,6 +46,19 @@ do { \
 do { \
 	HASH_FIND_PTR(_js_global_ht, &native_obj, p); \
 } while (0)
+
+#define TEST_NATIVE_OBJECT(cx, native_obj) \
+if (!native_obj) { \
+	JS_ReportError(cx, "Invalid Native Object"); \
+	return JS_FALSE; \
+}
+
+#define ADD_OBJECT_TYPE(klass) \
+static const char* OBJECT_TYPE; \
+const char* getObjectType() { return klass::OBJECT_TYPE; }
+
+#define ADD_OBJECT_TYPE_DECL(klass) \
+const char* klass::OBJECT_TYPE = #klass;
 
 class ScriptingCore
 {

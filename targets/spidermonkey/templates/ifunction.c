@@ -12,9 +12,7 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 #else
 	JSObject *obj = JS_THIS_OBJECT(cx, vp);
 	${namespaced_class_name}* cobj = (${namespaced_class_name} *)JS_GetPrivate(obj);
-	if (!cobj) {
-		return JS_FALSE;
-	}
+	TEST_NATIVE_OBJECT(cx, cobj)
 #end if
 
 

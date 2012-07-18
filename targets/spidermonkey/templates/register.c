@@ -76,14 +76,19 @@ void js_register_${generator.prefix}_${current_class.class_name}(JSContext *cx, 
 
 	// add the proto and JSClass to the type->js info hash table
 	js_type_class_t *p;
-	uint32_t type = ${current_class.namespaced_class_name}::OBJECT_TYPE;
-	HASH_FIND_INT(_js_global_type_ht, &type, p);
+	const char* type = ${current_class.namespaced_class_name}::OBJECT_TYPE;
+	HASH_FIND_STR(_js_global_type_ht, type, p);
 	if (!p) {
 		p = (js_type_class_t *)malloc(sizeof(js_type_class_t));
 		p->type = type;
 		p->jsclass = js_${generator.prefix}_${current_class.class_name}_class;
 		p->proto = js_${generator.prefix}_${current_class.class_name}_prototype;
-		HASH_ADD_INT(_js_global_type_ht, type, p);
+#if len($current_class.parents) > 0
+		p->parentProto = js_${generator.prefix}_${current_class.parents[0].class_name}_prototype;
+#else
+		p->parentProto = NULL;
+#end if
+		HASH_ADD_KEYPTR(hh, _js_global_type_ht, type, strlen(type), p);
 	}
 }
 

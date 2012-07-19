@@ -12,6 +12,10 @@
 #include "ScriptingCore.h"
 #include "cocos2d.h"
 
+#ifdef ANDROID
+#include <android/log.h>
+#endif
+
 js_proxy_t *_native_js_global_ht = NULL;
 js_proxy_t *_js_native_global_ht = NULL;
 js_type_class_t *_js_global_type_ht = NULL;
@@ -58,8 +62,13 @@ void js_log(const char *format, ...) {
 	va_start(vl, format);
 	int len = vsnprintf(_js_log_buf, 256, format, vl);
 	va_end(vl);
-	if (len)
+	if (len) {
+#ifdef ANDROID
+        __android_log_print(ANDROID_LOG_DEBUG, "js_log", _js_log_buf);
+#else
 		fprintf(stderr, "JS: %s\n", _js_log_buf);
+#endif
+    }
 }
 
 static JSClass global_class = {

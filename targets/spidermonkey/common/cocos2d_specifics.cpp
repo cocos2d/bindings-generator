@@ -19,7 +19,6 @@ JSObject* bind_menu_item(JSContext *cx, T* nativeObj, jsval callback) {
 		if (callback != JSVAL_VOID)
 			core->setReservedSpot(0, tmp, callback);
 		// bind nativeObj <-> JSObject
-		JS_SetPrivate(tmp, nativeObj);
 		js_proxy_t *proxy;
 		JS_NEW_PROXY(proxy, nativeObj, tmp);
 		return tmp;
@@ -42,9 +41,26 @@ JSBool js_cocos2dx_CCMenuItemSprite_create(JSContext *cx, uint32_t argc, jsval *
 {
 	if (argc >= 2) {
 		jsval *argv = JS_ARGV(cx, vp);
-		cocos2d::CCNode* arg0 = (cocos2d::CCNode*)JS_GetPrivate(JSVAL_TO_OBJECT(argv[0]));
-		cocos2d::CCNode* arg1 = (cocos2d::CCNode*)JS_GetPrivate(JSVAL_TO_OBJECT(argv[1]));
-		cocos2d::CCNode* arg2 = (argc >= 3 ? (cocos2d::CCNode*)JS_GetPrivate(JSVAL_TO_OBJECT(argv[2])) : NULL);
+		js_proxy_t *proxy;
+		JSObject *tmpObj;
+		
+		tmpObj = JSVAL_TO_OBJECT(argv[0]);
+		JS_GET_NATIVE_PROXY(proxy, tmpObj);
+		cocos2d::CCNode* arg0 = (cocos2d::CCNode*)(proxy ? proxy->ptr : NULL);
+		TEST_NATIVE_OBJECT(cx, arg0);
+
+		tmpObj = JSVAL_TO_OBJECT(argv[1]);
+		JS_GET_NATIVE_PROXY(proxy, tmpObj);
+		cocos2d::CCNode* arg1 = (cocos2d::CCNode*)(proxy ? proxy->ptr : NULL);
+		TEST_NATIVE_OBJECT(cx, arg1);
+
+		cocos2d::CCNode* arg2 = NULL;
+		if (argc >= 3) {
+			tmpObj = JSVAL_TO_OBJECT(argv[2]);
+			JS_GET_NATIVE_PROXY(proxy, tmpObj);
+			arg2 = (cocos2d::CCNode*)(proxy ? proxy->ptr : NULL);
+			TEST_NATIVE_OBJECT(cx, arg2);
+		}
 		cocos2d::CCMenuItemSprite* ret = cocos2d::CCMenuItemSprite::create(arg0, arg1, arg2);
 		JSObject *obj = bind_menu_item<cocos2d::CCMenuItemSprite>(cx, ret, (argc == 4 ? argv[3] : JSVAL_VOID));
 		JS_SET_RVAL(cx, vp, OBJECT_TO_JSVAL(obj));
@@ -72,7 +88,11 @@ JSBool js_cocos2dx_CCMenuItemLabel_create(JSContext *cx, uint32_t argc, jsval *v
 {
 	if (argc >= 1) {
 		jsval *argv = JS_ARGV(cx, vp);
-		cocos2d::CCNode* arg0 = (cocos2d::CCNode*)JS_GetPrivate(JSVAL_TO_OBJECT(argv[0]));
+		js_proxy_t *proxy;
+		JSObject *tmpObj = JSVAL_TO_OBJECT(argv[0]);
+		JS_GET_NATIVE_PROXY(proxy, tmpObj);
+		cocos2d::CCNode* arg0 = (cocos2d::CCNode*)(proxy ? proxy->ptr : NULL);
+		TEST_NATIVE_OBJECT(cx, arg0)
 		cocos2d::CCMenuItemLabel* ret = cocos2d::CCMenuItemLabel::create(arg0);
 		JSObject *obj = bind_menu_item<cocos2d::CCMenuItemLabel>(cx, ret, (argc == 2 ? argv[1] : JSVAL_VOID));
 		JS_SET_RVAL(cx, vp, OBJECT_TO_JSVAL(obj));
@@ -118,7 +138,11 @@ JSBool js_cocos2dx_CCMenuItemToggle_create(JSContext *cx, uint32_t argc, jsval *
 		cocos2d::CCMenuItemToggle* ret = cocos2d::CCMenuItemToggle::create(NULL, NULL, NULL);
 		JSObject *obj = bind_menu_item<cocos2d::CCMenuItemToggle>(cx, ret, argv[0]);
 		for (int i=1; i < argc; i++) {
-			cocos2d::CCMenuItem* item = (cocos2d::CCMenuItem*)JS_GetPrivate(JSVAL_TO_OBJECT(argv[i]));
+			js_proxy_t *proxy;
+			JSObject *tmpObj = JSVAL_TO_OBJECT(argv[i]);
+			JS_GET_NATIVE_PROXY(proxy, tmpObj);
+			cocos2d::CCMenuItem* item = (cocos2d::CCMenuItem*)(proxy ? proxy->ptr : NULL);
+			TEST_NATIVE_OBJECT(cx, item)
 			ret->addSubItem(item);
 		}
 		JS_SET_RVAL(cx, vp, OBJECT_TO_JSVAL(obj));
@@ -134,12 +158,16 @@ JSBool js_cocos2dx_swap_native_object(JSContext *cx, uint32_t argc, jsval *vp)
 		jsval *argv = JS_ARGV(cx, vp);
 		JSObject *one = JSVAL_TO_OBJECT(argv[0]);
 		JSObject *two = JSVAL_TO_OBJECT(argv[1]);
-		void *ptrTwo = JS_GetPrivate(two);
-		js_proxy_t *proxy;
-		JS_GET_PROXY(proxy, ptrTwo);
-		if (proxy) {
-			JS_REMOVE_PROXY(ptrTwo);
-			JS_NEW_PROXY(proxy, ptrTwo, one);
+		js_proxy_t *nproxy;
+		JS_GET_NATIVE_PROXY(nproxy, two);
+		void *ptrTwo = (nproxy ? nproxy->ptr : NULL);
+		if (nproxy) {
+			js_proxy_t *jsproxy;
+			JS_GET_PROXY(jsproxy, ptrTwo);
+			if (jsproxy) {
+				JS_REMOVE_PROXY(nproxy, jsproxy);
+				JS_NEW_PROXY(nproxy, ptrTwo, one);
+			}
 		}
 	}
 	return JS_TRUE;

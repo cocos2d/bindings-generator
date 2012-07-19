@@ -41,7 +41,10 @@ conversions:
     double: "${out_value} = JSVAL_TO_DOUBLE(${in_value})"
     object: |
       do {
-      ${($level + 1) * '\t'}${out_value} = (${ntype})JS_GetPrivate(JSVAL_TO_OBJECT(${in_value}));
+      ${($level + 1) * '\t'}js_proxy_t *proxy;
+      ${($level + 1) * '\t'}JSObject *tmpObj = JSVAL_TO_OBJECT(${in_value});
+      ${($level + 1) * '\t'}JS_GET_NATIVE_PROXY(proxy, tmpObj);
+      ${($level + 1) * '\t'}${out_value} = (${ntype})(proxy ? proxy->ptr : NULL);
       ${($level + 1) * '\t'}TEST_NATIVE_OBJECT(cx, ${out_value})
       ${($level + 0) * '\t'}} while (0)
     "CCPoint": |
@@ -118,24 +121,27 @@ conversions:
     double: "JS_NewNumberValue(cx, ${in_value}, &${out_value})"
     object: |
       do {
-      ${($level + 1) * '\t'}js_proxy_t *p;
-      ${($level + 1) * '\t'}JS_GET_PROXY(p, ${in_value});
-      ${($level + 1) * '\t'}if (p) {
-      ${($level + 2) * '\t'}${out_value} = OBJECT_TO_JSVAL(p->obj);
+      ${($level + 1) * '\t'}if (${in_value}) {
+      ${($level + 2) * '\t'}js_proxy_t *p;
+      ${($level + 2) * '\t'}JS_GET_PROXY(p, ${in_value});
+      ${($level + 2) * '\t'}if (p) {
+      ${($level + 3) * '\t'}${out_value} = OBJECT_TO_JSVAL(p->obj);
+      ${($level + 2) * '\t'}} else {
+      ${($level + 3) * '\t'}// create a new js obj of that class
+      ${($level + 3) * '\t'}js_type_class_t *p;
+      ${($level + 3) * '\t'}const char* type = ${in_value}->getObjectType();
+      ${($level + 3) * '\t'}HASH_FIND_STR(_js_global_type_ht, type, p);
+      ${($level + 3) * '\t'}assert(p);
+      ${($level + 3) * '\t'}JSObject *_tmp = JS_NewObject(cx, p->jsclass, p->proto, p->parentProto);
+      ${($level + 3) * '\t'}#ifdef COCOS2D_VERSION
+      ${($level + 3) * '\t'}JS_AddObjectRoot(cx, &_tmp);      
+      ${($level + 3) * '\t'}#endif
+      ${($level + 3) * '\t'}${out_value} = OBJECT_TO_JSVAL(_tmp);
+      ${($level + 3) * '\t'}js_proxy_t *pp;
+      ${($level + 3) * '\t'}JS_NEW_PROXY(pp, ${in_value}, _tmp);
+      ${($level + 2) * '\t'}}
       ${($level + 1) * '\t'}} else {
-      ${($level + 2) * '\t'}// create a new js obj of that class
-      ${($level + 2) * '\t'}js_type_class_t *p;
-      ${($level + 2) * '\t'}const char* type = ${in_value}->getObjectType();
-      ${($level + 2) * '\t'}HASH_FIND_STR(_js_global_type_ht, type, p);
-      ${($level + 2) * '\t'}assert(p);
-      ${($level + 2) * '\t'}JSObject *_tmp = JS_NewObject(cx, p->jsclass, p->proto, p->parentProto);
-      ${($level + 2) * '\t'}JS_SetPrivate(_tmp, ${in_value});
-      ${($level + 2) * '\t'}#ifdef COCOS2D_VERSION
-      ${($level + 2) * '\t'}JS_AddObjectRoot(cx, &_tmp);      
-      ${($level + 2) * '\t'}#endif
-      ${($level + 2) * '\t'}${out_value} = OBJECT_TO_JSVAL(_tmp);
-      ${($level + 2) * '\t'}js_proxy_t *pp;
-      ${($level + 2) * '\t'}JS_NEW_PROXY(pp, ${in_value}, _tmp);
+      ${($level + 2) * '\t'}${out_value} = JSVAL_NULL;
       ${($level + 1) * '\t'}}
       ${($level) * '\t'}} while (0)
     "CCPoint": |

@@ -6,7 +6,8 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 #end if
 #if not $is_constructor
 	JSObject *obj = JS_THIS_OBJECT(cx, vp);
-	${namespaced_class_name}* cobj = (${namespaced_class_name} *)JS_GetPrivate(obj);
+	js_proxy_t *proxy; JS_GET_NATIVE_PROXY(proxy, obj);
+	${namespaced_class_name}* cobj = (${namespaced_class_name} *)(proxy ? proxy->ptr : NULL);
 	TEST_NATIVE_OBJECT(cx, cobj)
 #end if
 
@@ -43,7 +44,6 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 	HASH_FIND_STR(_js_global_type_ht, type, typeClass);
 	assert(typeClass);
 	JSObject *obj = JS_NewObject(cx, typeClass->jsclass, typeClass->proto, typeClass->parentProto);
-	JS_SetPrivate(obj, cobj);
 \#ifdef COCOS2D_JAVASCRIPT
 	JS_AddObjectRoot(cx, &obj);
 \#endif

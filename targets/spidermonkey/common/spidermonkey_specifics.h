@@ -10,7 +10,8 @@ typedef struct js_proxy {
 	UT_hash_handle hh;
 } js_proxy_t;
 
-extern js_proxy_t *_js_global_ht;
+extern js_proxy_t *_native_js_global_ht;
+extern js_proxy_t *_js_native_global_ht;
 
 typedef struct js_type_class {
 	const char* type;
@@ -28,16 +29,29 @@ do { \
 	assert(p); \
 	p->ptr = native_obj; \
 	p->obj = js_obj; \
-	HASH_ADD_PTR(_js_global_ht, ptr, p); \
+	HASH_ADD_PTR(_native_js_global_ht, ptr, p); \
+	p = (js_proxy_t *)malloc(sizeof(js_proxy_t)); \
+	assert(p); \
+	p->ptr = native_obj; \
+	p->obj = js_obj; \
+	HASH_ADD_PTR(_js_native_global_ht, obj, p); \
 } while(0) \
 
 #define JS_GET_PROXY(p, native_obj) \
 do { \
-	HASH_FIND_PTR(_js_global_ht, &native_obj, p); \
+	HASH_FIND_PTR(_native_js_global_ht, &native_obj, p); \
 } while (0)
 
-#define JS_REMOVE_PROXY(proxy) \
-HASH_DEL(_js_global_ht, proxy)
+#define JS_GET_NATIVE_PROXY(p, js_obj) \
+do { \
+	HASH_FIND_PTR(_js_native_global_ht, &js_obj, p); \
+} while (0)
+
+#define JS_REMOVE_PROXY(nproxy, jsproxy) \
+do { \
+	if (nproxy)  HASH_DEL(_native_js_global_ht, nproxy); \
+	if (jsproxy) HASH_DEL(_js_native_global_ht, jsproxy); \
+} while (0)
 
 #define TEST_NATIVE_OBJECT(cx, native_obj) \
 if (!native_obj) { \

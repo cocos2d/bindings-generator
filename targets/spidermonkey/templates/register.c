@@ -22,7 +22,7 @@ void js_register_${generator.prefix}_${current_class.class_name}(JSContext *cx, 
 	js_${generator.prefix}_${current_class.class_name}_class->resolve = JS_ResolveStub;
 	js_${generator.prefix}_${current_class.class_name}_class->convert = JS_ConvertStub;
 	js_${generator.prefix}_${current_class.class_name}_class->finalize = js_${generator.prefix}_${current_class.class_name}_finalize;
-	js_${generator.prefix}_${current_class.class_name}_class->flags = JSCLASS_HAS_PRIVATE | JSCLASS_HAS_RESERVED_SLOTS(2);
+	js_${generator.prefix}_${current_class.class_name}_class->flags = JSCLASS_HAS_RESERVED_SLOTS(2);
 
 	#if len($current_class.fields) > 0
 	static JSPropertySpec properties[] = {

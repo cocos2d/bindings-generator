@@ -13,7 +13,6 @@ static JSBool dummy_constructor(JSContext *cx, uint32_t argc, jsval *vp) {
 	HASH_FIND_STR(_js_global_type_ht, type, p);
 	assert(p);
 	JSObject *_tmp = JS_NewObject(cx, p->jsclass, p->proto, p->parentProto);
-	JS_SetPrivate(_tmp, cobj);
 #ifdef COCOS2D_VERSION
 	JS_AddObjectRoot(cx, &_tmp);      
 #endif

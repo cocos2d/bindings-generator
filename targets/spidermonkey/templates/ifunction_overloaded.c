@@ -6,10 +6,9 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 	${namespaced_class_name}* cobj;
 #if not $is_constructor
 	obj = JS_THIS_OBJECT(cx, vp);
-	cobj = (${namespaced_class_name} *)JS_GetPrivate(obj);
-	if (!cobj) {
-		return JS_FALSE;
-	}
+	js_proxy_t *proxy; JS_GET_NATIVE_PROXY(proxy, obj);
+	cobj = (${namespaced_class_name} *)(proxy ? proxy->ptr : NULL);
+	TEST_NATIVE_OBJECT(cx, cobj)
 #end if
 
 #for func in $implementations
@@ -38,7 +37,8 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 		HASH_FIND_STR(_js_global_type_ht, type, typeClass);
 		assert(typeClass);
 		obj = JS_NewObject(cx, typeClass->jsclass, typeClass->proto, typeClass->parentProto);
-		JS_SetPrivate(obj, cobj);
+		js_proxy_t *proxy;
+		JS_NEW_PROXY(proxy, cobj, obj);
 \#ifdef COCOS2D_JAVASCRIPT
 		JS_AddObjectRoot(cx, &obj);
 \#endif
@@ -59,7 +59,6 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 #end for
 #if $is_constructor
 	if (cobj) {
-		JS_SetPrivate(obj, cobj);
 		JS_SET_RVAL(cx, vp, OBJECT_TO_JSVAL(obj));
 		return JS_TRUE;
 	}

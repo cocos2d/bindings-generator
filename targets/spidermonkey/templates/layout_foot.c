@@ -1,5 +1,5 @@
 void register_all_${prefix}() {
-	JSContext *cx = ScriptingCore::getInstance().getGlobalContext();
+	JSContext *cx = ScriptingCore::getInstance()->getGlobalContext();
 	JSObject *obj = JS_GetGlobalObject(cx);
 	#if $target_ns
 	// first, try to get the ns

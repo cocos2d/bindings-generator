@@ -66,8 +66,10 @@ void js_register_${generator.prefix}_${current_class.class_name}(JSContext *cx, 
 		js_${generator.prefix}_${current_class.class_name}_class,
 #if has_constructor
 		js_${generator.prefix}_${current_class.class_name}_constructor, 0, // constructor
+#else if $current_class.is_abstract
+		empty_constructor, 0,
 #else
-		dummy_constructor, 0, // no constructor
+		dummy_constructor<${current_class.namespaced_class_name}>, 0, // no constructor
 #end if
 		properties,
 		funcs,
@@ -79,6 +81,7 @@ void js_register_${generator.prefix}_${current_class.class_name}(JSContext *cx, 
 	const char* type = ${current_class.namespaced_class_name}::OBJECT_TYPE;
 	HASH_FIND_STR(_js_global_type_ht, type, p);
 	if (!p) {
+		printf("jsclass for %s: %p\n", "${current_class.class_name}", js_${generator.prefix}_${current_class.class_name}_class);
 		p = (js_type_class_t *)malloc(sizeof(js_type_class_t));
 		p->type = type;
 		p->jsclass = js_${generator.prefix}_${current_class.class_name}_class;

@@ -1,22 +1,23 @@
 #include "cocos2d.h"
+#include "cocos2dx.hpp"
 #include "cocos2d_specifics.hpp"
 
 template<class T>
 JSObject* bind_menu_item(JSContext *cx, T* nativeObj, jsval callback) {
 	js_proxy_t *p;
-	ScriptingCore core = ScriptingCore::getInstance();
+	ScriptingCore *core = ScriptingCore::getInstance();
 	JS_GET_PROXY(p, nativeObj);
 	if (p) {
-		core.setReservedSpot(0, p->obj, callback);
+		core->setReservedSpot(0, p->obj, callback);
 		return p->obj;
 	} else {
 		js_type_class_t *classType;
-		uint32_t type = nativeObj->getObjectType();
-		HASH_FIND_INT(_js_global_type_ht, &type, classType);
+		const char* type = nativeObj->getObjectType();
+		HASH_FIND_STR(_js_global_type_ht, type, classType);
 		assert(classType);
 		JSObject *tmp = JS_NewObject(cx, classType->jsclass, classType->proto, classType->parentProto);
 		if (callback != JSVAL_VOID)
-			core.setReservedSpot(0, tmp, callback);
+			core->setReservedSpot(0, tmp, callback);
 		// bind nativeObj <-> JSObject
 		JS_SetPrivate(tmp, nativeObj);
 		js_proxy_t *proxy;
@@ -124,4 +125,77 @@ JSBool js_cocos2dx_CCMenuItemToggle_create(JSContext *cx, uint32_t argc, jsval *
 		return JS_TRUE;
 	}
 	return JS_FALSE;
+}
+
+JSBool js_cocos2dx_swap_native_object(JSContext *cx, uint32_t argc, jsval *vp)
+{
+	if (argc == 2) {
+		// get the native object from the second object to the first object
+		jsval *argv = JS_ARGV(cx, vp);
+		JSObject *one = JSVAL_TO_OBJECT(argv[0]);
+		JSObject *two = JSVAL_TO_OBJECT(argv[1]);
+		void *ptrTwo = JS_GetPrivate(two);
+		js_proxy_t *proxy;
+		JS_GET_PROXY(proxy, ptrTwo);
+		if (proxy) {
+			JS_REMOVE_PROXY(ptrTwo);
+			JS_NEW_PROXY(proxy, ptrTwo, one);
+		}
+	}
+	return JS_TRUE;
+}
+
+JSObject* getObjectFromNamespace(JSContext* cx, JSObject *ns, const char *name) {
+	jsval out;
+	if (JS_GetProperty(cx, ns, name, &out) == JS_TRUE) {
+		JSObject *obj;
+		if (JS_ValueToObject(cx, out, &obj) == JS_TRUE) {
+			
+		}
+	}
+	return NULL;
+}
+
+jsval anonEvaluate(JSContext *cx, JSObject *thisObj, const char* string) {
+	jsval out;
+	if (JS_EvaluateScript(cx, thisObj, string, strlen(string), "(string)", 1, &out) == JS_TRUE) {
+		return out;
+	}
+	return JSVAL_VOID;
+}
+
+void register_cocos2dx_js_extensions()
+{
+	JSContext *cx = ScriptingCore::getInstance()->getGlobalContext();
+	JSObject *global = JS_GetGlobalObject(cx);
+	// first, try to get the ns
+	jsval nsval;
+	JSObject *ns;
+	JS_GetProperty(cx, global, "cc", &nsval);
+	if (nsval == JSVAL_VOID) {
+		ns = JS_NewObject(cx, NULL, NULL, NULL);
+		nsval = OBJECT_TO_JSVAL(ns);
+		JS_SetProperty(cx, global, "cc", &nsval);
+	} else {
+		JS_ValueToObject(cx, nsval, &ns);
+	}
+
+	JS_DefineFunction(cx, global, "__associateObjWithNative", js_cocos2dx_swap_native_object, 2, JSPROP_READONLY | JSPROP_PERMANENT);
+
+	// add the properties
+	JSObject *tmpObj;
+	tmpObj = JSVAL_TO_OBJECT(anonEvaluate(cx, global, "(function () { return cc.MenuItem; })()"));
+	JS_DefineFunction(cx, tmpObj, "create", js_cocos2dx_CCMenuItem_create, 1, JSPROP_READONLY | JSPROP_PERMANENT);
+	tmpObj = JSVAL_TO_OBJECT(anonEvaluate(cx, global, "(function () { return cc.MenuItemSprite; })()"));
+	JS_DefineFunction(cx, tmpObj, "create", js_cocos2dx_CCMenuItemSprite_create, 1, JSPROP_READONLY | JSPROP_PERMANENT);
+	tmpObj = JSVAL_TO_OBJECT(anonEvaluate(cx, global, "(function () { return cc.MenuItemImage; })()"));
+	JS_DefineFunction(cx, tmpObj, "create", js_cocos2dx_CCMenuItemImage_create, 1, JSPROP_READONLY | JSPROP_PERMANENT);
+	tmpObj = JSVAL_TO_OBJECT(anonEvaluate(cx, global, "(function () { return cc.MenuItemLabel; })()"));
+	JS_DefineFunction(cx, tmpObj, "create", js_cocos2dx_CCMenuItemLabel_create, 1, JSPROP_READONLY | JSPROP_PERMANENT);
+	tmpObj = JSVAL_TO_OBJECT(anonEvaluate(cx, global, "(function () { return cc.MenuItemAtlasFont; })()"));
+	JS_DefineFunction(cx, tmpObj, "create", js_cocos2dx_CCMenuItemAtlasFont_create, 1, JSPROP_READONLY | JSPROP_PERMANENT);
+	tmpObj = JSVAL_TO_OBJECT(anonEvaluate(cx, global, "(function () { return cc.MenuItemFont; })()"));
+	JS_DefineFunction(cx, tmpObj, "create", js_cocos2dx_CCMenuItemFont_create, 1, JSPROP_READONLY | JSPROP_PERMANENT);
+	tmpObj = JSVAL_TO_OBJECT(anonEvaluate(cx, global, "(function () { return cc.MenuItemToggle; })()"));
+	JS_DefineFunction(cx, tmpObj, "create", js_cocos2dx_CCMenuItemToggle_create, 1, JSPROP_READONLY | JSPROP_PERMANENT);
 }

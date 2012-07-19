@@ -2,15 +2,11 @@
 JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 {
 	jsval *argv = JS_ARGV(cx, vp);
-#if $is_constructor
-	JSObject *obj = JS_NewObject(cx,
-							 js_${generator.prefix}_${class_name}_class,
-							 js_${generator.prefix}_${class_name}_prototype,
-							 NULL); // <~ parent proto - not yet added!
-	${namespaced_class_name}* cobj = NULL;
-#else
-	JSObject *obj = JS_THIS_OBJECT(cx, vp);
-	${namespaced_class_name}* cobj = (${namespaced_class_name} *)JS_GetPrivate(obj);
+	JSObject *obj;
+	${namespaced_class_name}* cobj;
+#if not $is_constructor
+	obj = JS_THIS_OBJECT(cx, vp);
+	cobj = (${namespaced_class_name} *)JS_GetPrivate(obj);
 	if (!cobj) {
 		return JS_FALSE;
 	}
@@ -37,6 +33,15 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 	#end if
 	#if $is_constructor
 		cobj = new ${namespaced_class_name}(${arg_list});
+		js_type_class_t *typeClass;
+		const char* type = cobj->getObjectType();
+		HASH_FIND_STR(_js_global_type_ht, type, typeClass);
+		assert(typeClass);
+		obj = JS_NewObject(cx, typeClass->jsclass, typeClass->proto, typeClass->parentProto);
+		JS_SetPrivate(obj, cobj);
+\#ifdef COCOS2D_JAVASCRIPT
+		JS_AddObjectRoot(cx, &obj);
+\#endif
 	#else
 		#if str($func.ret_type) != "void"
 		${func.ret_type} ret = cobj->${func.func_name}($arg_list);

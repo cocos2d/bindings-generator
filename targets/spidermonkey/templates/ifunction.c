@@ -4,12 +4,7 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 #if $min_args > 0
 	jsval *argv = JS_ARGV(cx, vp);
 #end if
-#if $is_constructor
-	JSObject *obj = JS_NewObject(cx,
-							 js_${generator.prefix}_${class_name}_class,
-							 js_${generator.prefix}_${class_name}_prototype,
-							 NULL); // <~ parent proto - not yet added!
-#else
+#if not $is_constructor
 	JSObject *obj = JS_THIS_OBJECT(cx, vp);
 	${namespaced_class_name}* cobj = (${namespaced_class_name} *)JS_GetPrivate(obj);
 	TEST_NATIVE_OBJECT(cx, cobj)
@@ -43,7 +38,15 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 #end if
 #if $is_constructor
 	${namespaced_class_name}* cobj = new ${namespaced_class_name}($arg_list);
+	js_type_class_t *typeClass;
+	const char* type = cobj->getObjectType();
+	HASH_FIND_STR(_js_global_type_ht, type, typeClass);
+	assert(typeClass);
+	JSObject *obj = JS_NewObject(cx, typeClass->jsclass, typeClass->proto, typeClass->parentProto);
 	JS_SetPrivate(obj, cobj);
+\#ifdef COCOS2D_JAVASCRIPT
+	JS_AddObjectRoot(cx, &obj);
+\#endif
 	JS_SET_RVAL(cx, vp, OBJECT_TO_JSVAL(obj));
 	// link the native object with the javascript object
 	js_proxy_t *p;

@@ -82,7 +82,7 @@ ScriptingCore::ScriptingCore()
 	}
 
 	// register some global functions
-	JS_DefineFunction(this->cx, global, "require", ScriptingCore::executeScript, 0, JSPROP_READONLY | JSPROP_PERMANENT);
+	JS_DefineFunction(this->cx, global, "require", ScriptingCore::executeScript, 1, JSPROP_READONLY | JSPROP_PERMANENT);
 	JS_DefineFunction(this->cx, global, "log", ScriptingCore::log, 0, JSPROP_READONLY | JSPROP_PERMANENT);
 	JS_DefineFunction(this->cx, global, "executeScript", ScriptingCore::executeScript, 1, JSPROP_READONLY | JSPROP_PERMANENT);
 	JS_DefineFunction(this->cx, global, "forceGC", ScriptingCore::forceGC, 0, JSPROP_READONLY | JSPROP_PERMANENT);
@@ -125,16 +125,17 @@ void ScriptingCore::runScript(const char *path)
 	const char *realPath = NULL;
     futil->fullPathFromRelativePath(path);
 #endif
+
+    if (!realPath) {
+        return;
+    }
+
 	unsigned char *content = NULL;
 	unsigned long contentSize = 0;
+
     content = futil->getFileData(realPath, "r", &contentSize);
 	if (content && contentSize) {
-		JSBool ok;
-		jsval rval;
-		ok = JS_EvaluateScript(this->cx, this->global, (char *)content, contentSize, path, 1, &rval);
-		if (ok == JS_FALSE) {
-			js_log("error evaluating script:\n%s", content);
-		}
+        ScriptingCore::getInstance()->evalString((const char*) content, NULL);
 		free(content);
 	}
 }

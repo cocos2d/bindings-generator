@@ -10,13 +10,16 @@
 #define __SCRIPTING_CORE_H__
 
 #include <assert.h>
+#include "cocos2d.h"
 #include "uthash.h"
 #include "jsapi.h"
 #include "spidermonkey_specifics.h"
 
 void js_log(const char *format, ...);
 
-class ScriptingCore
+using namespace cocos2d;
+
+class ScriptingCore : public CCScriptEngineProtocol
 {
 	JSRuntime *rt;
 	JSContext *cx;
@@ -30,7 +33,71 @@ public:
 		static ScriptingCore instance;
 		return &instance;
 	};
-	
+
+	lua_State* getLuaState(void) {}
+    
+    /**
+     @brief Remove CCObject from lua state
+     @param object to remove
+     */
+	virtual void removeCCObjectByID(int nLuaID) {}
+    
+    /**
+     @brief Remove Lua function handler
+     */
+	virtual void removeLuaHandler(int nHandler) {}
+    
+    /**
+     @brief Add a path to find lua files in
+     @param path to be added to the Lua path
+     */
+	virtual void addSearchPath(const char* path) {}
+    
+    /**
+     @brief Execute script code contained in the given string.
+     @param codes holding the valid script code that should be executed.
+     @return 0 if the string is excuted correctly.
+     @return other if the string is excuted wrongly.
+     */
+	virtual int executeString(const char* codes) {}
+    
+    /**
+     @brief Execute a script file.
+     @param filename String object holding the filename of the script file that is to be executed
+     */
+    virtual  int executeScriptFile(const char* filename) {}
+    
+    /**
+     @brief Execute a scripted global function.
+     @brief The function should not take any parameters and should return an integer.
+     @param functionName String object holding the name of the function, in the global script environment, that is to be executed.
+     @return The integer value returned from the script function.
+     */
+	virtual int executeGlobalFunction(const char* functionName) {}
+    
+    /**
+     @brief Execute a function by handler
+     @param The function handler
+     @param Number of parameters
+     @return The integer value returned from the script function.
+     */
+	virtual int executeFunctionByHandler(int nHandler, int numArgs = 0) {}
+    virtual int executeFunctionWithIntegerData(int nHandler, int data, CCNode *self);
+	virtual int executeFunctionWithFloatData(int nHandler, float data) {}
+	virtual int executeFunctionWithBooleanData(int nHandler, bool data) {}
+	virtual int executeFunctionWithCCObject(int nHandler, CCObject* pObject, const char* typeName) {}    
+	virtual int pushIntegerToLuaStack(int data) {}
+	virtual int pushFloatToLuaStack(int data) {}
+	virtual int pushBooleanToLuaStack(int data) {}
+	virtual int pushCCObjectToLuaStack(CCObject* pObject, const char* typeName) {}
+    
+    // functions for excute touch event
+	virtual int executeTouchEvent(int nHandler, int eventType, CCTouch *pTouch) {}
+    virtual int executeTouchesEvent(int nHandler, int eventType, CCSet *pTouches, CCNode *self);
+    
+    // execute a schedule function
+	virtual int executeSchedule(int nHandler, float dt) {}
+
 	/**
 	 * will eval the specified string
 	 * @param string The string with the javascript code to be evaluated

@@ -10,10 +10,45 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "ScriptingCore.h"
+#include "cocos2d.h"
+#include "cocos2dx.hpp"
 
 js_proxy_t *_js_global_ht = NULL;
 js_type_class_t *_js_global_type_ht = NULL;
 char *_js_log_buf = NULL;
+
+static void executeJSFunctionFromReservedSpot(JSContext *cx, js_proxy_t *p, 
+                                              jsval &dataVal, jsval &retval) {
+    JSBool hasAction;
+    jsval temp_retval;
+    
+	//  if(p->jsclass->JSCLASS_HAS_RESERVED_SLOTS(1)) {
+	jsval func = JS_GetReservedSlot(p->obj, 0);
+	jsval funcRef;
+	JS_ConvertValue(cx, func, JSTYPE_FUNCTION, &funcRef);
+	JS_CallFunctionValue(cx, p->obj, funcRef, 1, &dataVal, &retval);
+	//  }
+}
+
+
+static void executeJSFunctionWithName(JSContext *cx, js_proxy_t *p, 
+                                      const char *funcName, jsval &dataVal,
+                                      jsval &retval) {
+    JSBool hasAction;
+    jsval temp_retval;
+	
+    if (JS_HasProperty(cx, p->obj, funcName, &hasAction) && hasAction) {
+        if(!JS_GetProperty(cx, p->obj, funcName, &temp_retval)) {
+            return;
+        }
+        if(temp_retval == JSVAL_VOID) {
+            return;
+        }
+        JS_CallFunctionName(cx, p->obj, funcName, 
+                            1, &dataVal, &retval);
+    }
+	
+}
 
 void js_log(const char *format, ...) {
 	if (_js_log_buf == NULL) {
@@ -73,6 +108,7 @@ bool ScriptingCore::evalString(const char *string, jsval *outVal)
 
 void ScriptingCore::runScript(const char *path)
 {
+	cocos2d::CCFileUtils *futil = cocos2d::CCFileUtils::sharedFileUtils();
 #ifdef DEBUG
 	/**
 	 * dpath should point to the parent directory of the "JS" folder. If this is
@@ -84,15 +120,14 @@ void ScriptingCore::runScript(const char *path)
 //	std::string dpath("/Users/rabarca/Desktop/testjs/testjs/");
 	std::string dpath("");
 	dpath += path;
-	const char *realPath = NULL;
-    //cocos2d::CCFileUtils::fullPathFromRelativePath(dpath.c_str());
+	const char *realPath = futil->fullPathFromRelativePath(dpath.c_str());
 #else
 	const char *realPath = NULL;
-    //cocos2d::CCFileUtils::fullPathFromRelativePath(path);
+    futil->fullPathFromRelativePath(path);
 #endif
 	unsigned char *content = NULL;
-	size_t contentSize = 0;
-    //cocos2d::CCFileUtils::ccLoadFileIntoMemory(realPath, &content);
+	unsigned long contentSize = 0;
+    content = futil->getFileData(realPath, "r", &contentSize);
 	if (content && contentSize) {
 		JSBool ok;
 		jsval rval;
@@ -113,4 +148,44 @@ ScriptingCore::~ScriptingCore()
 		free(_js_log_buf);
 		_js_log_buf = NULL;
 	}
+}
+
+int ScriptingCore::executeFunctionWithIntegerData(int nHandler, int data, CCNode *self) {
+    js_proxy_t * p;
+    JS_GET_PROXY(p, self);
+    
+    assert(p);    
+    
+    jsval retval;
+    jsval dataVal = INT_TO_JSVAL(1);
+    
+    std::string funcName = "";
+    if(data == kCCNodeOnEnter) {
+        executeJSFunctionWithName(this->cx, p, "onEnter", dataVal, retval);
+    } else if(data == kCCNodeOnExit) {
+        executeJSFunctionWithName(this->cx, p, "onExit", dataVal, retval);
+    } else if(data == kCCMenuItemActivated) {
+        executeJSFunctionFromReservedSpot(this->cx, p, dataVal, retval);
+    }
+	
+    
+	//    JSFunction *c = (JSFunction *)p->ptr;
+	//    
+	//    JS_CallFunction(this->cx, p->obj, c, 1, &dataVal, retval);
+    //  getJSHandler(self, nHandler);                                                                                                                                                                                                           
+    return 1;
+}
+
+
+int ScriptingCore::executeTouchesEvent(int nHandler, int eventType, CCSet *pTouches, CCNode *self) {
+	//    js_proxy_t * p;
+	//    JS_GET_PROXY(p, self);
+	//    
+	//    assert(p);
+	//    
+	//    jsval *retval;
+	//    jsval dataVal = INT_TO_JSVAL(eventType);
+	//    JS_CallFunction(this->cx, p->obj, (JSFunction *)p->ptr, 1, &dataVal, retval);
+	//    //getJSHandler(self, nHandler);
+    return 1;
 }

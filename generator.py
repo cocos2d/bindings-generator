@@ -288,6 +288,7 @@ class NativeClass(object):
 		self.methods = {}
 		self.static_methods = {}
 		self.generator = generator
+		self.is_abstract = self.class_name in generator.abstract_classes
 		self._current_visibility = cindex.AccessSpecifierKind.PRIVATE
 		if generator.remove_prefix:
 			self.target_class_name = re.sub(generator.remove_prefix, '', self.class_name)
@@ -400,7 +401,7 @@ class NativeClass(object):
 							previous_m.append(m)
 						else:
 							self.methods[m.func_name] = NativeOverloadedFunction([m, previous_m])
-		elif self._current_visibility == cindex.AccessSpecifierKind.PUBLIC and cursor.kind == cindex.CursorKind.CONSTRUCTOR and not self.class_name in self.generator.abstract_classes:
+		elif self._current_visibility == cindex.AccessSpecifierKind.PUBLIC and cursor.kind == cindex.CursorKind.CONSTRUCTOR and not self.is_abstract:
 			m = NativeFunction(cursor)
 			m.is_constructor = True
 			if not self.methods.has_key('constructor'):

@@ -11,7 +11,6 @@
 #include <stdlib.h>
 #include "ScriptingCore.h"
 #include "cocos2d.h"
-#include "cocos2dx.hpp"
 
 js_proxy_t *_native_js_global_ht = NULL;
 js_proxy_t *_js_native_global_ht = NULL;

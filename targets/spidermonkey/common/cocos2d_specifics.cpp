@@ -13,8 +13,8 @@ JSObject* bind_menu_item(JSContext *cx, T* nativeObj, jsval callback) {
 	} else {
 		js_type_class_t *classType;
 		TypeTest<T> t;
-		const char* type = t.s_name();
-		HASH_FIND_STR(_js_global_type_ht, type, classType);
+		uint32_t typeId = t.s_id();
+		HASH_FIND_INT(_js_global_type_ht, &typeId, classType);
 		assert(classType);
 		JSObject *tmp = JS_NewObject(cx, classType->jsclass, classType->proto, classType->parentProto);
 		if (callback != JSVAL_VOID)

@@ -128,10 +128,10 @@ conversions:
       ${($level + 3) * '\t'}${out_value} = OBJECT_TO_JSVAL(p->obj);
       ${($level + 2) * '\t'}} else {
       ${($level + 3) * '\t'}// create a new js obj of that class
-      ${($level + 3) * '\t'}TypeTest<${ntype}> t;
+      ${($level + 3) * '\t'}TypeTest<${ntype.replace("*", "")}> t;
       ${($level + 3) * '\t'}js_type_class_t *p;
-      ${($level + 3) * '\t'}const char* type = t.s_name();
-      ${($level + 3) * '\t'}HASH_FIND_STR(_js_global_type_ht, type, p);
+      ${($level + 3) * '\t'}uint32_t typeId = t.s_id();
+      ${($level + 3) * '\t'}HASH_FIND_INT(_js_global_type_ht, &typeId, p);
       ${($level + 3) * '\t'}assert(p);
       ${($level + 3) * '\t'}JSObject *_tmp = JS_NewObject(cx, p->jsclass, p->proto, p->parentProto);
       ${($level + 3) * '\t'}#ifdef COCOS2D_VERSION

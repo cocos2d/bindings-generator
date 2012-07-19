@@ -15,7 +15,7 @@ extern js_proxy_t *_native_js_global_ht;
 extern js_proxy_t *_js_native_global_ht;
 
 typedef struct js_type_class {
-	const char* type;
+	uint32_t type;
 	JSClass *jsclass;
 	JSObject *proto;
 	JSObject *parentProto;

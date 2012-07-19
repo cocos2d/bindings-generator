@@ -41,8 +41,8 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 	${namespaced_class_name}* cobj = new ${namespaced_class_name}($arg_list);
 	TypeTest<${namespaced_class_name}> t;
 	js_type_class_t *typeClass;
-	const char* type = t.s_name();
-	HASH_FIND_STR(_js_global_type_ht, type, typeClass);
+	uint32_t typeId = t.s_id();
+	HASH_FIND_INT(_js_global_type_ht, &typeId, typeClass);
 	assert(typeClass);
 	JSObject *obj = JS_NewObject(cx, typeClass->jsclass, typeClass->proto, typeClass->parentProto);
 \#ifdef COCOS2D_JAVASCRIPT

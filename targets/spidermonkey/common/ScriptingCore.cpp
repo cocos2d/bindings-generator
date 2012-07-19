@@ -97,17 +97,17 @@ ScriptingCore::ScriptingCore()
 	JS_DefineFunction(this->cx, global, "forceGC", ScriptingCore::forceGC, 0, JSPROP_READONLY | JSPROP_PERMANENT);
 }
 
-bool ScriptingCore::evalString(const char *string, jsval *outVal)
+bool ScriptingCore::evalString(const char *string, jsval *outVal, const char *filename)
 {
 	jsval rval;
 	JSString *str;
 	JSBool ok;
-	const char *filename = "noname";
+	const char *fname = (filename ? filename : "noname");
 	uint32_t lineno = 0;
 	if (outVal == NULL) {
 		outVal = &rval;
 	}
-	ok = JS_EvaluateScript(cx, global, string, strlen(string), filename, lineno, outVal);
+	ok = JS_EvaluateScript(cx, global, string, strlen(string), fname, lineno, outVal);
 	if (ok == JS_FALSE) {
 		js_log("error evaluating script:\n%s", string);
 	}
@@ -144,7 +144,7 @@ void ScriptingCore::runScript(const char *path)
 
     content = futil->getFileData(realPath, "r", &contentSize);
 	if (content && contentSize) {
-        ScriptingCore::getInstance()->evalString((const char*) content, NULL);
+		ScriptingCore::getInstance()->evalString((const char*) content, NULL);
 		free(content);
 	}
 }

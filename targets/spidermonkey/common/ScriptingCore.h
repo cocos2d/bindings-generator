@@ -104,7 +104,7 @@ public:
 	 * @param outVal The jsval that will hold the return value of the evaluation.
 	 * Can be NULL.
 	 */
-	bool evalString(const char *string, jsval *outVal);
+	bool evalString(const char *string, jsval *outVal, const char *filename = NULL);
 	
 	/**
 	 * will run the specified string

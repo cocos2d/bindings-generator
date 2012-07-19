@@ -77,8 +77,9 @@ void js_register_${generator.prefix}_${current_class.class_name}(JSContext *cx, 
 		st_funcs);
 
 	// add the proto and JSClass to the type->js info hash table
+	TypeTest<${current_class.namespaced_class_name}> t;
 	js_type_class_t *p;
-	const char* type = ${current_class.namespaced_class_name}::OBJECT_TYPE;
+	const char* type = t.s_name();
 	HASH_FIND_STR(_js_global_type_ht, type, p);
 	if (!p) {
 		printf("jsclass for %s: %p\n", "${current_class.class_name}", js_${generator.prefix}_${current_class.class_name}_class);

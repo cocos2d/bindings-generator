@@ -12,7 +12,8 @@ JSObject* bind_menu_item(JSContext *cx, T* nativeObj, jsval callback) {
 		return p->obj;
 	} else {
 		js_type_class_t *classType;
-		const char* type = nativeObj->getObjectType();
+		TypeTest<T> t;
+		const char* type = t.s_name();
 		HASH_FIND_STR(_js_global_type_ht, type, classType);
 		assert(classType);
 		JSObject *tmp = JS_NewObject(cx, classType->jsclass, classType->proto, classType->parentProto);
@@ -192,6 +193,14 @@ jsval anonEvaluate(JSContext *cx, JSObject *thisObj, const char* string) {
 	return JSVAL_VOID;
 }
 
+JSBool js_platform(JSContext *cx, uint32_t argc, jsval *vp)
+{
+	JSString *str = JS_NewStringCopyZ(cx, "mobile");
+	jsval out = STRING_TO_JSVAL(str);
+	JS_SET_RVAL(cx, vp, out);
+	return JS_TRUE;
+}
+
 void register_cocos2dx_js_extensions()
 {
 	JSContext *cx = ScriptingCore::getInstance()->getGlobalContext();
@@ -209,6 +218,7 @@ void register_cocos2dx_js_extensions()
 	}
 
 	JS_DefineFunction(cx, global, "__associateObjWithNative", js_cocos2dx_swap_native_object, 2, JSPROP_READONLY | JSPROP_PERMANENT);
+	JS_DefineFunction(cx, global, "__getPlatform", js_platform, 0, JSPROP_READONLY | JSPROP_PERMANENT);
 
 	// add the properties
 	JSObject *tmpObj;

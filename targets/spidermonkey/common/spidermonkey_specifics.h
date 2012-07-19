@@ -1,6 +1,7 @@
 #ifndef __SPIDERMONKEY_SPECIFICS_H__
 #define __SPIDERMONKEY_SPECIFICS_H__
 
+#include <typeinfo>
 #include "jsapi.h"
 #include "uthash.h"
 
@@ -59,11 +60,25 @@ if (!native_obj) { \
 	return JS_FALSE; \
 }
 
-#define ADD_OBJECT_TYPE(klass) \
-static const char* OBJECT_TYPE; \
-const char* getObjectType() { return klass::OBJECT_TYPE; }
+template< typename DERIVED >
+class TypeTest
+{
+	public:
+	static int s_id()
+	{
+		// return id unique for DERIVED
+		// NOT SURE IT WILL BE REALLY UNIQUE FOR EACH CLASS!!
+		static const int id = reinterpret_cast<int>(typeid( DERIVED ).name());
+		return id;
+	}
 
-#define ADD_OBJECT_TYPE_DECL(klass) \
-const char* klass::OBJECT_TYPE = #klass;
+	static const char* s_name()
+	{
+		// return id unique for DERIVED
+		// ALWAYS VALID BUT STRING, NOT INT - BUT VALID AND CROSS-PLATFORM/CROSS-VERSION COMPATBLE
+		// AS FAR AS YOU KEEP THE CLASS NAME
+		return typeid( DERIVED ).name();
+	}
+};
 
 #endif

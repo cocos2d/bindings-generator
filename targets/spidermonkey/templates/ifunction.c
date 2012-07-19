@@ -39,8 +39,9 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 #end if
 #if $is_constructor
 	${namespaced_class_name}* cobj = new ${namespaced_class_name}($arg_list);
+	TypeTest<${namespaced_class_name}> t;
 	js_type_class_t *typeClass;
-	const char* type = cobj->getObjectType();
+	const char* type = t.s_name();
 	HASH_FIND_STR(_js_global_type_ht, type, typeClass);
 	assert(typeClass);
 	JSObject *obj = JS_NewObject(cx, typeClass->jsclass, typeClass->proto, typeClass->parentProto);
@@ -58,6 +59,7 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 	${ret_type.from_native({"generator": $generator,
 							"in_value": "ret",
 							"out_value": "jsret",
+							"ntype": str($ret_type),
 							"level": 0})};
 	JS_SET_RVAL(cx, vp, jsret);
 	#else

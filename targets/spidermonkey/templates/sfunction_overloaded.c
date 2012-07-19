@@ -27,6 +27,7 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 		${func.ret_type.from_native({"generator": $generator,
 									 "in_value": "ret",
 									 "out_value": "jsret",
+									 "ntype": str($func.ret_type),
 									 "level": 2})};
 		JS_SET_RVAL(cx, vp, jsret);
 		#else

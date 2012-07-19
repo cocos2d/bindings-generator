@@ -13,7 +13,8 @@
 #include "cocos2d.h"
 #include "cocos2dx.hpp"
 
-js_proxy_t *_js_global_ht = NULL;
+js_proxy_t *_native_js_global_ht = NULL;
+js_proxy_t *_js_native_global_ht = NULL;
 js_type_class_t *_js_global_type_ht = NULL;
 char *_js_log_buf = NULL;
 
@@ -158,6 +159,8 @@ int ScriptingCore::executeFunctionWithIntegerData(int nHandler, int data, CCNode
     
     jsval retval;
     jsval dataVal = INT_TO_JSVAL(1);
+	js_proxy_t *proxy;
+	JS_GET_PROXY(proxy, self);
     
     std::string funcName = "";
     if(data == kCCNodeOnEnter) {
@@ -165,6 +168,7 @@ int ScriptingCore::executeFunctionWithIntegerData(int nHandler, int data, CCNode
     } else if(data == kCCNodeOnExit) {
         executeJSFunctionWithName(this->cx, p, "onExit", dataVal, retval);
     } else if(data == kCCMenuItemActivated) {
+		dataVal = (proxy ? OBJECT_TO_JSVAL(proxy->obj) : JSVAL_NULL);
         executeJSFunctionFromReservedSpot(this->cx, p, dataVal, retval);
     }
 	

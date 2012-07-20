@@ -3,7 +3,9 @@
 #include "cocos2d_specifics.hpp"
 
 static void addCallBackAndThis(JSObject *obj, jsval callback, jsval &thisObj) {
-    ScriptingCore::getInstance()->setReservedSpot(0, obj, callback);
+    if(callback != JSVAL_VOID) {
+        ScriptingCore::getInstance()->setReservedSpot(0, obj, callback);
+    }
     if(thisObj != JSVAL_VOID) {
         ScriptingCore::getInstance()->setReservedSpot(1, obj, thisObj);
     }

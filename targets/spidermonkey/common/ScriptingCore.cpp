@@ -27,6 +27,7 @@ static void executeJSFunctionFromReservedSpot(JSContext *cx, js_proxy_t *p,
     //  if(p->jsclass->JSCLASS_HAS_RESERVED_SLOTS(1)) {
     jsval func = JS_GetReservedSlot(p->obj, 0);
     
+    if(func == JSVAL_VOID) { return; }
     jsval thisObj = JS_GetReservedSlot(p->obj, 1);
     if(thisObj == JSVAL_VOID) {
         JS_CallFunctionValue(cx, p->obj, func, 1, &dataVal, &retval);

@@ -2,36 +2,48 @@
 #include "cocos2dx.hpp"
 #include "cocos2d_specifics.hpp"
 
-template<class T>
-JSObject* bind_menu_item(JSContext *cx, T* nativeObj, jsval callback) {
-	js_proxy_t *p;
-	ScriptingCore *core = ScriptingCore::getInstance();
-	JS_GET_PROXY(p, nativeObj);
-	if (p) {
-		core->setReservedSpot(0, p->obj, callback);
-		return p->obj;
-	} else {
-		js_type_class_t *classType;
-		TypeTest<T> t;
-		uint32_t typeId = t.s_id();
-		HASH_FIND_INT(_js_global_type_ht, &typeId, classType);
-		assert(classType);
-		JSObject *tmp = JS_NewObject(cx, classType->jsclass, classType->proto, classType->parentProto);
-		if (callback != JSVAL_VOID)
-			core->setReservedSpot(0, tmp, callback);
-		// bind nativeObj <-> JSObject
-		js_proxy_t *proxy;
-		JS_NEW_PROXY(proxy, nativeObj, tmp);
-		return tmp;
-	}
+static void addCallBackAndThis(JSObject *obj, jsval callback, jsval thisObj) {
+    ScriptingCore::getInstance()->setReservedSpot(0, obj, callback);
+    if(thisObj == JSVAL_VOID) {
+        ScriptingCore::getInstance()->setReservedSpot(1, obj, thisObj);
+    }
 }
 
+template<class T>
+JSObject* bind_menu_item(JSContext *cx, T* nativeObj, jsval callback, jsval thisObj) {
+    
+    js_proxy_t *p;
+    JS_GET_PROXY(p, nativeObj);
+    if (p) {
+        jsval vp;
+        JS_ConvertValue(cx, callback, JSTYPE_FUNCTION, &vp);
+        addCallBackAndThis(p->obj, callback, thisObj);
+        return p->obj;
+    } else {
+
+      TypeTest<T> t;
+      uint32_t typeId = t.s_id();
+      HASH_FIND_INT(_js_global_type_ht, &typeId, classType);
+      
+      assert(classType);
+      JSObject *tmp = JS_NewObject(cx, classType->jsclass, classType->proto, classType->parentProto);
+
+      // bind nativeObj <-> JSObject
+      js_proxy_t *proxy;
+      JS_NEW_PROXY(proxy, nativeObj, tmp);
+        
+      addCallBackAndThis(tmp, callback, thisObj);
+      
+      return tmp;
+    }
+}
 JSBool js_cocos2dx_CCMenuItem_create(JSContext *cx, uint32_t argc, jsval *vp)
 {
 	if (argc == 1) {
 		jsval *argv = JS_ARGV(cx, vp);
 		cocos2d::CCMenuItem* ret = cocos2d::CCMenuItem::create();
-		JSObject *obj = bind_menu_item<cocos2d::CCMenuItem>(cx, ret, argv[0]);
+		JSObject *obj = bind_menu_item<cocos2d::CCMenuItem>(cx, ret, argv[0],
+                                                            (argc == 2 ? argv[1] : JSVAL_VOID));
 		JS_SET_RVAL(cx, vp, OBJECT_TO_JSVAL(obj));
 		return JS_TRUE;
 	}
@@ -63,7 +75,7 @@ JSBool js_cocos2dx_CCMenuItemSprite_create(JSContext *cx, uint32_t argc, jsval *
 			TEST_NATIVE_OBJECT(cx, arg2);
 		}
 		cocos2d::CCMenuItemSprite* ret = cocos2d::CCMenuItemSprite::create(arg0, arg1, arg2);
-		JSObject *obj = bind_menu_item<cocos2d::CCMenuItemSprite>(cx, ret, (argc == 4 ? argv[3] : JSVAL_VOID));
+		JSObject *obj = bind_menu_item<cocos2d::CCMenuItemSprite>(cx, ret, (argc >= 4 ? argv[3] : JSVAL_VOID), (argc == 5 ? argv[4] : JSVAL_VOID));
 		JS_SET_RVAL(cx, vp, OBJECT_TO_JSVAL(obj));
 		return JS_TRUE;
 	}
@@ -78,7 +90,7 @@ JSBool js_cocos2dx_CCMenuItemImage_create(JSContext *cx, uint32_t argc, jsval *v
 		const char *arg1; do { JSString *tmp = JS_ValueToString(cx, argv[1]); arg1 = JS_EncodeString(cx, tmp); } while (0);
 		const char *arg2; do { JSString *tmp = JS_ValueToString(cx, argv[2]); arg2 = JS_EncodeString(cx, tmp); } while (0);
 		cocos2d::CCMenuItemImage* ret = cocos2d::CCMenuItemImage::create(arg0, arg1, arg2);
-		JSObject *obj = bind_menu_item<cocos2d::CCMenuItemImage>(cx, ret, (argc == 4 ? argv[3] : JSVAL_VOID));
+		JSObject *obj = bind_menu_item<cocos2d::CCMenuItemImage>(cx, ret, (argc >= 4 ? argv[3] : JSVAL_VOID), (argc == 5 ? argv[4] : JSVAL_VOID));
 		JS_SET_RVAL(cx, vp, OBJECT_TO_JSVAL(obj));
 		return JS_TRUE;
 	}
@@ -95,7 +107,7 @@ JSBool js_cocos2dx_CCMenuItemLabel_create(JSContext *cx, uint32_t argc, jsval *v
 		cocos2d::CCNode* arg0 = (cocos2d::CCNode*)(proxy ? proxy->ptr : NULL);
 		TEST_NATIVE_OBJECT(cx, arg0)
 		cocos2d::CCMenuItemLabel* ret = cocos2d::CCMenuItemLabel::create(arg0);
-		JSObject *obj = bind_menu_item<cocos2d::CCMenuItemLabel>(cx, ret, (argc == 2 ? argv[1] : JSVAL_VOID));
+		JSObject *obj = bind_menu_item<cocos2d::CCMenuItemLabel>(cx, ret, (argc >= 2 ? argv[1] : JSVAL_VOID),  (argc == 3 ? argv[2] : JSVAL_VOID));
 		JS_SET_RVAL(cx, vp, OBJECT_TO_JSVAL(obj));
 		return JS_TRUE;
 	}
@@ -112,7 +124,7 @@ JSBool js_cocos2dx_CCMenuItemAtlasFont_create(JSContext *cx, uint32_t argc, jsva
 		int arg3; if (!JS_ValueToInt32(cx, argv[3], &arg3)) return JS_FALSE;
 		int arg4; if (!JS_ValueToInt32(cx, argv[4], &arg4)) return JS_FALSE;
 		cocos2d::CCMenuItemAtlasFont* ret = cocos2d::CCMenuItemAtlasFont::create(arg0, arg1, arg2, arg3, arg4);
-		JSObject *obj = bind_menu_item<cocos2d::CCMenuItemAtlasFont>(cx, ret, (argc == 6 ? argv[5] : JSVAL_VOID));
+		JSObject *obj = bind_menu_item<cocos2d::CCMenuItemAtlasFont>(cx, ret, (argc >= 6 ? argv[5] : JSVAL_VOID), (argc == 7 ? argv[6] : JSVAL_VOID));
 		JS_SET_RVAL(cx, vp, OBJECT_TO_JSVAL(obj));
 		return JS_TRUE;
 	}
@@ -125,7 +137,7 @@ JSBool js_cocos2dx_CCMenuItemFont_create(JSContext *cx, uint32_t argc, jsval *vp
 		jsval *argv = JS_ARGV(cx, vp);
 		const char *arg0; do { JSString *tmp = JS_ValueToString(cx, argv[0]); arg0 = JS_EncodeString(cx, tmp); } while (0);
 		cocos2d::CCMenuItemFont* ret = cocos2d::CCMenuItemFont::create(arg0);
-		JSObject *obj = bind_menu_item<cocos2d::CCMenuItemFont>(cx, ret, (argc == 2 ? argv[1] : JSVAL_VOID));
+		JSObject *obj = bind_menu_item<cocos2d::CCMenuItemFont>(cx, ret, (argc >= 2 ? argv[1] : JSVAL_VOID), (argc == 3 ? argv[2] : JSVAL_VOID));
 		JS_SET_RVAL(cx, vp, OBJECT_TO_JSVAL(obj));
 		return JS_TRUE;
 	}
@@ -137,7 +149,7 @@ JSBool js_cocos2dx_CCMenuItemToggle_create(JSContext *cx, uint32_t argc, jsval *
 	if (argc >= 1) {
 		jsval *argv = JS_ARGV(cx, vp);
 		cocos2d::CCMenuItemToggle* ret = cocos2d::CCMenuItemToggle::create(NULL, NULL, NULL);
-		JSObject *obj = bind_menu_item<cocos2d::CCMenuItemToggle>(cx, ret, argv[0]);
+		JSObject *obj = bind_menu_item<cocos2d::CCMenuItemToggle>(cx, ret, argv[0], (argc == 2 ? argv[1] : JSVAL_VOID));
 		for (int i=1; i < argc; i++) {
 			js_proxy_t *proxy;
 			JSObject *tmpObj = JSVAL_TO_OBJECT(argv[i]);

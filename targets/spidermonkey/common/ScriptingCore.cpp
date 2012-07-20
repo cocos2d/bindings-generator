@@ -26,12 +26,20 @@ static void executeJSFunctionFromReservedSpot(JSContext *cx, js_proxy_t *p,
     JSBool hasAction;
     jsval temp_retval;
     
-	//  if(p->jsclass->JSCLASS_HAS_RESERVED_SLOTS(1)) {
-	jsval func = JS_GetReservedSlot(p->obj, 0);
-	jsval funcRef;
-	JS_ConvertValue(cx, func, JSTYPE_FUNCTION, &funcRef);
-	JS_CallFunctionValue(cx, p->obj, funcRef, 1, &dataVal, &retval);
-	//  }
+    
+    //  if(p->jsclass->JSCLASS_HAS_RESERVED_SLOTS(1)) {
+    jsval func = JS_GetReservedSlot(p->obj, 0);
+    jsval funcRef;
+    JS_ConvertValue(cx, func, JSTYPE_FUNCTION, &funcRef);
+    
+    jsval thisObj = JS_GetReservedSlot(p->obj, 1);
+    if(thisObj == JSVAL_VOID) {
+        JS_CallFunctionValue(cx, p->obj, funcRef, 1, &dataVal, &retval);
+    } else {
+        assert(!JSVAL_IS_PRIMITIVE(thisObj));
+        JS_CallFunctionValue(cx, JSVAL_TO_OBJECT(thisObj), funcRef, 1, &dataVal, &retval);
+    }        
+    //  }
 }
 
 
@@ -182,23 +190,107 @@ int ScriptingCore::executeFunctionWithIntegerData(int nHandler, int data, CCNode
     }
 	
     
-	//    JSFunction *c = (JSFunction *)p->ptr;
-	//    
-	//    JS_CallFunction(this->cx, p->obj, c, 1, &dataVal, retval);
-    //  getJSHandler(self, nHandler);                                                                                                                                                                                                           
+    
     return 1;
 }
 
 
-int ScriptingCore::executeTouchesEvent(int nHandler, int eventType, CCSet *pTouches, CCNode *self) {
-	//    js_proxy_t * p;
-	//    JS_GET_PROXY(p, self);
-	//    
-	//    assert(p);
-	//    
-	//    jsval *retval;
-	//    jsval dataVal = INT_TO_JSVAL(eventType);
-	//    JS_CallFunction(this->cx, p->obj, (JSFunction *)p->ptr, 1, &dataVal, retval);
-	//    //getJSHandler(self, nHandler);
+int ScriptingCore::executeFunctionWithFloatData(int nHandler, float data, CCNode *self) {
+    
+    
+    js_proxy_t * p;
+    JS_GET_PROXY(p, self);
+    
+    assert(p);
+    
+    jsval retval;
+    jsval dataVal = DOUBLE_TO_JSVAL(data);
+    
+    std::string funcName = "";
+    
+    executeJSFunctionWithName(this->cx, p, "update", dataVal, retval);
+    
+    //    if(data == kCCNodeOnEnter) {
+    //        executeJSFunctionWithName(this->cx, p, "onEnter", dataVal, retval);
+    //    } else if(data == kCCNodeOnExit) {
+    //        executeJSFunctionWithName(this->cx, p, "onExit", dataVal, retval);
+    //    } else if(data == kCCMenuItemActivated) {
+    //        executeJSFunctionFromReservedSpot(this->cx, p, dataVal, retval);
+    //    }
+    
     return 1;
 }
+
+static void getTouchFuncName(int eventType, std::string &funcName) {
+    switch(eventType) {
+        case CCTOUCHBEGAN:
+            funcName = "ccTouchBegan";
+            break;
+        case CCTOUCHENDED:
+            funcName = "ccTouchEnded";
+            break;
+        case CCTOUCHMOVED:
+            funcName = "ccTouchMoved";
+            break;
+        case CCTOUCHCANCELLED:
+            funcName = "ccTouchCancelled";
+            break;
+    }
+    
+}
+
+
+static void getJSTouchObject(JSContext *cx, CCTouch *x, jsval &jsret) {
+    
+    js_type_class_t *p;
+    const char* type = x->getObjectType();
+    HASH_FIND_STR(_js_global_type_ht, type, p);
+    assert(p);
+    JSObject *_tmp = JS_NewObject(cx, p->jsclass, p->proto, p->parentProto);
+
+    js_proxy_t *proxy;
+    JS_NEW_PROXY(proxy, x, _tmp);
+    
+    jsret = OBJECT_TO_JSVAL(_tmp);
+    
+}
+
+
+int ScriptingCore::executeTouchesEvent(int nHandler, int eventType, 
+                                       CCSet *pTouches, CCNode *self) {
+    
+    jsval retval;
+    
+    std::string funcName;
+    getTouchFuncName(eventType, funcName);
+    
+    JSObject *jsretArr = JS_NewArrayObject(this->cx, 0, NULL);
+    int count = 0;
+    for(CCSetIterator it = pTouches->begin(); it != pTouches->end(); ++it, ++count) {
+        jsval jsret;
+        getJSTouchObject(this->cx, (CCTouch *) *it, jsret);
+        if(!JS_SetElement(this->cx, jsretArr, count, &jsret)) {
+            break;
+        }
+    }
+    
+    js_proxy_t *lP;
+    JS_GET_PROXY(lP, self);
+    assert(lP);
+    
+    jsval jsretArrVal = OBJECT_TO_JSVAL(jsretArr);
+    executeJSFunctionWithName(this->cx, lP, funcName.c_str(), jsretArrVal, retval);
+    
+    return 1;
+}
+
+
+int ScriptingCore::executeSchedule(int nHandler, float dt, CCNode *self) {
+    
+    executeFunctionWithFloatData(nHandler, dt, self);
+    return 1;
+}
+
+
+
+

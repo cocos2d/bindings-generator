@@ -83,21 +83,22 @@ public:
      */
 	virtual int executeFunctionByHandler(int nHandler, int numArgs = 0) {}
     virtual int executeFunctionWithIntegerData(int nHandler, int data, CCNode *self);
-	virtual int executeFunctionWithFloatData(int nHandler, float data) {}
-	virtual int executeFunctionWithBooleanData(int nHandler, bool data) {}
-	virtual int executeFunctionWithCCObject(int nHandler, CCObject* pObject, const char* typeName) {}    
-	virtual int pushIntegerToLuaStack(int data) {}
-	virtual int pushFloatToLuaStack(int data) {}
-	virtual int pushBooleanToLuaStack(int data) {}
-	virtual int pushCCObjectToLuaStack(CCObject* pObject, const char* typeName) {}
+    virtual int executeFunctionWithFloatData(int nHandler, float data, CCNode *self);
+    virtual int executeFunctionWithBooleanData(int nHandler, bool data) {}
+    virtual int executeFunctionWithCCObject(int nHandler, CCObject* pObject, const char* typeName) {}    
+    virtual int pushIntegerToLuaStack(int data) {}
+    virtual int pushFloatToLuaStack(int data) {}
+    virtual int pushBooleanToLuaStack(int data) {}
+    virtual int pushCCObjectToLuaStack(CCObject* pObject, const char* typeName) {}
     
     // functions for excute touch event
 	virtual int executeTouchEvent(int nHandler, int eventType, CCTouch *pTouch) {}
     virtual int executeTouchesEvent(int nHandler, int eventType, CCSet *pTouches, CCNode *self);
     
     // execute a schedule function
-	virtual int executeSchedule(int nHandler, float dt) {}
-
+    virtual int executeSchedule(int nHandler, float dt, CCNode *self);
+    
+    
 	/**
 	 * will eval the specified string
 	 * @param string The string with the javascript code to be evaluated

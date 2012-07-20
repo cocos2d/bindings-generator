@@ -105,13 +105,13 @@ public:
 	 * @param outVal The jsval that will hold the return value of the evaluation.
 	 * Can be NULL.
 	 */
-	bool evalString(const char *string, jsval *outVal, const char *filename = NULL);
+	JSBool evalString(const char *string, jsval *outVal, const char *filename = NULL);
 	
 	/**
 	 * will run the specified string
 	 * @param string The path of the script to be run
 	 */
-	void runScript(const char *path);
+	JSBool runScript(const char *path);
 	
 	/**
 	 * @return the global context
@@ -153,12 +153,12 @@ public:
 	};
 
 	JSBool setReservedSpot(uint32_t i, JSObject *obj, jsval value) {
-        jsval vp;
-        if(JSVAL_IS_PRIMITIVE(value)) {
-            js_log("JS Value not a function/object");
-        }
-        JS_ConvertValue(this->cx, value, JSTYPE_FUNCTION, &vp);
-        JS_SetReservedSlot(obj, i, vp);
+//        jsval vp;
+//        if(JSVAL_IS_PRIMITIVE(value)) {
+//            js_log("JS Value not a function/object");
+//        }
+//        JS_ConvertValue(this->cx, value, JSTYPE_FUNCTION, &vp);
+        JS_SetReservedSlot(obj, i, value);
         return JS_TRUE;
     };
 
@@ -167,13 +167,14 @@ public:
 	 */
 	static JSBool executeScript(JSContext *cx, uint32_t argc, jsval *vp)
 	{
+		JSBool ret = JS_FALSE;
 		if (argc == 1) {
 			JSString *string;
 			if (JS_ConvertArguments(cx, argc, JS_ARGV(cx, vp), "S", &string) == JS_TRUE) {
-				ScriptingCore::getInstance()->runScript(JS_EncodeString(cx, string));
+				ret = ScriptingCore::getInstance()->runScript(JS_EncodeString(cx, string));
 			}
 		}
-		return JS_TRUE;
+		return ret;
 	};
 	
 	/**

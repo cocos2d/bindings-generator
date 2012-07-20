@@ -100,25 +100,18 @@ ScriptingCore::ScriptingCore()
     JS_DefineFunction(this->cx, global, "forceGC", ScriptingCore::forceGC, 0, JSPROP_READONLY | JSPROP_PERMANENT);
 }
 
-bool ScriptingCore::evalString(const char *string, jsval *outVal, const char *filename)
+JSBool ScriptingCore::evalString(const char *string, jsval *outVal, const char *filename)
 {
     jsval rval;
-    JSString *str;
-    JSBool ok;
     const char *fname = (filename ? filename : "noname");
     uint32_t lineno = 0;
     if (outVal == NULL) {
         outVal = &rval;
     }
-    ok = JS_EvaluateScript(cx, global, string, strlen(string), fname, lineno, outVal);
-    if (ok == JS_FALSE) {
-        js_log("error evaluating script:\n%s", string);
-    }
-    str = JS_ValueToString(cx, rval);
-    return ok;
+    return JS_EvaluateScript(cx, global, string, strlen(string), fname, lineno, outVal);
 }
 
-void ScriptingCore::runScript(const char *path)
+JSBool ScriptingCore::runScript(const char *path)
 {
     cocos2d::CCFileUtils *futil = cocos2d::CCFileUtils::sharedFileUtils();
 #ifdef DEBUG
@@ -139,22 +132,20 @@ void ScriptingCore::runScript(const char *path)
 #endif
 
     if (!realPath) {
-        return;
+        return JS_FALSE;
     }
 
     unsigned char *content = NULL;
     unsigned long contentSize = 0;
 
     content = futil->getFileData(realPath, "r", &contentSize);
+    JSBool ret = JS_FALSE;
     if (content && contentSize) {
-        JSBool ok;
         jsval rval;
-        ok = JS_EvaluateScript(this->cx, this->global, (char *)content, contentSize, path, 1, &rval);
-        if (ok == JS_FALSE) {
-            js_log("error evaluating script:\n%s", content);
-        }
+        ret = this->evalString((const char *)content, &rval, path);
         free(content);
     }
+    return ret;
 }
 
 ScriptingCore::~ScriptingCore()

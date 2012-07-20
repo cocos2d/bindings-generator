@@ -39,16 +39,16 @@ static size_t readFileInMemory(const char *path, unsigned char **buff) {
     return readBytes;
 }
 
-static void executeJSFunctionFromReservedSpot(JSContext *cx, js_proxy_t *p, 
+static void executeJSFunctionFromReservedSpot(JSContext *cx, JSObject *obj, 
                                               jsval &dataVal, jsval &retval) {
 
     //  if(p->jsclass->JSCLASS_HAS_RESERVED_SLOTS(1)) {
-    jsval func = JS_GetReservedSlot(p->obj, 0);
+    jsval func = JS_GetReservedSlot(obj, 0);
     
     if(func == JSVAL_VOID) { return; }
-    jsval thisObj = JS_GetReservedSlot(p->obj, 1);
+    jsval thisObj = JS_GetReservedSlot(obj, 1);
     if(thisObj == JSVAL_VOID) {
-        JS_CallFunctionValue(cx, p->obj, func, 1, &dataVal, &retval);
+        JS_CallFunctionValue(cx, obj, func, 1, &dataVal, &retval);
     } else {
         assert(!JSVAL_IS_PRIMITIVE(thisObj));
         JS_CallFunctionValue(cx, JSVAL_TO_OBJECT(thisObj), func, 1, &dataVal, &retval);
@@ -57,20 +57,20 @@ static void executeJSFunctionFromReservedSpot(JSContext *cx, js_proxy_t *p,
 }
 
 
-static void executeJSFunctionWithName(JSContext *cx, js_proxy_t *p, 
+static void executeJSFunctionWithName(JSContext *cx, JSObject *obj, 
                                       const char *funcName, jsval &dataVal,
                                       jsval &retval) {
     JSBool hasAction;
     jsval temp_retval;
-    
-    if (JS_HasProperty(cx, p->obj, funcName, &hasAction) && hasAction) {
-        if(!JS_GetProperty(cx, p->obj, funcName, &temp_retval)) {
+	
+    if (JS_HasProperty(cx, obj, funcName, &hasAction) && hasAction) {
+        if(!JS_GetProperty(cx, obj, funcName, &temp_retval)) {
             return;
         }
         if(temp_retval == JSVAL_VOID) {
             return;
         }
-        JS_CallFunctionName(cx, p->obj, funcName, 
+        JS_CallFunctionName(cx, obj, funcName, 
                             1, &dataVal, &retval);
     }
     
@@ -191,12 +191,12 @@ int ScriptingCore::executeFunctionWithIntegerData(int nHandler, int data, CCNode
     
     std::string funcName = "";
     if(data == kCCNodeOnEnter) {
-        executeJSFunctionWithName(this->cx, p, "onEnter", dataVal, retval);
+        executeJSFunctionWithName(this->cx, p->obj, "onEnter", dataVal, retval);
     } else if(data == kCCNodeOnExit) {
-        executeJSFunctionWithName(this->cx, p, "onExit", dataVal, retval);
+        executeJSFunctionWithName(this->cx, p->obj, "onExit", dataVal, retval);
     } else if(data == kCCMenuItemActivated) {
-        dataVal = (proxy ? OBJECT_TO_JSVAL(proxy->obj) : JSVAL_NULL);
-        executeJSFunctionFromReservedSpot(this->cx, p, dataVal, retval);
+		dataVal = (proxy ? OBJECT_TO_JSVAL(proxy->obj) : JSVAL_NULL);
+        executeJSFunctionFromReservedSpot(this->cx, p->obj, dataVal, retval);
     }
     
     
@@ -218,7 +218,7 @@ int ScriptingCore::executeFunctionWithFloatData(int nHandler, float data, CCNode
     
     std::string funcName = "";
     
-    executeJSFunctionWithName(this->cx, p, "update", dataVal, retval);
+    executeJSFunctionWithName(this->cx, p->obj, "update", dataVal, retval);
     
     //    if(data == kCCNodeOnEnter) {
     //        executeJSFunctionWithName(this->cx, p, "onEnter", dataVal, retval);
@@ -231,19 +231,37 @@ int ScriptingCore::executeFunctionWithFloatData(int nHandler, float data, CCNode
     return 1;
 }
 
+static void getTouchesFuncName(int eventType, std::string &funcName) {
+    switch(eventType) {
+        case CCTOUCHBEGAN:
+            funcName = "onTouchesBegan";
+            break;
+        case CCTOUCHENDED:
+            funcName = "onTouchesEnded";
+            break;
+        case CCTOUCHMOVED:
+            funcName = "onTouchesMoved";
+            break;
+        case CCTOUCHCANCELLED:
+            funcName = "onTouchesCancelled";
+            break;
+    }
+    
+}
+
 static void getTouchFuncName(int eventType, std::string &funcName) {
     switch(eventType) {
         case CCTOUCHBEGAN:
-            funcName = "ccTouchBegan";
+            funcName = "onTouchBegan";
             break;
         case CCTOUCHENDED:
-            funcName = "ccTouchEnded";
+            funcName = "onTouchEnded";
             break;
         case CCTOUCHMOVED:
-            funcName = "ccTouchMoved";
+            funcName = "onTouchMoved";
             break;
         case CCTOUCHCANCELLED:
-            funcName = "ccTouchCancelled";
+            funcName = "onTouchCancelled";
             break;
     }
     
@@ -269,7 +287,7 @@ int ScriptingCore::executeTouchesEvent(int nHandler, int eventType,
     jsval retval;
     
     std::string funcName;
-    getTouchFuncName(eventType, funcName);
+    getTouchesFuncName(eventType, funcName);
     
     JSObject *jsretArr = JS_NewArrayObject(this->cx, 0, NULL);
     int count = 0;
@@ -286,10 +304,65 @@ int ScriptingCore::executeTouchesEvent(int nHandler, int eventType,
     assert(lP);
     
     jsval jsretArrVal = OBJECT_TO_JSVAL(jsretArr);
-    executeJSFunctionWithName(this->cx, lP, funcName.c_str(), jsretArrVal, retval);
+    executeJSFunctionWithName(this->cx, lP->obj, funcName.c_str(), jsretArrVal, retval);
     
     return 1;
 }
+
+int ScriptingCore::executeCustomTouchesEvent(int eventType, 
+                                       CCSet *pTouches, JSObject *obj)
+{
+    
+    jsval retval;
+    std::string funcName;
+    getTouchesFuncName(eventType, funcName);
+    
+    JSObject *jsretArr = JS_NewArrayObject(this->cx, 0, NULL);
+    int count = 0;
+    for(CCSetIterator it = pTouches->begin(); it != pTouches->end(); ++it, ++count) {
+        jsval jsret;
+        getJSTouchObject(this->cx, (CCTouch *) *it, jsret);
+        if(!JS_SetElement(this->cx, jsretArr, count, &jsret)) {
+            break;
+        }
+    }
+    
+    jsval jsretArrVal = OBJECT_TO_JSVAL(jsretArr);
+    executeJSFunctionWithName(this->cx, obj, funcName.c_str(), jsretArrVal, retval);
+    
+    return 1;
+}
+
+
+int ScriptingCore::executeCustomTouchEvent(int eventType, 
+                                           CCTouch *pTouch, JSObject *obj) {
+    jsval retval;
+    std::string funcName;
+    getTouchFuncName(eventType, funcName);
+    
+    jsval jsTouch;
+    getJSTouchObject(this->cx, pTouch, jsTouch);
+    
+    executeJSFunctionWithName(this->cx, obj, funcName.c_str(), jsTouch, retval);
+    return 1;
+    
+}  
+
+
+int ScriptingCore::executeCustomTouchEvent(int eventType, 
+                                           CCTouch *pTouch, JSObject *obj,
+                                           jsval &retval) {
+
+    std::string funcName;
+    getTouchFuncName(eventType, funcName);
+    
+    jsval jsTouch;
+    getJSTouchObject(this->cx, pTouch, jsTouch);
+
+    executeJSFunctionWithName(this->cx, obj, funcName.c_str(), jsTouch, retval);
+    return 1;
+    
+}  
 
 
 int ScriptingCore::executeSchedule(int nHandler, float dt, CCNode *self) {
@@ -297,4 +370,3 @@ int ScriptingCore::executeSchedule(int nHandler, float dt, CCNode *self) {
     executeFunctionWithFloatData(nHandler, dt, self);
     return 1;
 }
-g

@@ -113,6 +113,13 @@ public:
 	 */
 	JSBool runScript(const char *path);
 	
+    
+    int executeCustomTouchEvent(int eventType, 
+                                CCTouch *pTouch, JSObject *obj, jsval &retval);
+    int executeCustomTouchEvent(int eventType, 
+                                CCTouch *pTouch, JSObject *obj);
+    int executeCustomTouchesEvent(int eventType, 
+                                  CCSet *pTouches, JSObject *obj);
 	/**
 	 * @return the global context
 	 */
@@ -153,7 +160,7 @@ public:
 	};
 	
 	JSBool setReservedSpot(uint32_t i, JSObject *obj, jsval value) {
-	    JS_SetReservedSlot(obj, i, vp);
+	    JS_SetReservedSlot(obj, i, value);
 	    return JS_TRUE;
 	};
 	

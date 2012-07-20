@@ -2,6 +2,26 @@
 #include "cocos2dx.hpp"
 #include "cocos2d_specifics.hpp"
 
+
+
+void JSTouchDelegate::setJSObject(JSObject *obj) {
+    _mObj = obj;
+}
+
+void JSTouchDelegate::registerStandardDelegate() {
+    CCDirector* pDirector = CCDirector::sharedDirector();
+    pDirector->getTouchDispatcher()->addStandardDelegate(this,0);
+}
+
+void JSTouchDelegate::registerTargettedDelegate(int priority, bool swallowsTouches) {
+    CCDirector* pDirector = CCDirector::sharedDirector();
+    pDirector->getTouchDispatcher()->addTargetedDelegate(this,
+                                                         priority,
+                                                         swallowsTouches);
+
+}
+
+
 static void addCallBackAndThis(JSObject *obj, jsval callback, jsval &thisObj) {
     if(callback != JSVAL_VOID) {
         ScriptingCore::getInstance()->setReservedSpot(0, obj, callback);
@@ -243,6 +263,37 @@ JSBool js_cocos2dx_CCMenuItemToggle_create(JSContext *cx, uint32_t argc, jsval *
 	return JS_FALSE;
 }
 
+
+JSBool js_cocos2dx_JSTouchDelegate_registerStandardDelegate(JSContext *cx, uint32_t argc, jsval *vp)
+{
+	if (argc >= 1) {
+		jsval *argv = JS_ARGV(cx, vp);
+        
+        JSTouchDelegate *touch = new JSTouchDelegate();
+        touch->registerStandardDelegate();
+        touch->setJSObject((argc == 1 ? JSVAL_TO_OBJECT(argv[0]) : JSVAL_TO_OBJECT(JSVAL_VOID)));
+        
+		return JS_TRUE;
+	}
+	return JS_FALSE;
+}
+
+JSBool js_cocos2dx_JSTouchDelegate_registerTargettedDelegate(JSContext *cx, uint32_t argc, jsval *vp)
+{
+	if (argc >= 1) {
+		jsval *argv = JS_ARGV(cx, vp);
+        
+        JSTouchDelegate *touch = new JSTouchDelegate();
+        touch->registerTargettedDelegate((argc >= 1 ? JSVAL_TO_INT(argv[0]) : 0), (argc >= 2 ? JSVAL_TO_BOOLEAN(argv[1]) : true));
+        touch->setJSObject((argc == 3 ? JSVAL_TO_OBJECT(argv[2]) : JSVAL_TO_OBJECT(JSVAL_VOID)));
+        
+		return JS_TRUE;
+	}
+	return JS_FALSE;
+}
+
+
+
 JSBool js_cocos2dx_swap_native_object(JSContext *cx, uint32_t argc, jsval *vp)
 {
 	if (argc == 2) {
@@ -329,4 +380,13 @@ void register_cocos2dx_js_extensions()
 	JS_DefineFunction(cx, tmpObj, "create", js_cocos2dx_CCMenuItemFont_create, 1, JSPROP_READONLY | JSPROP_PERMANENT);
 	tmpObj = JSVAL_TO_OBJECT(anonEvaluate(cx, global, "(function () { return cc.MenuItemToggle; })()"));
 	JS_DefineFunction(cx, tmpObj, "create", js_cocos2dx_CCMenuItemToggle_create, 1, JSPROP_READONLY | JSPROP_PERMANENT);
+    
+    tmpObj = JSVAL_TO_OBJECT(anonEvaluate(cx, global, "(function () { return this; })()"));
+	JS_DefineFunction(cx, tmpObj, "registerTargettedDelegate", js_cocos2dx_JSTouchDelegate_registerTargettedDelegate, 1, JSPROP_READONLY | JSPROP_PERMANENT);
+    
+    
+    tmpObj = JSVAL_TO_OBJECT(anonEvaluate(cx, global, "(function () { return this; })()"));
+	JS_DefineFunction(cx, tmpObj, "registerStandardDelegate", js_cocos2dx_JSTouchDelegate_registerStandardDelegate, 1, JSPROP_READONLY | JSPROP_PERMANENT);
+    
+    
 }

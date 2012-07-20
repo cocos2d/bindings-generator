@@ -61,11 +61,11 @@ JSBool js_cocos2dx_CCMenu_create(JSContext *cx, uint32_t argc, jsval *vp)
 {
 	jsval *argv = JS_ARGV(cx, vp);
 	if (argc > 0) {
-		cocos2d::CCArray* array;
+		cocos2d::CCArray* array = cocos2d::CCArray::create();
 		int i = 0;
 		while (i < argc) {
 			js_proxy_t *proxy;
-			JSObject *tmpObj = JSVAL_TO_OBJECT(argv[0]);
+			JSObject *tmpObj = JSVAL_TO_OBJECT(argv[i]);
 			JS_GET_NATIVE_PROXY(proxy, tmpObj);
 			cocos2d::CCObject *item = (cocos2d::CCObject*)(proxy ? proxy->ptr : NULL);
 			TEST_NATIVE_OBJECT(cx, item)
@@ -114,6 +114,102 @@ JSBool js_cocos2dx_CCMenu_create(JSContext *cx, uint32_t argc, jsval *vp)
 				} else {
 					// create a new js obj of that class
 					TypeTest<cocos2d::CCMenu> t;
+					js_type_class_t *p;
+					uint32_t typeId = t.s_id();
+					HASH_FIND_INT(_js_global_type_ht, &typeId, p);
+					assert(p);
+					JSObject *_tmp = JS_NewObject(cx, p->jsclass, p->proto, p->parentProto);
+#ifdef COCOS2D_VERSION
+					JS_AddObjectRoot(cx, &_tmp);      
+#endif
+					jsret = OBJECT_TO_JSVAL(_tmp);
+					js_proxy_t *pp;
+					JS_NEW_PROXY(pp, ret, _tmp);
+				}
+			} else {
+				jsret = JSVAL_NULL;
+			}
+		} while (0);
+		JS_SET_RVAL(cx, vp, jsret);
+		return JS_TRUE;
+	}
+	return JS_FALSE;
+}
+
+JSBool js_cocos2dx_CCSequence_create(JSContext *cx, uint32_t argc, jsval *vp)
+{
+	jsval *argv = JS_ARGV(cx, vp);
+	if (argc > 0) {
+		cocos2d::CCArray* array = cocos2d::CCArray::create();
+		int i = 0;
+		while (i < argc) {
+			js_proxy_t *proxy;
+			JSObject *tmpObj = JSVAL_TO_OBJECT(argv[i]);
+			JS_GET_NATIVE_PROXY(proxy, tmpObj);
+			cocos2d::CCObject *item = (cocos2d::CCObject*)(proxy ? proxy->ptr : NULL);
+			TEST_NATIVE_OBJECT(cx, item)
+			array->addObject(item);
+			i++;
+		}
+		cocos2d::CCFiniteTimeAction* ret = cocos2d::CCSequence::create(array);
+		jsval jsret;
+		do {
+			if (ret) {
+				js_proxy_t *p;
+				JS_GET_PROXY(p, ret);
+				if (p) {
+					jsret = OBJECT_TO_JSVAL(p->obj);
+				} else {
+					// create a new js obj of that class
+					TypeTest<cocos2d::CCSequence> t;
+					js_type_class_t *p;
+					uint32_t typeId = t.s_id();
+					HASH_FIND_INT(_js_global_type_ht, &typeId, p);
+					assert(p);
+					JSObject *_tmp = JS_NewObject(cx, p->jsclass, p->proto, p->parentProto);
+#ifdef COCOS2D_VERSION
+					JS_AddObjectRoot(cx, &_tmp);      
+#endif
+					jsret = OBJECT_TO_JSVAL(_tmp);
+					js_proxy_t *pp;
+					JS_NEW_PROXY(pp, ret, _tmp);
+				}
+			} else {
+				jsret = JSVAL_NULL;
+			}
+		} while (0);
+		JS_SET_RVAL(cx, vp, jsret);
+		return JS_TRUE;
+	}
+	return JS_FALSE;
+}
+
+JSBool js_cocos2dx_CCSpawn_create(JSContext *cx, uint32_t argc, jsval *vp)
+{
+	jsval *argv = JS_ARGV(cx, vp);
+	if (argc > 0) {
+		cocos2d::CCArray* array = cocos2d::CCArray::create();
+		int i = 0;
+		while (i < argc) {
+			js_proxy_t *proxy;
+			JSObject *tmpObj = JSVAL_TO_OBJECT(argv[i]);
+			JS_GET_NATIVE_PROXY(proxy, tmpObj);
+			cocos2d::CCObject *item = (cocos2d::CCObject*)(proxy ? proxy->ptr : NULL);
+			TEST_NATIVE_OBJECT(cx, item)
+			array->addObject(item);
+			i++;
+		}
+		cocos2d::CCFiniteTimeAction* ret = cocos2d::CCSpawn::create(array);
+		jsval jsret;
+		do {
+			if (ret) {
+				js_proxy_t *p;
+				JS_GET_PROXY(p, ret);
+				if (p) {
+					jsret = OBJECT_TO_JSVAL(p->obj);
+				} else {
+					// create a new js obj of that class
+					TypeTest<cocos2d::CCSpawn> t;
 					js_type_class_t *p;
 					uint32_t typeId = t.s_id();
 					HASH_FIND_INT(_js_global_type_ht, &typeId, p);
@@ -187,9 +283,16 @@ JSBool js_cocos2dx_CCMenuItemImage_create(JSContext *cx, uint32_t argc, jsval *v
 		jsval *argv = JS_ARGV(cx, vp);
 		const char *arg0; do { JSString *tmp = JS_ValueToString(cx, argv[0]); arg0 = JS_EncodeString(cx, tmp); } while (0);
 		const char *arg1; do { JSString *tmp = JS_ValueToString(cx, argv[1]); arg1 = JS_EncodeString(cx, tmp); } while (0);
-		const char *arg2; do { JSString *tmp = JS_ValueToString(cx, argv[2]); arg2 = JS_EncodeString(cx, tmp); } while (0);
+		const char *arg2 = NULL;
+		int last = 2;
+		if (JSVAL_IS_STRING(argv[2])) {
+			do { JSString *tmp = JS_ValueToString(cx, argv[2]); arg2 = JS_EncodeString(cx, tmp); } while (0);
+			last = 3;
+		}
 		cocos2d::CCMenuItemImage* ret = cocos2d::CCMenuItemImage::create(arg0, arg1, arg2);
-		JSObject *obj = bind_menu_item<cocos2d::CCMenuItemImage>(cx, ret, (argc >= 4 ? argv[3] : JSVAL_VOID), (argc == 5 ? argv[4] : JSVAL_VOID));
+		jsval thisObj = argv[last++];
+		jsval callback = argv[last];
+		JSObject *obj = bind_menu_item<cocos2d::CCMenuItemImage>(cx, ret, callback, thisObj);
 		JS_SET_RVAL(cx, vp, OBJECT_TO_JSVAL(obj));
 		return JS_TRUE;
 	}
@@ -380,13 +483,8 @@ void register_cocos2dx_js_extensions()
 	JS_DefineFunction(cx, tmpObj, "create", js_cocos2dx_CCMenuItemFont_create, 1, JSPROP_READONLY | JSPROP_PERMANENT);
 	tmpObj = JSVAL_TO_OBJECT(anonEvaluate(cx, global, "(function () { return cc.MenuItemToggle; })()"));
 	JS_DefineFunction(cx, tmpObj, "create", js_cocos2dx_CCMenuItemToggle_create, 1, JSPROP_READONLY | JSPROP_PERMANENT);
-    
-    tmpObj = JSVAL_TO_OBJECT(anonEvaluate(cx, global, "(function () { return this; })()"));
-	JS_DefineFunction(cx, tmpObj, "registerTargettedDelegate", js_cocos2dx_JSTouchDelegate_registerTargettedDelegate, 1, JSPROP_READONLY | JSPROP_PERMANENT);
-    
-    
-    tmpObj = JSVAL_TO_OBJECT(anonEvaluate(cx, global, "(function () { return this; })()"));
-	JS_DefineFunction(cx, tmpObj, "registerStandardDelegate", js_cocos2dx_JSTouchDelegate_registerStandardDelegate, 1, JSPROP_READONLY | JSPROP_PERMANENT);
-    
-    
+	tmpObj = JSVAL_TO_OBJECT(anonEvaluate(cx, global, "(function () { return cc.Sequence; })()"));
+	JS_DefineFunction(cx, tmpObj, "create", js_cocos2dx_CCSequence_create, 0, JSPROP_READONLY | JSPROP_PERMANENT);
+	tmpObj = JSVAL_TO_OBJECT(anonEvaluate(cx, global, "(function () { return cc.Spawn; })()"));
+	JS_DefineFunction(cx, tmpObj, "create", js_cocos2dx_CCSpawn_create, 0, JSPROP_READONLY | JSPROP_PERMANENT);
 }

@@ -36,6 +36,86 @@ JSObject* bind_menu_item(JSContext *cx, T* nativeObj, jsval callback, jsval this
 		return tmp;
 	}
 }
+
+JSBool js_cocos2dx_CCMenu_create(JSContext *cx, uint32_t argc, jsval *vp)
+{
+	jsval *argv = JS_ARGV(cx, vp);
+	if (argc > 0) {
+		cocos2d::CCArray* array;
+		int i = 0;
+		while (i < argc) {
+			js_proxy_t *proxy;
+			JSObject *tmpObj = JSVAL_TO_OBJECT(argv[0]);
+			JS_GET_NATIVE_PROXY(proxy, tmpObj);
+			cocos2d::CCObject *item = (cocos2d::CCObject*)(proxy ? proxy->ptr : NULL);
+			TEST_NATIVE_OBJECT(cx, item)
+			array->addObject(item);
+			i++;
+		}
+		cocos2d::CCMenu* ret = cocos2d::CCMenu::create(array);
+		jsval jsret;
+		do {
+			if (ret) {
+				js_proxy_t *p;
+				JS_GET_PROXY(p, ret);
+				if (p) {
+					jsret = OBJECT_TO_JSVAL(p->obj);
+				} else {
+					// create a new js obj of that class
+					TypeTest<cocos2d::CCMenu> t;
+					js_type_class_t *p;
+					uint32_t typeId = t.s_id();
+					HASH_FIND_INT(_js_global_type_ht, &typeId, p);
+					assert(p);
+					JSObject *_tmp = JS_NewObject(cx, p->jsclass, p->proto, p->parentProto);
+#ifdef COCOS2D_VERSION
+					JS_AddObjectRoot(cx, &_tmp);      
+#endif
+					jsret = OBJECT_TO_JSVAL(_tmp);
+					js_proxy_t *pp;
+					JS_NEW_PROXY(pp, ret, _tmp);
+				}
+			} else {
+				jsret = JSVAL_NULL;
+			}
+		} while (0);
+		JS_SET_RVAL(cx, vp, jsret);
+		return JS_TRUE;
+	}
+	if (argc == 0) {
+		cocos2d::CCMenu* ret = cocos2d::CCMenu::create();
+		jsval jsret;
+		do {
+			if (ret) {
+				js_proxy_t *p;
+				JS_GET_PROXY(p, ret);
+				if (p) {
+					jsret = OBJECT_TO_JSVAL(p->obj);
+				} else {
+					// create a new js obj of that class
+					TypeTest<cocos2d::CCMenu> t;
+					js_type_class_t *p;
+					uint32_t typeId = t.s_id();
+					HASH_FIND_INT(_js_global_type_ht, &typeId, p);
+					assert(p);
+					JSObject *_tmp = JS_NewObject(cx, p->jsclass, p->proto, p->parentProto);
+#ifdef COCOS2D_VERSION
+					JS_AddObjectRoot(cx, &_tmp);      
+#endif
+					jsret = OBJECT_TO_JSVAL(_tmp);
+					js_proxy_t *pp;
+					JS_NEW_PROXY(pp, ret, _tmp);
+				}
+			} else {
+				jsret = JSVAL_NULL;
+			}
+		} while (0);
+		JS_SET_RVAL(cx, vp, jsret);
+		return JS_TRUE;
+	}
+	return JS_FALSE;
+}
+
 JSBool js_cocos2dx_CCMenuItem_create(JSContext *cx, uint32_t argc, jsval *vp)
 {
 	if (argc == 1) {
@@ -233,6 +313,8 @@ void register_cocos2dx_js_extensions()
 
 	// add the properties
 	JSObject *tmpObj;
+	tmpObj = JSVAL_TO_OBJECT(anonEvaluate(cx, global, "(function () { return cc.Menu; })()"));
+	JS_DefineFunction(cx, tmpObj, "create", js_cocos2dx_CCMenu_create, 0, JSPROP_READONLY | JSPROP_PERMANENT);
 	tmpObj = JSVAL_TO_OBJECT(anonEvaluate(cx, global, "(function () { return cc.MenuItem; })()"));
 	JS_DefineFunction(cx, tmpObj, "create", js_cocos2dx_CCMenuItem_create, 1, JSPROP_READONLY | JSPROP_PERMANENT);
 	tmpObj = JSVAL_TO_OBJECT(anonEvaluate(cx, global, "(function () { return cc.MenuItemSprite; })()"));

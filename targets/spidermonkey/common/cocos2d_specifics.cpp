@@ -2,9 +2,9 @@
 #include "cocos2dx.hpp"
 #include "cocos2d_specifics.hpp"
 
-static void addCallBackAndThis(JSObject *obj, jsval callback, jsval thisObj) {
+static void addCallBackAndThis(JSObject *obj, jsval callback, jsval &thisObj) {
     ScriptingCore::getInstance()->setReservedSpot(0, obj, callback);
-    if(thisObj == JSVAL_VOID) {
+    if(thisObj != JSVAL_VOID) {
         ScriptingCore::getInstance()->setReservedSpot(1, obj, thisObj);
     }
 }
@@ -14,8 +14,6 @@ JSObject* bind_menu_item(JSContext *cx, T* nativeObj, jsval callback, jsval this
 	js_proxy_t *p;
 	JS_GET_PROXY(p, nativeObj);
 	if (p) {
-		jsval vp;
-		JS_ConvertValue(cx, callback, JSTYPE_FUNCTION, &vp);
 		addCallBackAndThis(p->obj, callback, thisObj);
 		return p->obj;
 	} else {
@@ -30,7 +28,7 @@ JSObject* bind_menu_item(JSContext *cx, T* nativeObj, jsval callback, jsval this
 		// bind nativeObj <-> JSObject
 		js_proxy_t *proxy;
 		JS_NEW_PROXY(proxy, nativeObj, tmp);
-
+        
 		addCallBackAndThis(tmp, callback, thisObj);
 
 		return tmp;

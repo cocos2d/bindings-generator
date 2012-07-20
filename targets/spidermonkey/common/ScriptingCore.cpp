@@ -211,7 +211,7 @@ int ScriptingCore::executeFunctionWithFloatData(int nHandler, float data, CCNode
     js_proxy_t * p;
     JS_GET_PROXY(p, self);
     
-    assert(p);
+    if (!p) return 0;
     
     jsval retval;
     jsval dataVal = DOUBLE_TO_JSVAL(data);
@@ -297,3 +297,4 @@ int ScriptingCore::executeSchedule(int nHandler, float dt, CCNode *self) {
     executeFunctionWithFloatData(nHandler, dt, self);
     return 1;
 }
+g

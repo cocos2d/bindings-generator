@@ -151,17 +151,12 @@ public:
 		}
 		return JS_TRUE;
 	};
-
+	
 	JSBool setReservedSpot(uint32_t i, JSObject *obj, jsval value) {
-//        jsval vp;
-//        if(JSVAL_IS_PRIMITIVE(value)) {
-//            js_log("JS Value not a function/object");
-//        }
-//        JS_ConvertValue(this->cx, value, JSTYPE_FUNCTION, &vp);
-        JS_SetReservedSlot(obj, i, value);
-        return JS_TRUE;
-    };
-
+	    JS_SetReservedSlot(obj, i, vp);
+	    return JS_TRUE;
+	};
+	
 	/**
 	 * run a script from script :)
 	 */

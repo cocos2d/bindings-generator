@@ -9,6 +9,8 @@
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include "ScriptingCore.h"
 #include "cocos2d.h"
 
@@ -20,6 +22,22 @@ js_proxy_t *_native_js_global_ht = NULL;
 js_proxy_t *_js_native_global_ht = NULL;
 js_type_class_t *_js_global_type_ht = NULL;
 char *_js_log_buf = NULL;
+
+static size_t readFileInMemory(const char *path, unsigned char **buff) {
+    struct stat buf;
+    int file = open(path, O_RDONLY);
+    long readBytes = -1;
+    if (file) {
+        if (fstat(file, &buf) == 0) {
+            *buff = (unsigned char *)calloc(buf.st_size + 1, 1);
+            if (*buff) {
+                readBytes = read(file, *buff, buf.st_size);
+            }
+        }
+    }
+    close(file);
+    return readBytes;
+}
 
 static void executeJSFunctionFromReservedSpot(JSContext *cx, js_proxy_t *p, 
                                               jsval &dataVal, jsval &retval) {
@@ -139,7 +157,7 @@ JSBool ScriptingCore::runScript(const char *path)
     unsigned char *content = NULL;
     unsigned long contentSize = 0;
 
-    content = futil->getFileData(realPath, "r", &contentSize);
+    contentSize = readFileInMemory(realPath, &content);
     JSBool ret = JS_FALSE;
     if (content && contentSize) {
         jsval rval;
@@ -164,7 +182,7 @@ int ScriptingCore::executeFunctionWithIntegerData(int nHandler, int data, CCNode
     js_proxy_t * p;
     JS_GET_PROXY(p, self);
     
-    assert(p);    
+    if (!p) return 0;
     
     jsval retval;
     jsval dataVal = INT_TO_JSVAL(1);

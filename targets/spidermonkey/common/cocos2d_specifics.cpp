@@ -10,32 +10,31 @@ static void addCallBackAndThis(JSObject *obj, jsval callback, jsval thisObj) {
 }
 
 template<class T>
-JSObject* bind_menu_item(JSContext *cx, T* nativeObj, jsval callback, jsval thisObj) {
-    
-    js_proxy_t *p;
-    JS_GET_PROXY(p, nativeObj);
-    if (p) {
-        jsval vp;
-        JS_ConvertValue(cx, callback, JSTYPE_FUNCTION, &vp);
-        addCallBackAndThis(p->obj, callback, thisObj);
-        return p->obj;
-    } else {
+JSObject* bind_menu_item(JSContext *cx, T* nativeObj, jsval callback, jsval thisObj) {    
+	js_proxy_t *p;
+	JS_GET_PROXY(p, nativeObj);
+	if (p) {
+		jsval vp;
+		JS_ConvertValue(cx, callback, JSTYPE_FUNCTION, &vp);
+		addCallBackAndThis(p->obj, callback, thisObj);
+		return p->obj;
+	} else {
+		js_type_class_t *classType;
+		TypeTest<T> t;
+		uint32_t typeId = t.s_id();
+		HASH_FIND_INT(_js_global_type_ht, &typeId, classType);
 
-      TypeTest<T> t;
-      uint32_t typeId = t.s_id();
-      HASH_FIND_INT(_js_global_type_ht, &typeId, classType);
-      
-      assert(classType);
-      JSObject *tmp = JS_NewObject(cx, classType->jsclass, classType->proto, classType->parentProto);
+		assert(classType);
+		JSObject *tmp = JS_NewObject(cx, classType->jsclass, classType->proto, classType->parentProto);
 
-      // bind nativeObj <-> JSObject
-      js_proxy_t *proxy;
-      JS_NEW_PROXY(proxy, nativeObj, tmp);
-        
-      addCallBackAndThis(tmp, callback, thisObj);
-      
-      return tmp;
-    }
+		// bind nativeObj <-> JSObject
+		js_proxy_t *proxy;
+		JS_NEW_PROXY(proxy, nativeObj, tmp);
+
+		addCallBackAndThis(tmp, callback, thisObj);
+
+		return tmp;
+	}
 }
 JSBool js_cocos2dx_CCMenuItem_create(JSContext *cx, uint32_t argc, jsval *vp)
 {

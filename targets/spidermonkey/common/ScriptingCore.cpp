@@ -240,19 +240,16 @@ static void getTouchFuncName(int eventType, std::string &funcName) {
 }
 
 
-static void getJSTouchObject(JSContext *cx, CCTouch *x, jsval &jsret) {
-    
-    js_type_class_t *p;
-    const char* type = x->getObjectType();
-    HASH_FIND_STR(_js_global_type_ht, type, p);
-    assert(p);
-    JSObject *_tmp = JS_NewObject(cx, p->jsclass, p->proto, p->parentProto);
-
-    js_proxy_t *proxy;
-    JS_NEW_PROXY(proxy, x, _tmp);
-    
-    jsret = OBJECT_TO_JSVAL(_tmp);
-    
+static void getJSTouchObject(JSContext *cx, CCTouch *x, jsval &jsret) {    
+	js_type_class_t *classType;
+	TypeTest<cocos2d::CCTouch> t;
+	uint32_t typeId = t.s_id();
+	HASH_FIND_INT(_js_global_type_ht, &typeId, classType);
+	assert(classType);
+	JSObject *_tmp = JS_NewObject(cx, classType->jsclass, classType->proto, classType->parentProto);
+	js_proxy_t *proxy;
+	JS_NEW_PROXY(proxy, x, _tmp);
+	jsret = OBJECT_TO_JSVAL(_tmp);
 }
 
 

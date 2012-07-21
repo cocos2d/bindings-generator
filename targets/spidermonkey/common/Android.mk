@@ -6,7 +6,8 @@ LOCAL_MODULE := scriptingcore-spidermonkey
 
 LOCAL_MODULE_FILENAME := libscriptingcore-spidermonkey
 
-LOCAL_SRC_FILES := ScriptingCore.cpp
+LOCAL_SRC_FILES := ScriptingCore.cpp \
+                   cocos2d_specifics.cpp
 
 LOCAL_CFLAGS := -DCOCOS2D_JAVASCRIPT
 

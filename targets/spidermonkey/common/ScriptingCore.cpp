@@ -16,28 +16,21 @@
 
 #ifdef ANDROID
 #include <android/log.h>
+#include <android/asset_manager.h>
+#include <jni/JniHelper.h>
+#endif
+
+#ifdef ANDROID
+#define  LOG_TAG    "ScriptingCore.cpp"
+#define  LOGD(...)  __android_log_print(ANDROID_LOG_DEBUG,LOG_TAG,__VA_ARGS__)
+#else
+#define  LOGD(...) js_log(...)
 #endif
 
 js_proxy_t *_native_js_global_ht = NULL;
 js_proxy_t *_js_native_global_ht = NULL;
 js_type_class_t *_js_global_type_ht = NULL;
 char *_js_log_buf = NULL;
-
-static size_t readFileInMemory(const char *path, unsigned char **buff) {
-    struct stat buf;
-    int file = open(path, O_RDONLY);
-    long readBytes = -1;
-    if (file) {
-        if (fstat(file, &buf) == 0) {
-            *buff = (unsigned char *)calloc(buf.st_size + 1, 1);
-            if (*buff) {
-                readBytes = read(file, *buff, buf.st_size);
-            }
-        }
-    }
-    close(file);
-    return readBytes;
-}
 
 static void executeJSFunctionFromReservedSpot(JSContext *cx, JSObject *obj, 
                                               jsval &dataVal, jsval &retval) {
@@ -119,6 +112,33 @@ ScriptingCore::ScriptingCore()
     JS_DefineFunction(this->cx, global, "forceGC", ScriptingCore::forceGC, 0, JSPROP_READONLY | JSPROP_PERMANENT);
 }
 
+void ScriptingCore::string_report(jsval val) {
+    if (JSVAL_IS_NULL(val)) {
+        LOGD("val : (JSVAL_IS_NULL(val)");
+        // return 1;
+    } else if ((JSVAL_IS_BOOLEAN(val)) &&
+               (JS_FALSE == (JSVAL_TO_BOOLEAN(val)))) {
+        LOGD("val : (return value is JS_FALSE");
+        // return 1;
+    } else if (JSVAL_IS_STRING(val)) {
+        JSString *str = JS_ValueToString(this->getGlobalContext(), val);
+        if (NULL == str) {
+            LOGD("val : return string is NULL");
+        } else {
+            LOGD("val : return string =\n%s\n",
+                 JS_EncodeString(this->getGlobalContext(), str));
+        }
+    } else if (JSVAL_IS_NUMBER(val)) {
+        double number;
+        if (JS_FALSE ==
+            JS_ValueToNumber(this->getGlobalContext(), val, &number)) {
+            LOGD("val : return number could not be converted");
+        } else {
+            LOGD("val : return number =\n%f", number);
+        }
+    }
+}
+
 JSBool ScriptingCore::evalString(const char *string, jsval *outVal, const char *filename)
 {
     jsval rval;
@@ -127,7 +147,35 @@ JSBool ScriptingCore::evalString(const char *string, jsval *outVal, const char *
     if (outVal == NULL) {
         outVal = &rval;
     }
-    return JS_EvaluateScript(cx, global, string, strlen(string), fname, lineno, outVal);
+
+    JSBool evaluatedOK = JS_EvaluateScript(cx, global,
+                                           string, strlen(string),
+                                           fname, lineno, outVal);
+
+    if (JS_FALSE == evaluatedOK) {
+        LOGD("evaluatedOK == JS_FALSE)");
+    } else {
+        this->string_report(*outVal);
+    }
+
+    return evaluatedOK;
+}
+
+#ifdef PLATFORM_IOS
+static size_t readFileInMemory(const char *path, unsigned char **buff) {
+    struct stat buf;
+    int file = open(path, O_RDONLY);
+    long readBytes = -1;
+    if (file) {
+        if (fstat(file, &buf) == 0) {
+            *buff = (unsigned char *)calloc(buf.st_size + 1, 1);
+            if (*buff) {
+                readBytes = read(file, *buff, buf.st_size);
+            }
+        }
+    }
+    close(file);
+    return readBytes;
 }
 
 JSBool ScriptingCore::runScript(const char *path)
@@ -166,6 +214,87 @@ JSBool ScriptingCore::runScript(const char *path)
     }
     return ret;
 }
+#endif //PLATFORM_IOS
+
+#ifdef ANDROID
+
+static unsigned long
+fileutils_read_into_new_memory(const char* relativepath,
+                               unsigned char** content) {
+    *content = NULL;
+
+    AAssetManager* assetmanager =
+        JniHelper::getAssetManager();
+    if (NULL == assetmanager) {
+        LOGD("assetmanager : is NULL");
+        return 0;
+    }
+
+    // read asset data
+    AAsset* asset =
+        AAssetManager_open(assetmanager,
+                           relativepath,
+                           AASSET_MODE_UNKNOWN);
+    if (NULL == asset) {
+        LOGD("asset : is NULL");
+        return 0; 
+    }
+
+    off_t size = AAsset_getLength(asset);
+    LOGD("size = %d ", size);
+
+    unsigned char* buf =
+        (unsigned char*) malloc((sizeof(unsigned char)) * (size+1));
+    if (NULL == buf) {
+        LOGD("memory allocation failed");
+        AAsset_close(asset);
+        return 0;
+    }
+
+    int bytesread = AAsset_read(asset, buf, size);
+    LOGD("bytesread = %d ", bytesread);
+    buf[bytesread] = '\0';
+
+    AAsset_close(asset);
+
+    *content = (unsigned char*) buf;
+    return bytesread;
+}
+
+JSBool ScriptingCore::runScript(const char *path)
+{
+    LOGD("ScriptingCore::runScript(%s)", path);
+
+    if (NULL == path) {
+        return JS_FALSE;
+    }
+
+    unsigned char* content = NULL;
+    unsigned long contentsize = 0;
+
+    contentsize = fileutils_read_into_new_memory(path, &content);
+
+    if (NULL == content) {
+        LOGD("(NULL == content)");
+        return JS_FALSE;
+    }
+
+    if (contentsize <= 0) {
+        LOGD("(contentsize <= 0)");
+        free(content);
+        return JS_FALSE;
+    }
+
+    jsval rval;
+    JSBool ret = this->evalString((const char *)content, &rval, path);
+    free(content);
+
+    LOGD("... ScriptingCore::runScript(%s) done successfully.", path);
+
+    return ret;
+}
+
+#endif //ANDROID
 
 ScriptingCore::~ScriptingCore()
 {

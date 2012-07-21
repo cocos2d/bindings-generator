@@ -190,6 +190,9 @@ public:
 		JS_GC(cx);
 		return JS_TRUE;
 	};
+
+ private:
+    void string_report(jsval val);
 };
 
 #endif

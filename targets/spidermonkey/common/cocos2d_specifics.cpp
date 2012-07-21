@@ -411,7 +411,7 @@ JSBool js_cocos2dx_swap_native_object(JSContext *cx, uint32_t argc, jsval *vp)
 			js_proxy_t *jsproxy;
 			JS_GET_PROXY(jsproxy, ptrTwo);
 			if (jsproxy) {
-				JS_REMOVE_PROXY(nproxy, jsproxy);
+				JS_REMOVE_PROXY(jsproxy, nproxy);
 				JS_NEW_PROXY(nproxy, ptrTwo, one);
 			}
 		}

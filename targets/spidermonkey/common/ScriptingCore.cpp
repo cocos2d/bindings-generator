@@ -49,6 +49,14 @@ static void executeJSFunctionFromReservedSpot(JSContext *cx, JSObject *obj,
     //  }
 }
 
+void ScriptingCore::executeJSFunctionWithThisObj(jsval thisObj, jsval callback,
+                                                 jsval data) {
+    jsval retval;
+    if(callback != JSVAL_VOID || thisObj != JSVAL_VOID) {
+        JS_CallFunctionValue(cx, JSVAL_TO_OBJECT(thisObj), callback, 1, &data, &retval);
+    }
+}
+
 
 static void executeJSFunctionWithName(JSContext *cx, JSObject *obj, 
                                       const char *funcName, jsval &dataVal,

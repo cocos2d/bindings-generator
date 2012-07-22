@@ -98,7 +98,8 @@ public:
     // execute a schedule function
     virtual int executeSchedule(int nHandler, float dt, CCNode *self);
     
-    
+    void executeJSFunctionWithThisObj(jsval thisObj, jsval callback, jsval data);
+
 	/**
 	 * will eval the specified string
 	 * @param string The string with the javascript code to be evaluated

@@ -6,6 +6,33 @@
 
 void register_cocos2dx_js_extensions();
 
+class JSCallFunc: public CCObject {
+public:
+    JSCallFunc(jsval func): jsCallback(func) {}
+    JSCallFunc() {}
+    ~JSCallFunc(){}
+    void setJSCallbackFunc(jsval obj);
+    void setJSCallbackThis(jsval thisObj);
+    void setExtraDataField(jsval data);
+    void callbackFunc() const {
+        
+        if(extraData) {
+            ScriptingCore::getInstance()->executeJSFunctionWithThisObj(jsThisObj,
+                                                                   jsCallback,
+                                                                   *extraData);
+        } else {
+            ScriptingCore::getInstance()->executeJSFunctionWithThisObj(jsThisObj,
+                                                                       jsCallback,
+                                                                       jsThisObj);
+        } 
+        js_log("IN CALLBACK");
+    }
+private:
+    jsval jsCallback;
+    jsval jsThisObj;
+    jsval *extraData = NULL;
+};
+
 class JSTouchDelegate: public CCTouchDelegate, public CCNode {
     public:
         void setJSObject(JSObject *obj);

@@ -30,7 +30,7 @@ public:
 private:
     jsval jsCallback;
     jsval jsThisObj;
-    jsval *extraData = NULL;
+    jsval *extraData;
 };
 
 class JSTouchDelegate: public CCTouchDelegate, public CCNode {

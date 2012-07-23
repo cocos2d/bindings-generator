@@ -151,7 +151,7 @@ JSBool ScriptingCore::evalString(const char *string, jsval *outVal, const char *
 {
     jsval rval;
     const char *fname = (filename ? filename : "noname");
-    uint32_t lineno = 0;
+    uint32_t lineno = 1;
     if (outVal == NULL) {
         outVal = &rval;
     }

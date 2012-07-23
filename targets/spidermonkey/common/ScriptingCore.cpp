@@ -24,7 +24,7 @@
 #define  LOG_TAG    "ScriptingCore.cpp"
 #define  LOGD(...)  __android_log_print(ANDROID_LOG_DEBUG,LOG_TAG,__VA_ARGS__)
 #else
-#define  LOGD(...) js_log(...)
+#define  LOGD(...) js_log(__VA_ARGS__)
 #endif
 
 js_proxy_t *_native_js_global_ht = NULL;
@@ -169,61 +169,6 @@ JSBool ScriptingCore::evalString(const char *string, jsval *outVal, const char *
     return evaluatedOK;
 }
 
-#ifdef PLATFORM_IOS
-static size_t readFileInMemory(const char *path, unsigned char **buff) {
-    struct stat buf;
-    int file = open(path, O_RDONLY);
-    long readBytes = -1;
-    if (file) {
-        if (fstat(file, &buf) == 0) {
-            *buff = (unsigned char *)calloc(buf.st_size + 1, 1);
-            if (*buff) {
-                readBytes = read(file, *buff, buf.st_size);
-            }
-        }
-    }
-    close(file);
-    return readBytes;
-}
-
-JSBool ScriptingCore::runScript(const char *path)
-{
-    cocos2d::CCFileUtils *futil = cocos2d::CCFileUtils::sharedFileUtils();
-#ifdef DEBUG
-    /**
-     * dpath should point to the parent directory of the "JS" folder. If this is
-     * set to "" (as it is now) then it will take the scripts from the app bundle.
-     * By setting the absolute path you can iterate the development only by
-     * modifying those scripts and reloading from the simulator (no recompiling/
-     * relaunching)
-     */
-//  std::string dpath("/Users/rabarca/Desktop/testjs/testjs/");
-    std::string dpath("");
-    dpath += path;
-    const char *realPath = futil->fullPathFromRelativePath(dpath.c_str());
-#else
-    const char *realPath = NULL;
-    futil->fullPathFromRelativePath(path);
-#endif
-
-    if (!realPath) {
-        return JS_FALSE;
-    }
-
-    unsigned char *content = NULL;
-    unsigned long contentSize = 0;
-
-    contentSize = readFileInMemory(realPath, &content);
-    JSBool ret = JS_FALSE;
-    if (content && contentSize) {
-        jsval rval;
-        ret = this->evalString((const char *)content, &rval, path);
-        free(content);
-    }
-    return ret;
-}
-#endif //PLATFORM_IOS
-
 #ifdef ANDROID
 
 static unsigned long
@@ -302,7 +247,62 @@ JSBool ScriptingCore::runScript(const char *path)
     return ret;
 }
 
-#endif //ANDROID
+#else
+
+static size_t readFileInMemory(const char *path, unsigned char **buff) {
+    struct stat buf;
+    int file = open(path, O_RDONLY);
+    long readBytes = -1;
+    if (file) {
+        if (fstat(file, &buf) == 0) {
+            *buff = (unsigned char *)calloc(buf.st_size + 1, 1);
+            if (*buff) {
+                readBytes = read(file, *buff, buf.st_size);
+            }
+        }
+    }
+    close(file);
+    return readBytes;
+}
+
+JSBool ScriptingCore::runScript(const char *path)
+{
+    cocos2d::CCFileUtils *futil = cocos2d::CCFileUtils::sharedFileUtils();
+#ifdef DEBUG
+    /**
+     * dpath should point to the parent directory of the "JS" folder. If this is
+     * set to "" (as it is now) then it will take the scripts from the app bundle.
+     * By setting the absolute path you can iterate the development only by
+     * modifying those scripts and reloading from the simulator (no recompiling/
+     * relaunching)
+     */
+//  std::string dpath("/Users/rabarca/Desktop/testjs/testjs/");
+    std::string dpath("");
+    dpath += path;
+    const char *realPath = futil->fullPathFromRelativePath(dpath.c_str());
+#else
+    const char *realPath = NULL;
+    futil->fullPathFromRelativePath(path);
+#endif
+
+    if (!realPath) {
+        return JS_FALSE;
+    }
+
+    unsigned char *content = NULL;
+    unsigned long contentSize = 0;
+
+    contentSize = readFileInMemory(realPath, &content);
+    JSBool ret = JS_FALSE;
+    if (content && contentSize) {
+        jsval rval;
+        ret = this->evalString((const char *)content, &rval, path);
+        free(content);
+    }
+    return ret;
+}
+
+#endif
 
 ScriptingCore::~ScriptingCore()
 {

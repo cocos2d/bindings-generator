@@ -380,7 +380,9 @@ JSBool js_cocos2dx_setCallback(JSContext *cx, uint32_t argc, jsval *vp) {
         cocos2d::CCMenuItem* item = (cocos2d::CCMenuItem*)(proxy ? proxy->ptr : NULL);
         TEST_NATIVE_OBJECT(cx, item)
         JSObject *tempObj = bind_menu_item<cocos2d::CCMenuItem>(cx, item, argv[2], argv[1]);
+        return JS_TRUE;
     }
+    return JS_FALSE;
 }
 
 
@@ -539,14 +541,13 @@ void register_cocos2dx_js_extensions()
 	tmpObj = JSVAL_TO_OBJECT(anonEvaluate(cx, global, "(function () { return cc.Sequence; })()"));
 	JS_DefineFunction(cx, tmpObj, "create", js_cocos2dx_CCSequence_create, 0, JSPROP_READONLY | JSPROP_PERMANENT);
 	tmpObj = JSVAL_TO_OBJECT(anonEvaluate(cx, global, "(function () { return cc.Spawn; })()"));
-	JS_DefineFunction(cx, tmpObj, "create", js_cocos2dx_CCSpawn_create, 0, JSPROP_READONLY | JSPROP_PERMANENT);/
+	JS_DefineFunction(cx, tmpObj, "create", js_cocos2dx_CCSpawn_create, 0, JSPROP_READONLY | JSPROP_PERMANENT);
     
-	  tmpObj = JSVAL_TO_OBJECT(anonEvaluate(cx, global, "(function () { return cc; })()"));
-	  JS_DefineFunction(cx, tmpObj, "registerTargettedDelegate", js_cocos2dx_JSTouchDelegate_registerTargettedDelegate, 1, JSPROP_READONLY | JSPROP_PERMANENT);
-	  tmpObj = JSVAL_TO_OBJECT(anonEvaluate(cx, global, "(function () { return cc; })()"));
-	  JS_DefineFunction(cx, tmpObj, "registerStandardDelegate", js_cocos2dx_JSTouchDelegate_registerStandardDelegate, 1, JSPROP_READONLY | JSPROP_PERMANENT);
+	tmpObj = JSVAL_TO_OBJECT(anonEvaluate(cx, global, "(function () { return cc; })()"));
+	JS_DefineFunction(cx, tmpObj, "registerTargettedDelegate", js_cocos2dx_JSTouchDelegate_registerTargettedDelegate, 1, JSPROP_READONLY | JSPROP_PERMANENT);
+	tmpObj = JSVAL_TO_OBJECT(anonEvaluate(cx, global, "(function () { return cc; })()"));
+	JS_DefineFunction(cx, tmpObj, "registerStandardDelegate", js_cocos2dx_JSTouchDelegate_registerStandardDelegate, 1, JSPROP_READONLY | JSPROP_PERMANENT);
 
-	  tmpObj = JSVAL_TO_OBJECT(anonEvaluate(cx, global, "(function () { cc.CallFunc = cc.CallFunc || new Object(); return cc.CallFunc; })()"));
-	  JS_DefineFunction(cx, tmpObj, "create", js_callFunc, 1, JSPROP_READONLY | JSPROP_PERMANENT);
-
+	tmpObj = JSVAL_TO_OBJECT(anonEvaluate(cx, global, "(function () { cc.CallFunc = cc.CallFunc || new Object(); return cc.CallFunc; })()"));
+	JS_DefineFunction(cx, tmpObj, "create", js_callFunc, 1, JSPROP_READONLY | JSPROP_PERMANENT);
 }

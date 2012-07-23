@@ -380,27 +380,28 @@ class NativeClass(object):
 			# skip if variadic
 			if self._current_visibility == cindex.AccessSpecifierKind.PUBLIC and not cursor.type.is_function_variadic():
 				m = NativeFunction(cursor)
+				registration_name = self.generator.should_rename(self.class_name, m.func_name) or m.func_name
 				# bail if the function is not supported (at least one arg not supported)
 				if m.not_supported:
 					return
 				if m.static:
-					if not self.static_methods.has_key(m.func_name):
-						self.static_methods[m.func_name] = m
+					if not self.static_methods.has_key(registration_name):
+						self.static_methods[registration_name] = m
 					else:
-						previous_m = self.static_methods[m.func_name]
+						previous_m = self.static_methods[registration_name]
 						if isinstance(previous_m, NativeOverloadedFunction):
 							previous_m.append(m)
 						else:
-							self.static_methods[m.func_name] = NativeOverloadedFunction([m, previous_m])
+							self.static_methods[registration_name] = NativeOverloadedFunction([m, previous_m])
 				else:
-					if not self.methods.has_key(m.func_name):
-						self.methods[m.func_name] = m
+					if not self.methods.has_key(registration_name):
+						self.methods[registration_name] = m
 					else:
-						previous_m = self.methods[m.func_name]
+						previous_m = self.methods[registration_name]
 						if isinstance(previous_m, NativeOverloadedFunction):
 							previous_m.append(m)
 						else:
-							self.methods[m.func_name] = NativeOverloadedFunction([m, previous_m])
+							self.methods[registration_name] = NativeOverloadedFunction([m, previous_m])
 		elif self._current_visibility == cindex.AccessSpecifierKind.PUBLIC and cursor.kind == cindex.CursorKind.CONSTRUCTOR and not self.is_abstract:
 			m = NativeFunction(cursor)
 			m.is_constructor = True
@@ -434,6 +435,7 @@ class Generator(object):
 		self.head_file = None
 		self.skip_classes = {}
 		self.generated_classes = {}
+		self.rename_functions = {}
 		if opts['skip']:
 			list_of_skips = re.split(",\n?", opts['skip'])
 			for skip in list_of_skips:
@@ -444,6 +446,25 @@ class Generator(object):
 					self.skip_classes[class_name] = match.group(1).split(" ")
 				else:
 					raise Exception("invalid list of skip methods")
+		if opts['rename']:
+			list_of_renames = re.split(",\n?", opts['rename'])
+			for rename in list_of_renames:
+				class_name, methods = rename.split("::")
+				self.rename_functions[class_name] = {}
+				match = re.match("\[([^]]+)\]", methods)
+				if match:
+					list_of_methods = match.group(1).split(" ")
+					for pair in list_of_methods:
+						k, v = pair.split("=")
+						self.rename_functions[class_name][k] = v
+				else:
+					raise Exception("invalid list of rename methods")
+
+	def should_rename(self, class_name, method_name):
+		if self.rename_functions.has_key(class_name) and self.rename_functions[class_name].has_key(method_name):
+			# print >> sys.stderr, "will rename %s to %s" % (method_name, self.rename_functions[class_name][method_name])
+			return self.rename_functions[class_name][method_name]
+		return None
 
 	def should_skip(self, class_name, method_name, verbose=False):
 		if class_name == "*" and self.skip_classes.has_key("*"):
@@ -631,7 +652,8 @@ def main():
 				'target_ns': config.get(s, 'target_namespace'),
 				'base_objects': config.get(s, 'base_objects'),
 				'abstract_classes': config.get(s, 'abstract_classes'),
-				'skip': config.get(s, 'skip')
+				'skip': config.get(s, 'skip'),
+				'rename': config.get(s, 'rename')
 				}
 			generator = Generator(gen_opts)
 			generator.generate_code()

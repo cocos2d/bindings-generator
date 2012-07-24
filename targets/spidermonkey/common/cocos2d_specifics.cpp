@@ -504,6 +504,27 @@ JSBool js_cocos2dx_swap_native_object(JSContext *cx, uint32_t argc, jsval *vp)
 	return JS_TRUE;
 }
 
+JSBool js_cocos2dx_CCNode_copy(JSContext *cx, uint32_t argc, jsval *vp)
+{
+	if (argc == 0) {
+		JSObject *obj = JSVAL_TO_OBJECT(JS_THIS(cx, vp));
+		js_proxy_t *proxy;
+		JS_GET_NATIVE_PROXY(proxy, obj);
+		cocos2d::CCNode *node = (cocos2d::CCNode *)(proxy ? proxy->ptr : NULL);
+		TEST_NATIVE_OBJECT(cx, node)
+		JSClass *jsclass = JS_GetClass(obj);
+		JSObject *proto = JS_GetPrototype(obj);
+		JSObject *parent = JS_GetParent(obj);
+		JSObject *ret = JS_NewObject(cx, jsclass, proto, parent);
+		if (ret) {
+			JS_NEW_PROXY(proxy, node, ret);
+			JS_SET_RVAL(cx, vp, OBJECT_TO_JSVAL(ret));
+			return JS_TRUE;
+		}
+	}
+	return JS_FALSE;
+}
+
 JSObject* getObjectFromNamespace(JSContext* cx, JSObject *ns, const char *name) {
 	jsval out;
 	if (JS_GetProperty(cx, ns, name, &out) == JS_TRUE) {
@@ -566,6 +587,23 @@ JSBool js_callFunc(JSContext *cx, uint32_t argc, jsval *vp)
     }
 }
 
+#ifndef ANDROID
+JSBool js_break(JSContext *cx, uint32_t argc, jsval *vp)
+{
+	JSObject *obj = NULL;
+	if (argc == 1) {
+		jsval *argv = JS_ARGV(cx, vp);
+		if (JSVAL_IS_OBJECT(argv[0])) {
+			JS_ValueToObject(cx, argv[0], &obj);
+		}
+	}
+	__builtin_trap();
+	return JS_TRUE;
+}
+#endif
+
+extern JSObject* js_cocos2dx_CCNode_prototype;
+extern JSObject* js_cocos2dx_CCAction_prototype;
 
 void register_cocos2dx_js_extensions()
 {
@@ -585,9 +623,15 @@ void register_cocos2dx_js_extensions()
 
 	JS_DefineFunction(cx, global, "__associateObjWithNative", js_cocos2dx_swap_native_object, 2, JSPROP_READONLY | JSPROP_PERMANENT);
 	JS_DefineFunction(cx, global, "__getPlatform", js_platform, 0, JSPROP_READONLY | JSPROP_PERMANENT);
+#ifndef ANDROID
+	JS_DefineFunction(cx, global, "__break", js_break, 0, JSPROP_READONLY | JSPROP_PERMANENT);
+#endif
 
-	// add the properties
 	JSObject *tmpObj;
+	JS_DefineFunction(cx, js_cocos2dx_CCNode_prototype, "copy", js_cocos2dx_CCNode_copy, 1, JSPROP_READONLY | JSPROP_PERMANENT);
+	JS_DefineFunction(cx, js_cocos2dx_CCAction_prototype, "copy", js_cocos2dx_CCNode_copy, 1, JSPROP_READONLY | JSPROP_PERMANENT);
+	tmpObj = JSVAL_TO_OBJECT(anonEvaluate(cx, global, "(function () { return cc.Node.prototype; })()"));
+	JS_DefineFunction(cx, tmpObj, "copy", js_cocos2dx_CCNode_copy, 1, JSPROP_READONLY | JSPROP_PERMANENT);
 	tmpObj = JSVAL_TO_OBJECT(anonEvaluate(cx, global, "(function () { return cc.Menu; })()"));
 	JS_DefineFunction(cx, tmpObj, "create", js_cocos2dx_CCMenu_create, 0, JSPROP_READONLY | JSPROP_PERMANENT);
 	tmpObj = JSVAL_TO_OBJECT(anonEvaluate(cx, global, "(function () { return cc.MenuItem; })()"));

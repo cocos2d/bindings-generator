@@ -370,6 +370,72 @@ JSBool js_cocos2dx_CCMenuItemToggle_create(JSContext *cx, uint32_t argc, jsval *
 	return JS_FALSE;
 }
 
+
+JSBool js_cocos2dx_CCAnimation_create(JSContext *cx, uint32_t argc, jsval *vp)
+{
+	jsval *argv = JS_ARGV(cx, vp);
+	if (argc > 0 && argc <= 3) {
+		cocos2d::CCArray* arg0 = cocos2d::CCArray::create();
+		if (JSVAL_IS_OBJECT(argv[0])) {
+			JSObject *jsarr = JSVAL_TO_OBJECT(argv[0]);
+			uint32_t len;
+			if (JS_IsArrayObject(cx, jsarr) && JS_GetArrayLength(cx, jsarr, &len)) {
+				for (int i=0; i < len; i++) {
+					jsval elt;
+					if (JS_GetElement(cx, jsarr, i, &elt)) {
+						js_proxy_t *proxy;
+						JSObject *tmpObj = JSVAL_TO_OBJECT(elt);
+						JS_GET_NATIVE_PROXY(proxy, tmpObj);
+						cocos2d::CCObject *tmpCObj = (cocos2d::CCObject *)(proxy ? proxy->ptr : NULL);
+						TEST_NATIVE_OBJECT(cx, tmpCObj);
+						arg0->addObject(tmpCObj);
+					}
+				}
+			}
+		}
+		cocos2d::CCAnimation* ret;
+		double arg1 = 0.0f;
+		if (argc < 3) {
+			if (argc == 2) {
+				JS_ValueToNumber(cx, argv[1], &arg1);
+			}
+			ret = cocos2d::CCAnimation::create(arg0, arg1);
+		} else {
+			unsigned int loops;
+			JS_ValueToECMAUint32(cx, argv[1], &loops);
+			ret = cocos2d::CCAnimation::create(arg0, arg1, loops);
+		}
+		jsval jsret;
+		do {
+			if (ret) {
+				js_proxy_t *p;
+				JS_GET_PROXY(p, ret);
+				if (p) {
+					jsret = OBJECT_TO_JSVAL(p->obj);
+				} else {
+					// create a new js obj of that class
+					TypeTest<cocos2d::CCAnimation> t;
+					js_type_class_t *p;
+					uint32_t typeId = t.s_id();
+					HASH_FIND_INT(_js_global_type_ht, &typeId, p);
+					assert(p);
+					JSObject *_tmp = JS_NewObject(cx, p->jsclass, p->proto, p->parentProto);
+					JS_AddObjectRoot(cx, &_tmp);      
+					jsret = OBJECT_TO_JSVAL(_tmp);
+					js_proxy_t *pp;
+					JS_NEW_PROXY(pp, ret, _tmp);
+				}
+			} else {
+				jsret = JSVAL_NULL;
+			}
+		} while (0);
+		JS_SET_RVAL(cx, vp, jsret);
+		return JS_TRUE;
+	}
+	return JS_FALSE;
+}
+
+
 JSBool js_cocos2dx_setCallback(JSContext *cx, uint32_t argc, jsval *vp) {
 
     if(argc == 2) {
@@ -542,6 +608,8 @@ void register_cocos2dx_js_extensions()
 	JS_DefineFunction(cx, tmpObj, "create", js_cocos2dx_CCSequence_create, 0, JSPROP_READONLY | JSPROP_PERMANENT);
 	tmpObj = JSVAL_TO_OBJECT(anonEvaluate(cx, global, "(function () { return cc.Spawn; })()"));
 	JS_DefineFunction(cx, tmpObj, "create", js_cocos2dx_CCSpawn_create, 0, JSPROP_READONLY | JSPROP_PERMANENT);
+	tmpObj = JSVAL_TO_OBJECT(anonEvaluate(cx, global, "(function () { return cc.Animation; })()"));
+	JS_DefineFunction(cx, tmpObj, "create", js_cocos2dx_CCAnimation_create, 0, JSPROP_READONLY | JSPROP_PERMANENT);
     
 	JS_DefineFunction(cx, ns, "registerTargettedDelegate", js_cocos2dx_JSTouchDelegate_registerTargettedDelegate, 1, JSPROP_READONLY | JSPROP_PERMANENT);
 	JS_DefineFunction(cx, ns, "registerStandardDelegate", js_cocos2dx_JSTouchDelegate_registerStandardDelegate, 1, JSPROP_READONLY | JSPROP_PERMANENT);

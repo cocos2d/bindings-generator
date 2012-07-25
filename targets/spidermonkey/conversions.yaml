@@ -11,12 +11,19 @@ conversions:
   native_types:
     bool: "JSBool"
     float: "double"
+    short: "int32_t"
     "unsigned char": "uint16_t"
+    "char": "int32_t"
   to_native:
     # jsval to int
-    int: "JS_ValueToInt32(cx, ${in_value}, &${out_value})"
+    int: "JS_ValueToInt32(cx, ${in_value}, (int32_t *)&${out_value})"
     "unsigned int": "JS_ValueToECMAUint32(cx, ${in_value}, &${out_value})"
     "unsigned char": "JS_ValueToUint16(cx, ${in_value}, &${out_value})"
+    short: "JS_ValueToInt32(cx, ${in_value}, &${out_value})"
+    char: "JS_ValueToInt32(cx, ${in_value}, &${out_value})"
+    bool: "JS_ValueToBoolean(cx, ${in_value}, &${out_value})"
+    float: "JS_ValueToNumber(cx, ${in_value}, &${out_value})"
+    double: "${out_value} = JSVAL_TO_DOUBLE(${in_value})"
     # jsval has to be a TypedArray, a UInt32Array with 2 elements
     "long long": |
       do {
@@ -36,9 +43,6 @@ conversions:
       ${($level + 1) * '\t'}JSString *tmp = JS_ValueToString(cx, ${in_value});
       ${($level + 1) * '\t'}${out_value} = JS_EncodeString(cx, tmp);
       ${$level * '\t'}} while (0)
-    bool: "JS_ValueToBoolean(cx, ${in_value}, &${out_value})"
-    float: "JS_ValueToNumber(cx, ${in_value}, &${out_value})"
-    double: "${out_value} = JSVAL_TO_DOUBLE(${in_value})"
     object: |
       do {
       ${($level + 1) * '\t'}js_proxy_t *proxy;
@@ -74,6 +78,15 @@ conversions:
       ${($level + 1) * '\t'}float *arr = (float *)JS_GetTypedArrayData(tmp);
       ${($level + 1) * '\t'}${out_value} = cocos2d::CCSize(arr[0], arr[1]);
       ${($level + 0) * '\t'}} while (0)
+    "const ccGridSize": |
+      do {
+      ${($level + 1) * '\t'}JSObject *tmp;
+      ${($level + 1) * '\t'}if (!JS_ValueToObject(cx, ${in_value}, &tmp)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!js_IsTypedArray(tmp)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_GetTypedArrayByteLength(tmp) == sizeof(float) * 2) return JS_FALSE;
+      ${($level + 1) * '\t'}float *arr = (float *)JS_GetTypedArrayData(tmp);
+      ${($level + 1) * '\t'}${out_value} = cocos2d::ccg(arr[0], arr[1]);
+      ${($level + 0) * '\t'}} while (0)
     "const ccColor4B": |
       do {
       ${($level + 1) * '\t'}JSObject *tmp;
@@ -98,6 +111,7 @@ conversions:
     # int to jsval
     int: "JS_NewNumberValue(cx, ${in_value}, &${out_value})"
     "unsigned int": "JS_NewNumberValue(cx, ${in_value}, &${out_value})"
+    "unsigned char": "JS_NewNumberValue(cx, ${in_value}, &${out_value})"
     "long long": |
       do {
       ${($level + 1) * '\t'}JSObject *tmp = js_CreateTypedArray(cx, js::TypedArray::TYPE_UINT32, 2);
@@ -169,6 +183,14 @@ conversions:
       ${($level + 1) * '\t'}float *data = (float *)JS_GetTypedArrayData(tmp);
       ${($level + 1) * '\t'}data[0] = ${in_value}.width;
       ${($level + 1) * '\t'}data[1] = ${in_value}.height;
+      ${($level + 1) * '\t'}${out_value} = OBJECT_TO_JSVAL(tmp);
+      ${($level + 0) * '\t'}} while (0)
+    "const ccGridSize":
+      do {
+      ${($level + 1) * '\t'}JSObject *tmp = js_CreateTypedArray(cx, js::TypedArray::TYPE_FLOAT32, 2);
+      ${($level + 1) * '\t'}float *data = (float *)JS_GetTypedArrayData(tmp);
+      ${($level + 1) * '\t'}data[0] = ${in_value}.x;
+      ${($level + 1) * '\t'}data[1] = ${in_value}.y;
       ${($level + 1) * '\t'}${out_value} = OBJECT_TO_JSVAL(tmp);
       ${($level + 0) * '\t'}} while (0)
     "const ccColor4B": |

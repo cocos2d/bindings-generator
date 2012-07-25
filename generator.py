@@ -133,6 +133,8 @@ class NativeType(object):
 				name = "object"
 			elif not generator.config['conversions']['from_native'].has_key(name):
 				name = "object"
+		elif self.type.get_canonical().kind == cindex.TypeKind.ENUM:
+			name = "int"
 
 		if generator.config['conversions']['from_native'].has_key(name):
 			tpl = generator.config['conversions']['from_native'][name]
@@ -150,6 +152,9 @@ class NativeType(object):
 				name = "object"
 			elif not generator.config['conversions']['to_native'].has_key(name):
 				name = "object"
+		elif self.type.get_canonical().kind == cindex.TypeKind.ENUM:
+			name = "int"
+
 		if generator.config['conversions']['to_native'].has_key(name):
 			tpl = generator.config['conversions']['to_native'][name]
 			tpl = Template(tpl, searchList=[convert_opts])

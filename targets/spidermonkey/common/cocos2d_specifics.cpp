@@ -88,9 +88,7 @@ JSBool js_cocos2dx_CCMenu_create(JSContext *cx, uint32_t argc, jsval *vp)
 					HASH_FIND_INT(_js_global_type_ht, &typeId, p);
 					assert(p);
 					JSObject *_tmp = JS_NewObject(cx, p->jsclass, p->proto, p->parentProto);
-#ifdef COCOS2D_VERSION
 					JS_AddObjectRoot(cx, &_tmp);      
-#endif
 					jsret = OBJECT_TO_JSVAL(_tmp);
 					js_proxy_t *pp;
 					JS_NEW_PROXY(pp, ret, _tmp);
@@ -119,9 +117,7 @@ JSBool js_cocos2dx_CCMenu_create(JSContext *cx, uint32_t argc, jsval *vp)
 					HASH_FIND_INT(_js_global_type_ht, &typeId, p);
 					assert(p);
 					JSObject *_tmp = JS_NewObject(cx, p->jsclass, p->proto, p->parentProto);
-#ifdef COCOS2D_VERSION
 					JS_AddObjectRoot(cx, &_tmp);      
-#endif
 					jsret = OBJECT_TO_JSVAL(_tmp);
 					js_proxy_t *pp;
 					JS_NEW_PROXY(pp, ret, _tmp);
@@ -167,9 +163,7 @@ JSBool js_cocos2dx_CCSequence_create(JSContext *cx, uint32_t argc, jsval *vp)
 					HASH_FIND_INT(_js_global_type_ht, &typeId, p);
 					assert(p);
 					JSObject *_tmp = JS_NewObject(cx, p->jsclass, p->proto, p->parentProto);
-#ifdef COCOS2D_VERSION
 					JS_AddObjectRoot(cx, &_tmp);      
-#endif
 					jsret = OBJECT_TO_JSVAL(_tmp);
 					js_proxy_t *pp;
 					JS_NEW_PROXY(pp, ret, _tmp);
@@ -215,9 +209,7 @@ JSBool js_cocos2dx_CCSpawn_create(JSContext *cx, uint32_t argc, jsval *vp)
 					HASH_FIND_INT(_js_global_type_ht, &typeId, p);
 					assert(p);
 					JSObject *_tmp = JS_NewObject(cx, p->jsclass, p->proto, p->parentProto);
-#ifdef COCOS2D_VERSION
 					JS_AddObjectRoot(cx, &_tmp);      
-#endif
 					jsret = OBJECT_TO_JSVAL(_tmp);
 					js_proxy_t *pp;
 					JS_NEW_PROXY(pp, ret, _tmp);
@@ -370,7 +362,6 @@ JSBool js_cocos2dx_CCMenuItemToggle_create(JSContext *cx, uint32_t argc, jsval *
 	return JS_FALSE;
 }
 
-
 JSBool js_cocos2dx_CCAnimation_create(JSContext *cx, uint32_t argc, jsval *vp)
 {
 	jsval *argv = JS_ARGV(cx, vp);
@@ -445,7 +436,7 @@ JSBool js_cocos2dx_setCallback(JSContext *cx, uint32_t argc, jsval *vp) {
         JS_GET_NATIVE_PROXY(proxy, obj);
         cocos2d::CCMenuItem* item = (cocos2d::CCMenuItem*)(proxy ? proxy->ptr : NULL);
         TEST_NATIVE_OBJECT(cx, item)
-        JSObject *tempObj = bind_menu_item<cocos2d::CCMenuItem>(cx, item, argv[2], argv[1]);
+        bind_menu_item<cocos2d::CCMenuItem>(cx, item, argv[1], argv[0]);
         return JS_TRUE;
     }
     return JS_FALSE;
@@ -604,6 +595,7 @@ JSBool js_break(JSContext *cx, uint32_t argc, jsval *vp)
 
 extern JSObject* js_cocos2dx_CCNode_prototype;
 extern JSObject* js_cocos2dx_CCAction_prototype;
+extern JSObject* js_cocos2dx_CCMenuItem_prototype;
 
 void register_cocos2dx_js_extensions()
 {
@@ -630,6 +622,7 @@ void register_cocos2dx_js_extensions()
 	JSObject *tmpObj;
 	JS_DefineFunction(cx, js_cocos2dx_CCNode_prototype, "copy", js_cocos2dx_CCNode_copy, 1, JSPROP_READONLY | JSPROP_PERMANENT);
 	JS_DefineFunction(cx, js_cocos2dx_CCAction_prototype, "copy", js_cocos2dx_CCNode_copy, 1, JSPROP_READONLY | JSPROP_PERMANENT);
+	JS_DefineFunction(cx, js_cocos2dx_CCMenuItem_prototype, "setCallback", js_cocos2dx_setCallback, 2, JSPROP_READONLY | JSPROP_PERMANENT);
 	tmpObj = JSVAL_TO_OBJECT(anonEvaluate(cx, global, "(function () { return cc.Node.prototype; })()"));
 	JS_DefineFunction(cx, tmpObj, "copy", js_cocos2dx_CCNode_copy, 1, JSPROP_READONLY | JSPROP_PERMANENT);
 	tmpObj = JSVAL_TO_OBJECT(anonEvaluate(cx, global, "(function () { return cc.Menu; })()"));

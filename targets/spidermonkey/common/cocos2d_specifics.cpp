@@ -1,7 +1,5 @@
 #include "cocos2d.h"
-//#include "cocos2dx.hpp"
 #include "cocos2d_specifics.hpp"
-
 
 
 void JSTouchDelegate::setJSObject(JSObject *obj) {

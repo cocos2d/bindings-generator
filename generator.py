@@ -441,6 +441,7 @@ class Generator(object):
 		self.skip_classes = {}
 		self.generated_classes = {}
 		self.rename_functions = {}
+		self.out_file = opts['out_file']
 		if opts['skip']:
 			list_of_skips = re.split(",\n?", opts['skip'])
 			for skip in list_of_skips:
@@ -535,8 +536,8 @@ class Generator(object):
 		stream = file(os.path.join(self.target, "conversions.yaml"), "r")
 		data = yaml.load(stream)
 		self.config = data
-		implfilepath = os.path.join(self.outdir, self.prefix + ".cpp")
-		headfilepath = os.path.join(self.outdir, self.prefix + ".hpp")
+		implfilepath = os.path.join(self.outdir, self.out_file + ".cpp")
+		headfilepath = os.path.join(self.outdir, self.out_file + ".hpp")
 		self.impl_file = open(implfilepath, "w+")
 		self.head_file = open(headfilepath, "w+")
 
@@ -599,6 +600,8 @@ def main():
 						help="specifies the target vm. Will search for TARGET.yaml")
 	parser.add_option("-o", action="store", type="string", dest="outdir",
 						help="specifies the output directory for generated C++ code")
+	parser.add_option("-n", action="store", type="string", dest="out_file",
+						help="specifcies the name of the output file, defaults to the prefix in the .ini file")
 
 	(opts, args) = parser.parse_args()
 
@@ -658,7 +661,8 @@ def main():
 				'base_objects': config.get(s, 'base_objects'),
 				'abstract_classes': config.get(s, 'abstract_classes'),
 				'skip': config.get(s, 'skip'),
-				'rename': config.get(s, 'rename')
+				'rename': config.get(s, 'rename'),
+				'out_file': opts.out_file or config.get(s, 'prefix')
 				}
 			generator = Generator(gen_opts)
 			generator.generate_code()

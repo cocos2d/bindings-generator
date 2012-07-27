@@ -9,23 +9,27 @@ void register_cocos2dx_js_extensions();
 class JSCallFunc: public CCObject {
 public:
     JSCallFunc(jsval func): jsCallback(func) {}
-    JSCallFunc() {}
+    JSCallFunc() { extraData = NULL; }
     ~JSCallFunc(){}
     void setJSCallbackFunc(jsval obj);
     void setJSCallbackThis(jsval thisObj);
     void setExtraDataField(jsval data);
-    void callbackFunc() const {
+    static void dumpNamedRoot(const char *name, void *addr, JSGCRootType type, void *data);
+    
+    void callbackFunc(CCNode *node) const {
         
-        if(extraData) {
+        js_proxy_t *p;
+        JS_GET_PROXY(p, node);
+        jsval retObj = OBJECT_TO_JSVAL(p->obj);
+        if(extraData != NULL) {
             ScriptingCore::getInstance()->executeJSFunctionWithThisObj(jsThisObj,
                                                                    jsCallback,
                                                                    *extraData);
         } else {
             ScriptingCore::getInstance()->executeJSFunctionWithThisObj(jsThisObj,
                                                                        jsCallback,
-                                                                       jsThisObj);
+                                                                       retObj);
         } 
-        js_log("IN CALLBACK");
     }
 private:
     jsval jsCallback;

@@ -569,11 +569,37 @@ JSBool js_callFunc(JSContext *cx, uint32_t argc, jsval *vp)
         } if(argc == 3) {
             tmpCobj->setExtraDataField(argv[2]);
         }
-        CCCallFuncN *test = CCCallFuncN::create((CCObject *)tmpCobj, 
-                                               callfuncN_selector(JSCallFunc::callbackFunc));
-        test->execute();
-
+        
+        CCCallFunc *ret = (CCCallFunc *)CCCallFuncN::create((CCObject *)tmpCobj, 
+                                             callfuncN_selector(JSCallFunc::callbackFunc));
+        
+		js_proxy_t *proxy;
+        
+        js_type_class_t *classType;
+		TypeTest<cocos2d::CCCallFunc> t;
+		uint32_t typeId = t.s_id();
+		HASH_FIND_INT(_js_global_type_ht, &typeId, classType);
+        
+		assert(classType);
+		JSObject *tmp = JS_NewObject(cx, classType->jsclass, classType->proto, classType->parentProto);
+        
+		// bind nativeObj <-> JSObject
+		JS_NEW_PROXY(proxy, ret, tmp);      
+		JS_SET_RVAL(cx, vp, OBJECT_TO_JSVAL(tmp));        
+      //  test->execute();
     }
+    return JS_TRUE;
+
+}
+
+
+
+
+
+
+JSBool js_forceGC(JSContext *cx, uint32_t argc, jsval *vp) {
+    JS_GC(cx);
+    return JS_TRUE;
 }
 
 #ifndef ANDROID
@@ -651,4 +677,8 @@ void register_cocos2dx_js_extensions()
 
 	tmpObj = JSVAL_TO_OBJECT(anonEvaluate(cx, global, "(function () { cc.CallFunc = cc.CallFunc || new Object(); return cc.CallFunc; })()"));
 	JS_DefineFunction(cx, tmpObj, "create", js_callFunc, 1, JSPROP_READONLY | JSPROP_PERMANENT);
+
+     tmpObj = JSVAL_TO_OBJECT(anonEvaluate(cx, global, "(function () { return this; })()"));
+    JS_DefineFunction(cx, tmpObj, "garbageCollect", js_forceGC, 1, JSPROP_READONLY | JSPROP_PERMANENT);
+
 }

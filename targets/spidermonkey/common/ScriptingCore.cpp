@@ -342,6 +342,21 @@ int ScriptingCore::executeFunctionWithIntegerData(int nHandler, int data, CCNode
 }
 
 
+int ScriptingCore::executeFunctionWithObjectData(int nHandler, const char *name, JSObject *obj, CCNode *self) {
+    
+    js_proxy_t * p;
+    JS_GET_PROXY(p, self);
+    if (!p) return 0;
+    
+    jsval retval;
+    jsval dataVal = OBJECT_TO_JSVAL(obj);
+    
+    executeJSFunctionWithName(this->cx, p->obj, name, dataVal, retval);
+    
+    return 1;
+}
+
+
 int ScriptingCore::executeFunctionWithFloatData(int nHandler, float data, CCNode *self) {
     
     
@@ -404,6 +419,17 @@ static void getTouchFuncName(int eventType, std::string &funcName) {
     
 }
 
+static void rootObject(JSContext *cx, JSObject *obj) {
+    JS_AddObjectRoot(cx, &obj);
+}
+
+
+static void unRootObject(JSContext *cx, JSObject *obj) {
+    JS_RemoveObjectRoot(cx, &obj);
+}
+
+
+
 
 static void getJSTouchObject(JSContext *cx, CCTouch *x, jsval &jsret) {    
     js_type_class_t *classType;
@@ -421,12 +447,12 @@ static void getJSTouchObject(JSContext *cx, CCTouch *x, jsval &jsret) {
 int ScriptingCore::executeTouchesEvent(int nHandler, int eventType, 
                                        CCSet *pTouches, CCNode *self) {
     
-    jsval retval;
-    
-    std::string funcName;
+    std::string funcName = "";
     getTouchesFuncName(eventType, funcName);
-    
+        
     JSObject *jsretArr = JS_NewArrayObject(this->cx, 0, NULL);
+    
+    JS_AddObjectRoot(this->cx, &jsretArr);
     int count = 0;
     for(CCSetIterator it = pTouches->begin(); it != pTouches->end(); ++it, ++count) {
         jsval jsret;
@@ -436,12 +462,28 @@ int ScriptingCore::executeTouchesEvent(int nHandler, int eventType,
         }
     }
     
-    js_proxy_t *lP;
-    JS_GET_PROXY(lP, self);
-    assert(lP);
+    executeFunctionWithObjectData(1,  funcName.c_str(), jsretArr, self);
     
-    jsval jsretArrVal = OBJECT_TO_JSVAL(jsretArr);
-    executeJSFunctionWithName(this->cx, lP->obj, funcName.c_str(), jsretArrVal, retval);
+    JS_RemoveObjectRoot(this->cx, &jsretArr);
+
+    
+//    
+//    js_proxy_t *lP;
+//    JS_GET_PROXY(lP, self);
+//    if(!lP) return 0;
+//    
+//    //if (!JS_EnterLocalRootScope(this->cx))
+//    //    return JS_FALSE;
+//
+//    //rootObject(this->cx, jsretArr);
+//
+//    jsval jsretArrVal = OBJECT_TO_JSVAL(jsretArr);
+//    
+//    
+//    executeJSFunctionWithName(this->cx, lP->obj, funcName.c_str(), jsretArrVal, retval);
+//    
+//    //JS_LeaveLocalRootScope(this->cx);
+//    //unRootObject(this->cx, jsretArr);
     
     return 1;
 }
@@ -455,6 +497,7 @@ int ScriptingCore::executeCustomTouchesEvent(int eventType,
     getTouchesFuncName(eventType, funcName);
     
     JSObject *jsretArr = JS_NewArrayObject(this->cx, 0, NULL);
+    JS_AddObjectRoot(this->cx, &jsretArr);
     int count = 0;
     for(CCSetIterator it = pTouches->begin(); it != pTouches->end(); ++it, ++count) {
         jsval jsret;
@@ -466,7 +509,7 @@ int ScriptingCore::executeCustomTouchesEvent(int eventType,
     
     jsval jsretArrVal = OBJECT_TO_JSVAL(jsretArr);
     executeJSFunctionWithName(this->cx, obj, funcName.c_str(), jsretArrVal, retval);
-    
+    JS_RemoveObjectRoot(this->cx, &jsretArr);    
     return 1;
 }
 

@@ -4,6 +4,10 @@
 #include "jsapi.h"
 #include "ScriptingCore.h"
 
+template<class T>
+js_type_class_t *js_get_type_from_native(T* native_obj);
+template<class T>
+js_proxy_t *js_get_or_create_proxy(JSContext *cx, T *native_obj);
 void register_cocos2dx_js_extensions();
 
 class JSCallFunc: public CCObject {

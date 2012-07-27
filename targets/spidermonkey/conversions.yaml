@@ -136,25 +136,8 @@ conversions:
     object: |
       do {
       ${($level + 1) * '\t'}if (${in_value}) {
-      ${($level + 2) * '\t'}js_proxy_t *p;
-      ${($level + 2) * '\t'}JS_GET_PROXY(p, ${in_value});
-      ${($level + 2) * '\t'}if (p) {
-      ${($level + 3) * '\t'}${out_value} = OBJECT_TO_JSVAL(p->obj);
-      ${($level + 2) * '\t'}} else {
-      ${($level + 3) * '\t'}// create a new js obj of that class
-      ${($level + 3) * '\t'}TypeTest<${ntype.replace("*", "")}> t;
-      ${($level + 3) * '\t'}js_type_class_t *p;
-      ${($level + 3) * '\t'}uint32_t typeId = t.s_id();
-      ${($level + 3) * '\t'}HASH_FIND_INT(_js_global_type_ht, &typeId, p);
-      ${($level + 3) * '\t'}assert(p);
-      ${($level + 3) * '\t'}JSObject *_tmp = JS_NewObject(cx, p->jsclass, p->proto, p->parentProto);
-      ${($level + 3) * '\t'}#ifdef COCOS2D_VERSION
-      ${($level + 3) * '\t'}JS_AddObjectRoot(cx, &_tmp);      
-      ${($level + 3) * '\t'}#endif
-      ${($level + 3) * '\t'}${out_value} = OBJECT_TO_JSVAL(_tmp);
-      ${($level + 3) * '\t'}js_proxy_t *pp;
-      ${($level + 3) * '\t'}JS_NEW_PROXY(pp, ${in_value}, _tmp);
-      ${($level + 2) * '\t'}}
+      ${($level + 2) * '\t'}js_proxy_t *proxy = js_get_or_create_proxy<${ntype.replace("*", "")}>(cx, ${in_value});
+      ${($level + 2) * '\t'}${out_value} = OBJECT_TO_JSVAL(proxy->obj);
       ${($level + 1) * '\t'}} else {
       ${($level + 2) * '\t'}${out_value} = JSVAL_NULL;
       ${($level + 1) * '\t'}}

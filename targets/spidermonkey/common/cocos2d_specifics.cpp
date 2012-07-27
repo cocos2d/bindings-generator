@@ -37,11 +37,7 @@ JSObject* bind_menu_item(JSContext *cx, T* nativeObj, jsval callback, jsval this
 		addCallBackAndThis(p->obj, callback, thisObj);
 		return p->obj;
 	} else {
-		js_type_class_t *classType;
-		TypeTest<T> t;
-		uint32_t typeId = t.s_id();
-		HASH_FIND_INT(_js_global_type_ht, &typeId, classType);
-
+		js_type_class_t *classType = js_get_type_from_native<T>(nativeObj);
 		assert(classType);
 		JSObject *tmp = JS_NewObject(cx, classType->jsclass, classType->proto, classType->parentProto);
 
@@ -103,16 +99,8 @@ JSBool js_cocos2dx_CCMenu_create(JSContext *cx, uint32_t argc, jsval *vp)
 					jsret = OBJECT_TO_JSVAL(p->obj);
 				} else {
 					// create a new js obj of that class
-					TypeTest<cocos2d::CCMenu> t;
-					js_type_class_t *p;
-					uint32_t typeId = t.s_id();
-					HASH_FIND_INT(_js_global_type_ht, &typeId, p);
-					assert(p);
-					JSObject *_tmp = JS_NewObject(cx, p->jsclass, p->proto, p->parentProto);
-					JS_AddObjectRoot(cx, &_tmp);      
-					jsret = OBJECT_TO_JSVAL(_tmp);
-					js_proxy_t *pp;
-					JS_NEW_PROXY(pp, ret, _tmp);
+					js_proxy_t *proxy = js_get_or_create_proxy<cocos2d::CCMenu>(cx, ret);
+					jsret = OBJECT_TO_JSVAL(proxy->obj);
 				}
 			} else {
 				jsret = JSVAL_NULL;
@@ -132,16 +120,8 @@ JSBool js_cocos2dx_CCMenu_create(JSContext *cx, uint32_t argc, jsval *vp)
 					jsret = OBJECT_TO_JSVAL(p->obj);
 				} else {
 					// create a new js obj of that class
-					TypeTest<cocos2d::CCMenu> t;
-					js_type_class_t *p;
-					uint32_t typeId = t.s_id();
-					HASH_FIND_INT(_js_global_type_ht, &typeId, p);
-					assert(p);
-					JSObject *_tmp = JS_NewObject(cx, p->jsclass, p->proto, p->parentProto);
-					JS_AddObjectRoot(cx, &_tmp);      
-					jsret = OBJECT_TO_JSVAL(_tmp);
-					js_proxy_t *pp;
-					JS_NEW_PROXY(pp, ret, _tmp);
+					js_proxy_t *proxy = js_get_or_create_proxy<cocos2d::CCMenu>(cx, ret);
+					jsret = OBJECT_TO_JSVAL(proxy->obj);
 				}
 			} else {
 				jsret = JSVAL_NULL;
@@ -178,16 +158,8 @@ JSBool js_cocos2dx_CCSequence_create(JSContext *cx, uint32_t argc, jsval *vp)
 					jsret = OBJECT_TO_JSVAL(p->obj);
 				} else {
 					// create a new js obj of that class
-					TypeTest<cocos2d::CCSequence> t;
-					js_type_class_t *p;
-					uint32_t typeId = t.s_id();
-					HASH_FIND_INT(_js_global_type_ht, &typeId, p);
-					assert(p);
-					JSObject *_tmp = JS_NewObject(cx, p->jsclass, p->proto, p->parentProto);
-					JS_AddObjectRoot(cx, &_tmp);      
-					jsret = OBJECT_TO_JSVAL(_tmp);
-					js_proxy_t *pp;
-					JS_NEW_PROXY(pp, ret, _tmp);
+					js_proxy_t *proxy = js_get_or_create_proxy<cocos2d::CCFiniteTimeAction>(cx, ret);
+					jsret = OBJECT_TO_JSVAL(proxy->obj);
 				}
 			} else {
 				jsret = JSVAL_NULL;
@@ -224,16 +196,8 @@ JSBool js_cocos2dx_CCSpawn_create(JSContext *cx, uint32_t argc, jsval *vp)
 					jsret = OBJECT_TO_JSVAL(p->obj);
 				} else {
 					// create a new js obj of that class
-					TypeTest<cocos2d::CCSpawn> t;
-					js_type_class_t *p;
-					uint32_t typeId = t.s_id();
-					HASH_FIND_INT(_js_global_type_ht, &typeId, p);
-					assert(p);
-					JSObject *_tmp = JS_NewObject(cx, p->jsclass, p->proto, p->parentProto);
-					JS_AddObjectRoot(cx, &_tmp);      
-					jsret = OBJECT_TO_JSVAL(_tmp);
-					js_proxy_t *pp;
-					JS_NEW_PROXY(pp, ret, _tmp);
+					js_proxy_t *proxy = js_get_or_create_proxy<cocos2d::CCFiniteTimeAction>(cx, ret);
+					jsret = OBJECT_TO_JSVAL(proxy->obj);
 				}
 			} else {
 				jsret = JSVAL_NULL;
@@ -368,7 +332,7 @@ JSBool js_cocos2dx_CCMenuItemToggle_create(JSContext *cx, uint32_t argc, jsval *
 	if (argc >= 1) {
 		jsval *argv = JS_ARGV(cx, vp);
 		cocos2d::CCMenuItemToggle* ret = cocos2d::CCMenuItemToggle::create(NULL, NULL, NULL);
-		JSObject *obj = bind_menu_item<cocos2d::CCMenuItemToggle>(cx, ret, (argc == 2 ? argv[1] : JSVAL_VOID), argv[0]);
+		JSObject *obj = bind_menu_item(cx, ret, (argc == 2 ? argv[1] : JSVAL_VOID), argv[0]);
 		for (int i=1; i < argc; i++) {
 			js_proxy_t *proxy;
 			JSObject *tmpObj = JSVAL_TO_OBJECT(argv[i]);
@@ -382,6 +346,23 @@ JSBool js_cocos2dx_CCMenuItemToggle_create(JSContext *cx, uint32_t argc, jsval *
 	}
 	return JS_FALSE;
 }
+
+
+JSBool js_cocos2dx_setCallback(JSContext *cx, uint32_t argc, jsval *vp) {
+
+    if(argc == 2) {
+        jsval *argv = JS_ARGV(cx, vp);
+        JSObject *obj = JS_THIS_OBJECT(cx, vp);
+        js_proxy_t *proxy;
+        JS_GET_NATIVE_PROXY(proxy, obj);
+        cocos2d::CCMenuItem* item = (cocos2d::CCMenuItem*)(proxy ? proxy->ptr : NULL);
+        TEST_NATIVE_OBJECT(cx, item)
+        bind_menu_item(cx, item, argv[1], argv[0]);
+        return JS_TRUE;
+    }
+    return JS_FALSE;
+}
+
 
 JSBool js_cocos2dx_CCAnimation_create(JSContext *cx, uint32_t argc, jsval *vp)
 {
@@ -426,16 +407,8 @@ JSBool js_cocos2dx_CCAnimation_create(JSContext *cx, uint32_t argc, jsval *vp)
 					jsret = OBJECT_TO_JSVAL(p->obj);
 				} else {
 					// create a new js obj of that class
-					TypeTest<cocos2d::CCAnimation> t;
-					js_type_class_t *p;
-					uint32_t typeId = t.s_id();
-					HASH_FIND_INT(_js_global_type_ht, &typeId, p);
-					assert(p);
-					JSObject *_tmp = JS_NewObject(cx, p->jsclass, p->proto, p->parentProto);
-					JS_AddObjectRoot(cx, &_tmp);      
-					jsret = OBJECT_TO_JSVAL(_tmp);
-					js_proxy_t *pp;
-					JS_NEW_PROXY(pp, ret, _tmp);
+					js_proxy_t *proxy = js_get_or_create_proxy<cocos2d::CCAnimation>(cx, ret);
+					jsret = OBJECT_TO_JSVAL(proxy->obj);
 				}
 			} else {
 				jsret = JSVAL_NULL;
@@ -445,22 +418,6 @@ JSBool js_cocos2dx_CCAnimation_create(JSContext *cx, uint32_t argc, jsval *vp)
 		return JS_TRUE;
 	}
 	return JS_FALSE;
-}
-
-
-JSBool js_cocos2dx_setCallback(JSContext *cx, uint32_t argc, jsval *vp) {
-
-    if(argc == 2) {
-        jsval *argv = JS_ARGV(cx, vp);
-        JSObject *obj = JS_THIS_OBJECT(cx, vp);
-        js_proxy_t *proxy;
-        JS_GET_NATIVE_PROXY(proxy, obj);
-        cocos2d::CCMenuItem* item = (cocos2d::CCMenuItem*)(proxy ? proxy->ptr : NULL);
-        TEST_NATIVE_OBJECT(cx, item)
-        bind_menu_item<cocos2d::CCMenuItem>(cx, item, argv[1], argv[0]);
-        return JS_TRUE;
-    }
-    return JS_FALSE;
 }
 
 
@@ -596,29 +553,12 @@ JSBool js_callFunc(JSContext *cx, uint32_t argc, jsval *vp)
         CCCallFunc *ret = (CCCallFunc *)CCCallFuncN::create((CCObject *)tmpCobj, 
                                              callfuncN_selector(JSCallFunc::callbackFunc));
         
-		js_proxy_t *proxy;
-        
-        js_type_class_t *classType;
-		TypeTest<cocos2d::CCCallFunc> t;
-		uint32_t typeId = t.s_id();
-		HASH_FIND_INT(_js_global_type_ht, &typeId, classType);
-        
-		assert(classType);
-		JSObject *tmp = JS_NewObject(cx, classType->jsclass, classType->proto, classType->parentProto);
-        
-		// bind nativeObj <-> JSObject
-		JS_NEW_PROXY(proxy, ret, tmp);      
-		JS_SET_RVAL(cx, vp, OBJECT_TO_JSVAL(tmp));        
+		js_proxy_t *proxy = js_get_or_create_proxy<cocos2d::CCCallFunc>(cx, ret);
+		JS_SET_RVAL(cx, vp, OBJECT_TO_JSVAL(proxy->obj));
       //  test->execute();
     }
     return JS_TRUE;
-
 }
-
-
-
-
-
 
 JSBool js_forceGC(JSContext *cx, uint32_t argc, jsval *vp) {
     JS_GC(cx);
@@ -639,6 +579,46 @@ JSBool js_break(JSContext *cx, uint32_t argc, jsval *vp)
 	return JS_TRUE;
 }
 #endif
+
+/**
+ * You don't need to manage the returned pointer. They live for the whole life of
+ * the app.
+ */
+template <class T>
+js_type_class_t *js_get_type_from_native(T* native_obj) {
+	js_type_class_t *typeProxy;
+	uint32_t typeId = reinterpret_cast<int>(typeid(*native_obj).name());
+	HASH_FIND_INT(_js_global_type_ht, &typeId, typeProxy);
+	if (!typeProxy) {
+		TypeInfo *typeInfo = dynamic_cast<TypeInfo *>(native_obj);
+		if (typeInfo) {
+			typeId = typeInfo->getClassTypeInfo();
+			HASH_FIND_INT(_js_global_type_ht, &typeId, typeProxy);
+		}
+	}
+	return typeProxy;
+}
+
+/**
+ * you don't need to manage the returned pointer. The returned pointer should be deleted
+ * using JS_REMOVE_PROXY. Most of the time you do that in the C++ destructor.
+ */
+template<class T>
+js_proxy_t *js_get_or_create_proxy(JSContext *cx, T *native_obj) {
+	js_proxy_t *proxy;
+	HASH_FIND_PTR(_native_js_global_ht, &native_obj, proxy);
+	if (!proxy) {
+		js_type_class_t *typeProxy = js_get_type_from_native<T>(native_obj);
+		assert(typeProxy);
+		JSObject* js_obj = JS_NewObject(cx, typeProxy->jsclass, typeProxy->proto, typeProxy->parentProto);
+		JS_AddObjectRoot(cx, &js_obj);
+		JS_NEW_PROXY(proxy, native_obj, js_obj);
+		return proxy;
+	} else {
+		return proxy;
+	}
+	return NULL;
+}
 
 extern JSObject* js_cocos2dx_CCNode_prototype;
 extern JSObject* js_cocos2dx_CCAction_prototype;
@@ -699,7 +679,7 @@ void register_cocos2dx_js_extensions()
 	JS_DefineFunction(cx, ns, "registerTargettedDelegate", js_cocos2dx_JSTouchDelegate_registerTargettedDelegate, 1, JSPROP_READONLY | JSPROP_PERMANENT);
 	JS_DefineFunction(cx, ns, "registerStandardDelegate", js_cocos2dx_JSTouchDelegate_registerStandardDelegate, 1, JSPROP_READONLY | JSPROP_PERMANENT);
 
-	tmpObj = JSVAL_TO_OBJECT(anonEvaluate(cx, global, "(function () { cc.CallFunc = cc.CallFunc || new Object(); return cc.CallFunc; })()"));
+	tmpObj = JSVAL_TO_OBJECT(anonEvaluate(cx, global, "(function () { return cc.CallFunc; })()"));
 	JS_DefineFunction(cx, tmpObj, "create", js_callFunc, 1, JSPROP_READONLY | JSPROP_PERMANENT);
 
      tmpObj = JSVAL_TO_OBJECT(anonEvaluate(cx, global, "(function () { return this; })()"));

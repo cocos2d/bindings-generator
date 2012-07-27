@@ -24,6 +24,33 @@ typedef struct js_type_class {
 
 extern js_type_class_t *_js_global_type_ht;
 
+template< typename DERIVED >
+class TypeTest
+{
+	public:
+	static int s_id()
+	{
+		// return id unique for DERIVED
+		// NOT SURE IT WILL BE REALLY UNIQUE FOR EACH CLASS!!
+		static const int id = reinterpret_cast<int>(typeid( DERIVED ).name());
+		return id;
+	}
+
+	static const char* s_name()
+	{
+		// return id unique for DERIVED
+		// ALWAYS VALID BUT STRING, NOT INT - BUT VALID AND CROSS-PLATFORM/CROSS-VERSION COMPATBLE
+		// AS FAR AS YOU KEEP THE CLASS NAME
+		return typeid( DERIVED ).name();
+	}
+};
+
+class TypeInfo
+{
+public:
+	virtual uint32_t getClassTypeInfo() = 0;
+};
+
 #define JS_NEW_PROXY(p, native_obj, js_obj) \
 do { \
 	p = (js_proxy_t *)malloc(sizeof(js_proxy_t)); \
@@ -59,26 +86,5 @@ if (!native_obj) { \
 	JS_ReportError(cx, "Invalid Native Object"); \
 	return JS_FALSE; \
 }
-
-template< typename DERIVED >
-class TypeTest
-{
-	public:
-	static int s_id()
-	{
-		// return id unique for DERIVED
-		// NOT SURE IT WILL BE REALLY UNIQUE FOR EACH CLASS!!
-		static const int id = reinterpret_cast<int>(typeid( DERIVED ).name());
-		return id;
-	}
-
-	static const char* s_name()
-	{
-		// return id unique for DERIVED
-		// ALWAYS VALID BUT STRING, NOT INT - BUT VALID AND CROSS-PLATFORM/CROSS-VERSION COMPATBLE
-		// AS FAR AS YOU KEEP THE CLASS NAME
-		return typeid( DERIVED ).name();
-	}
-};
 
 #endif

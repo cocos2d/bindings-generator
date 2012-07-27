@@ -55,6 +55,29 @@ JSObject* bind_menu_item(JSContext *cx, T* nativeObj, jsval callback, jsval this
 	}
 }
 
+JSBool js_cocos2dx_CCNode_getChildren(JSContext *cx, uint32_t argc, jsval *vp)
+{
+	JSObject *thisObj = JSVAL_TO_OBJECT(JS_THIS(cx, vp));
+	if (thisObj) {
+		js_proxy_t *proxy;
+		JS_GET_NATIVE_PROXY(proxy, thisObj);
+		if (proxy) {
+			cocos2d::CCNode *node = (cocos2d::CCNode *)(proxy->ptr ? proxy->ptr : NULL);
+			cocos2d::CCArray *children = node->getChildren();
+			JSObject *jsarr = JS_NewArrayObject(cx, children->count(), NULL);
+			for (int i=0; i < children->count(); i++) {
+				cocos2d::CCNode *child = (cocos2d::CCNode*)children->objectAtIndex(i);
+				js_proxy_t *childProxy = js_get_or_create_proxy<cocos2d::CCNode>(cx, child);
+				jsval childVal = OBJECT_TO_JSVAL(childProxy->obj);
+				JS_SetElement(cx, jsarr, i, &childVal);
+			}
+			JS_SET_RVAL(cx, vp, OBJECT_TO_JSVAL(jsarr));
+		}
+		return JS_TRUE;
+	}
+	return JS_FALSE;
+}
+
 JSBool js_cocos2dx_CCMenu_create(JSContext *cx, uint32_t argc, jsval *vp)
 {
 	jsval *argv = JS_ARGV(cx, vp);
@@ -644,6 +667,7 @@ void register_cocos2dx_js_extensions()
 #endif
 
 	JSObject *tmpObj;
+	JS_DefineFunction(cx, js_cocos2dx_CCNode_prototype, "getChildren", js_cocos2dx_CCNode_getChildren, 1, JSPROP_READONLY | JSPROP_PERMANENT);
 	JS_DefineFunction(cx, js_cocos2dx_CCNode_prototype, "copy", js_cocos2dx_CCNode_copy, 1, JSPROP_READONLY | JSPROP_PERMANENT);
 	JS_DefineFunction(cx, js_cocos2dx_CCAction_prototype, "copy", js_cocos2dx_CCNode_copy, 1, JSPROP_READONLY | JSPROP_PERMANENT);
 	JS_DefineFunction(cx, js_cocos2dx_CCMenuItem_prototype, "setCallback", js_cocos2dx_setCallback, 2, JSPROP_READONLY | JSPROP_PERMANENT);

@@ -18,8 +18,10 @@ js_type_class_t *js_get_type_from_native(T* native_obj) {
 		TypeInfo *typeInfo = dynamic_cast<TypeInfo *>(native_obj);
 		if (typeInfo) {
 			typeId = typeInfo->getClassTypeInfo();
-			HASH_FIND_INT(_js_global_type_ht, &typeId, typeProxy);
+		} else {
+			typeId = reinterpret_cast<int>(typeid(T).name());
 		}
+		HASH_FIND_INT(_js_global_type_ht, &typeId, typeProxy);
 	}
 	return typeProxy;
 }

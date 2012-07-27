@@ -367,9 +367,10 @@ JSBool js_cocos2dx_setCallback(JSContext *cx, uint32_t argc, jsval *vp) {
 JSBool js_cocos2dx_CCAnimation_create(JSContext *cx, uint32_t argc, jsval *vp)
 {
 	jsval *argv = JS_ARGV(cx, vp);
-	if (argc > 0 && argc <= 3) {
-		cocos2d::CCArray* arg0 = cocos2d::CCArray::create();
-		if (JSVAL_IS_OBJECT(argv[0])) {
+	if (argc <= 3) {
+		cocos2d::CCArray* arg0;
+		if (argc > 0 && JSVAL_IS_OBJECT(argv[0])) {
+			arg0 = cocos2d::CCArray::create();
 			JSObject *jsarr = JSVAL_TO_OBJECT(argv[0]);
 			uint32_t len;
 			if (JS_IsArrayObject(cx, jsarr) && JS_GetArrayLength(cx, jsarr, &len)) {
@@ -388,32 +389,33 @@ JSBool js_cocos2dx_CCAnimation_create(JSContext *cx, uint32_t argc, jsval *vp)
 		}
 		cocos2d::CCAnimation* ret;
 		double arg1 = 0.0f;
-		if (argc < 3) {
+		if (argc > 0 && argc == 2) {
 			if (argc == 2) {
 				JS_ValueToNumber(cx, argv[1], &arg1);
 			}
 			ret = cocos2d::CCAnimation::create(arg0, arg1);
-		} else {
+		} else if (argc > 0) {
 			unsigned int loops;
+			JS_ValueToNumber(cx, argv[1], &arg1);
 			JS_ValueToECMAUint32(cx, argv[1], &loops);
 			ret = cocos2d::CCAnimation::create(arg0, arg1, loops);
+		} else if (argc == 0) {
+			ret = cocos2d::CCAnimation::create();
 		}
 		jsval jsret;
-		do {
-			if (ret) {
-				js_proxy_t *p;
-				JS_GET_PROXY(p, ret);
-				if (p) {
-					jsret = OBJECT_TO_JSVAL(p->obj);
-				} else {
-					// create a new js obj of that class
-					js_proxy_t *proxy = js_get_or_create_proxy<cocos2d::CCAnimation>(cx, ret);
-					jsret = OBJECT_TO_JSVAL(proxy->obj);
-				}
+		if (ret) {
+			js_proxy_t *proxy;
+			JS_GET_PROXY(proxy, ret);
+			if (proxy) {
+				jsret = OBJECT_TO_JSVAL(proxy->obj);
 			} else {
-				jsret = JSVAL_NULL;
+				// create a new js obj of that class
+				proxy = js_get_or_create_proxy<cocos2d::CCAnimation>(cx, ret);
+				jsret = OBJECT_TO_JSVAL(proxy->obj);
 			}
-		} while (0);
+		} else {
+			jsret = JSVAL_NULL;
+		}
 		JS_SET_RVAL(cx, vp, jsret);
 		return JS_TRUE;
 	}
@@ -484,10 +486,11 @@ JSBool js_cocos2dx_CCNode_copy(JSContext *cx, uint32_t argc, jsval *vp)
 		JSClass *jsclass = JS_GetClass(obj);
 		JSObject *proto = JS_GetPrototype(obj);
 		JSObject *parent = JS_GetParent(obj);
-		JSObject *ret = JS_NewObject(cx, jsclass, proto, parent);
-		if (ret) {
-			JS_NEW_PROXY(proxy, node, ret);
-			JS_SET_RVAL(cx, vp, OBJECT_TO_JSVAL(ret));
+		JSObject *jsret = JS_NewObject(cx, jsclass, proto, parent);
+		cocos2d::CCObject *ret = node->copy();
+		if (ret && jsret) {
+			JS_NEW_PROXY(proxy, ret, jsret);
+			JS_SET_RVAL(cx, vp, OBJECT_TO_JSVAL(jsret));
 			return JS_TRUE;
 		}
 	}
@@ -593,8 +596,10 @@ js_type_class_t *js_get_type_from_native(T* native_obj) {
 		TypeInfo *typeInfo = dynamic_cast<TypeInfo *>(native_obj);
 		if (typeInfo) {
 			typeId = typeInfo->getClassTypeInfo();
-			HASH_FIND_INT(_js_global_type_ht, &typeId, typeProxy);
+		} else {
+			typeId = reinterpret_cast<int>(typeid(T).name());
 		}
+		HASH_FIND_INT(_js_global_type_ht, &typeId, typeProxy);
 	}
 	return typeProxy;
 }

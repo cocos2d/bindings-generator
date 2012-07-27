@@ -11,13 +11,15 @@
 //var cc = cc || {};
 
 cc.log = log;
+cc.AudioEngine = cc.SimpleAudioEngine;
 
 cc.p = function (x, y) {
 	var tmp = new Float32Array(2);
 	tmp[0] = x;
 	tmp[1] = y;
 	return tmp;
-}
+};
+cc._reuse_point = cc.p(0, 0);
 
 cc.c3 = function (r, g, b) {
 	var tmp = new Uint8Array(3);
@@ -25,7 +27,7 @@ cc.c3 = function (r, g, b) {
 	tmp[1] = g;
 	tmp[2] = b;
 	return tmp;
-}
+};
 
 cc.c4 = function (r, g, b, o) {
 	var tmp = new Uint8Array(4);
@@ -36,7 +38,44 @@ cc.c4 = function (r, g, b, o) {
 	return tmp;
 };
 
+cc.c4f = function (r, g, b, o) {
+	var tmp = new Float32Array(4);
+	tmp[0] = r;
+	tmp[1] = g;
+	tmp[2] = b;
+	tmp[3] = o;
+	return tmp;
+};
+
 cc.g = cc.p;
+
+cc.Node.prototype.retain = function () {
+	cc.log("someone's calling retain... wtf?");
+};
+
+cc.pSub = function (p1, p2) {
+	cc._reuse_point[0] = p1[0] - p2[0];
+	cc._reuse_point[1] = p1[1] - p2[1];
+	return cc._reuse_point;
+};
+
+cc.pAdd = function (p1, p2) {
+	cc._reuse_point[0] = p1[0] + p2[0];
+	cc._reuse_point[1] = p1[1] + p2[1];
+	return cc._reuse_point;
+};
+
+cc.pMult = function (p1, scale) {
+	cc._reuse_point[0] = p1[0] * scale;
+	cc._reuse_point[1] = p1[1] * scale;
+	return cc._reuse_point;
+};
+
+cc.pDistance = function (p1, p2) {
+	var dx = (p2[0] - p1[0]);
+	var dy = (p2[1] - p1[1]);
+	return Math.sqrt(dx * dx + dy * dy);
+};
 
 //
 // cocos2d constants
@@ -161,7 +200,7 @@ cc.size_get_height = function (size )
 
 cc.Touch.prototype.getLocation = function () {
     var pt = this.locationInView();
-    return cc.Director.sharedDirector().convertToGL(pt);
+    return cc.Director.getInstance().convertToGL(pt);
 };
 
 cc.Touch.prototype.getDelta = function () {
@@ -172,6 +211,11 @@ cc.Touch.prototype.getDelta = function () {
     return cc._reuse_point;
 };
 
+cc.ParticleSystem.createWithTotalParticles = function (count) {
+	var ps = new cc.ParticleSystem();
+	ps.initWithTotalParticles(count);
+	return ps;
+};
 
 //
 // Google "subclasses"

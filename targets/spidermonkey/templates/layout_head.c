@@ -67,3 +67,4 @@ static JSBool dummy_constructor(JSContext *cx, uint32_t argc, jsval *vp) {
 static JSBool empty_constructor(JSContext *cx, uint32_t argc, jsval *vp) {
 	return JS_FALSE;
 }
+

@@ -105,7 +105,15 @@ conversions:
       ${($level + 1) * '\t'}GLubyte *arr = (GLubyte *)JS_GetTypedArrayData(tmp);
       ${($level + 1) * '\t'}${out_value} = cocos2d::ccc3(arr[0], arr[1], arr[2]);
       ${($level + 0) * '\t'}} while (0)
-
+    "const ccColor4F": |
+      do {
+      ${($level + 1) * '\t'}JSObject *tmp;
+      ${($level + 1) * '\t'}if (!JS_ValueToObject(cx, ${in_value}, &tmp)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!js_IsTypedArray(tmp)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_GetTypedArrayByteLength(tmp) == sizeof(float) * 4) return JS_FALSE;
+      ${($level + 1) * '\t'}float *arr = (float *)JS_GetTypedArrayData(tmp);
+      ${($level + 1) * '\t'}${out_value} = cocos2d::ccc4f(arr[0], arr[1], arr[2], arr[3]);
+      ${($level + 0) * '\t'}} while (0)
 
   from_native:
     # int to jsval
@@ -193,5 +201,15 @@ conversions:
       ${($level + 1) * '\t'}data[0] = ${in_value}.r;
       ${($level + 1) * '\t'}data[1] = ${in_value}.g;
       ${($level + 1) * '\t'}data[1] = ${in_value}.b;
+      ${($level + 1) * '\t'}${out_value} = OBJECT_TO_JSVAL(tmp);
+      ${($level + 0) * '\t'}} while (0)
+    "const ccColor4F": |
+      do {
+      ${($level + 1) * '\t'}JSObject *tmp = js_CreateTypedArray(cx, js::TypedArray::TYPE_FLOAT32, 4);
+      ${($level + 1) * '\t'}float *data = (float *)JS_GetTypedArrayData(tmp);
+      ${($level + 1) * '\t'}data[0] = ${in_value}.r;
+      ${($level + 1) * '\t'}data[1] = ${in_value}.g;
+      ${($level + 1) * '\t'}data[1] = ${in_value}.b;
+      ${($level + 1) * '\t'}data[1] = ${in_value}.a;
       ${($level + 1) * '\t'}${out_value} = OBJECT_TO_JSVAL(tmp);
       ${($level + 0) * '\t'}} while (0)

@@ -82,3 +82,13 @@ Templates are stored in the `templates/${target}` directory and follow the namin
 One final part of the puzzle is the `${target}.yaml` file, that contains specific type conversion
 snippets to be used by the templates. For instance, for spidermonkey, this is the place where we
 specify the conversion routines for the native types (to and from int, float, string, etc.)
+
+# Limitations
+
+Currently the generator is leveraging clang in order to get information about the C/C++ code, so we
+can only get as much information as clang give us. Known list of things that won't work:
+
+* variable number of arguments. Solution: write a manual wrapper
+* default arguments. Solution: write another function that actually calls the real function with the
+  default argument.
+

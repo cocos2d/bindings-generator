@@ -41,7 +41,7 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 		js_proxy_t *proxy;
 		JS_NEW_PROXY(proxy, cobj, obj);
 \#ifdef COCOS2D_JAVASCRIPT
-		JS_AddObjectRoot(cx, &obj);
+		JS_AddObjectRoot(cx, &proxy->obj);
 \#endif
 	#else
 		#if str($func.ret_type) != "void"

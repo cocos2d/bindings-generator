@@ -189,7 +189,8 @@ public:
 	 */
 	static JSBool forceGC(JSContext *cx, uint32_t argc, jsval *vp)
 	{
-		JS_GC(cx);
+        JSRuntime *rt = JS_GetRuntime(cx);
+        JS_GC(rt);
 		return JS_TRUE;
 	};
 

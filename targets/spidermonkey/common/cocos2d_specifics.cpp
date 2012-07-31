@@ -369,7 +369,7 @@ JSBool js_cocos2dx_CCAnimation_create(JSContext *cx, uint32_t argc, jsval *vp)
 	jsval *argv = JS_ARGV(cx, vp);
 	if (argc <= 3) {
 		cocos2d::CCArray* arg0;
-		if (argc > 0 && JSVAL_IS_OBJECT(argv[0])) {
+		if (argc > 0 && argv[0].isObject()) {
 			arg0 = cocos2d::CCArray::create();
 			JSObject *jsarr = JSVAL_TO_OBJECT(argv[0]);
 			uint32_t len;
@@ -564,7 +564,8 @@ JSBool js_callFunc(JSContext *cx, uint32_t argc, jsval *vp)
 }
 
 JSBool js_forceGC(JSContext *cx, uint32_t argc, jsval *vp) {
-    JS_GC(cx);
+    JSRuntime *rt = JS_GetRuntime(cx);
+    JS_GC(rt);
     return JS_TRUE;
 }
 
@@ -574,7 +575,7 @@ JSBool js_break(JSContext *cx, uint32_t argc, jsval *vp)
 	JSObject *obj = NULL;
 	if (argc == 1) {
 		jsval *argv = JS_ARGV(cx, vp);
-		if (JSVAL_IS_OBJECT(argv[0])) {
+		if (argv[0].isObject()) {
 			JS_ValueToObject(cx, argv[0], &obj);
 		}
 	}
@@ -616,8 +617,8 @@ js_proxy_t *js_get_or_create_proxy(JSContext *cx, T *native_obj) {
 		js_type_class_t *typeProxy = js_get_type_from_native<T>(native_obj);
 		assert(typeProxy);
 		JSObject* js_obj = JS_NewObject(cx, typeProxy->jsclass, typeProxy->proto, typeProxy->parentProto);
-		JS_AddObjectRoot(cx, &js_obj);
 		JS_NEW_PROXY(proxy, native_obj, js_obj);
+		JS_AddObjectRoot(cx, &proxy->obj);
 		return proxy;
 	} else {
 		return proxy;

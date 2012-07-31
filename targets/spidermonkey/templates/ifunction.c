@@ -45,13 +45,13 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 	HASH_FIND_INT(_js_global_type_ht, &typeId, typeClass);
 	assert(typeClass);
 	JSObject *obj = JS_NewObject(cx, typeClass->jsclass, typeClass->proto, typeClass->parentProto);
-\#ifdef COCOS2D_JAVASCRIPT
-	JS_AddObjectRoot(cx, &obj);
-\#endif
 	JS_SET_RVAL(cx, vp, OBJECT_TO_JSVAL(obj));
 	// link the native object with the javascript object
 	js_proxy_t *p;
 	JS_NEW_PROXY(p, cobj, obj);
+\#ifdef COCOS2D_JAVASCRIPT
+	JS_AddObjectRoot(cx, &p->obj);
+\#endif
 #else
 	#if $ret_type.name != "void"
 	${ret_type} ret = cobj->${func_name}($arg_list);

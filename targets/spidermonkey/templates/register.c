@@ -8,7 +8,7 @@ ${current_class.methods.constructor.generate_code($current_class)}
 #set methods = $current_class.methods_clean()
 #set st_methods = $current_class.static_methods_clean()
 
-void js_${generator.prefix}_${current_class.class_name}_finalize(JSContext *cx, JSObject *obj) {
+void js_${generator.prefix}_${current_class.class_name}_finalize(JSFreeOp *fop, JSObject *obj) {
 }
 
 void js_register_${generator.prefix}_${current_class.class_name}(JSContext *cx, JSObject *global) {

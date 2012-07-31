@@ -63,7 +63,7 @@ static void executeJSFunctionWithName(JSContext *cx, JSObject *obj,
                                       jsval &retval) {
     JSBool hasAction;
     jsval temp_retval;
-	
+    
     if (JS_HasProperty(cx, obj, funcName, &hasAction) && hasAction) {
         if(!JS_GetProperty(cx, obj, funcName, &temp_retval)) {
             return;
@@ -94,21 +94,27 @@ void js_log(const char *format, ...) {
     }
 }
 
+void sc_finalize(JSFreeOp *freeOp, JSObject *obj) {
+    return;
+}
+
 static JSClass global_class = {
     "global", JSCLASS_GLOBAL_FLAGS,
     JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
-    JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, JS_FinalizeStub,
+    JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, sc_finalize,
     JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
 ScriptingCore::ScriptingCore()
 {
-    this->rt = JS_NewRuntime(8 * 1024 * 1024);
-    this->cx = JS_NewContext(rt, 8192);
-    JS_SetOptions(this->cx, JSOPTION_VAROBJFIX);
+    this->rt = JS_NewRuntime(10 * 1024 * 1024);
+    this->cx = JS_NewContext(rt, 10240);
+    JS_SetOptions(this->cx, JSOPTION_TYPE_INFERENCE);
     JS_SetVersion(this->cx, JSVERSION_LATEST);
+    JS_SetOptions(this->cx, JS_GetOptions(this->cx) & ~JSOPTION_METHODJIT);
+    JS_SetOptions(this->cx, JS_GetOptions(this->cx) & ~JSOPTION_METHODJIT_ALWAYS);
     JS_SetErrorReporter(this->cx, ScriptingCore::reportError);
-    global = JS_NewCompartmentAndGlobalObject(cx, &global_class, NULL);
+    global = JS_NewGlobalObject(cx, &global_class, NULL);
     if (!JS_InitStandardClasses(cx, global)) {
         js_log("error initializing the VM");
     }
@@ -332,7 +338,7 @@ int ScriptingCore::executeFunctionWithIntegerData(int nHandler, int data, CCNode
     } else if(data == kCCNodeOnExit) {
         executeJSFunctionWithName(this->cx, p->obj, "onExit", dataVal, retval);
     } else if(data == kCCMenuItemActivated) {
-		dataVal = (proxy ? OBJECT_TO_JSVAL(proxy->obj) : JSVAL_NULL);
+        dataVal = (proxy ? OBJECT_TO_JSVAL(proxy->obj) : JSVAL_NULL);
         executeJSFunctionFromReservedSpot(this->cx, p->obj, dataVal, retval);
     }
     

@@ -28,8 +28,8 @@ conversions:
     "long long": |
       do {
       ${($level + 1) * '\t'}JSObject *tmp = JSVAL_TO_OBJECT(${in_value});
-      ${($level + 1) * '\t'}if (js_IsTypedArray(tmp) && JS_GetTypedArrayByteLength(tmp) == 8) {
-      ${($level + 2) * '\t'}uint32_t *data = (uint32_t *)JS_GetTypedArrayData(tmp);
+      ${($level + 1) * '\t'}if (JS_IsTypedArrayObject(tmp, cx) && JS_GetTypedArrayByteLength(tmp, cx) == 8) {
+      ${($level + 2) * '\t'}uint32_t *data = JS_GetUint32ArrayData(tmp, cx);
       ${($level + 2) * '\t'}${out_value} = (long long)(*data);
       ${($level + 1) * '\t'}}
       ${$level * '\t'}} while (0)
@@ -55,63 +55,63 @@ conversions:
       do {
       ${($level + 1) * '\t'}JSObject *tmp;
       ${($level + 1) * '\t'}if (!JS_ValueToObject(cx, ${in_value}, &tmp)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!js_IsTypedArray(tmp)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_GetTypedArrayByteLength(tmp) == sizeof(float) * 2) return JS_FALSE;
-      ${($level + 1) * '\t'}float *arr = (float *)JS_GetTypedArrayData(tmp);
+      ${($level + 1) * '\t'}if (!JS_IsTypedArrayObject(tmp, cx)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_GetTypedArrayByteLength(tmp, cx) == sizeof(float) * 2) return JS_FALSE;
+      ${($level + 1) * '\t'}float *arr = JS_GetFloat32ArrayData(tmp, cx);
       ${($level + 1) * '\t'}${out_value} = cocos2d::CCPoint(arr[0], arr[1]);
       ${($level + 0) * '\t'}} while (0)
     "CCRect": |
       do {
       ${($level + 1) * '\t'}JSObject *tmp;
       ${($level + 1) * '\t'}if (!JS_ValueToObject(cx, ${in_value}, &tmp)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!js_IsTypedArray(tmp)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_GetTypedArrayByteLength(tmp) == sizeof(float) * 4) return JS_FALSE;
-      ${($level + 1) * '\t'}float *arr = (float *)JS_GetTypedArrayData(tmp);
+      ${($level + 1) * '\t'}if (!JS_IsTypedArrayObject(tmp, cx)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_GetTypedArrayByteLength(tmp, cx) == sizeof(float) * 4) return JS_FALSE;
+      ${($level + 1) * '\t'}float *arr = JS_GetFloat32ArrayData(tmp, cx);
       ${($level + 1) * '\t'}${out_value} = cocos2d::CCRect(arr[0], arr[1], arr[2], arr[3]);
       ${($level + 0) * '\t'}} while (0)
     "CCSize": |
       do {
       ${($level + 1) * '\t'}JSObject *tmp;
       ${($level + 1) * '\t'}if (!JS_ValueToObject(cx, ${in_value}, &tmp)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!js_IsTypedArray(tmp)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_GetTypedArrayByteLength(tmp) == sizeof(float) * 2) return JS_FALSE;
-      ${($level + 1) * '\t'}float *arr = (float *)JS_GetTypedArrayData(tmp);
+      ${($level + 1) * '\t'}if (!JS_IsTypedArrayObject(tmp, cx)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_GetTypedArrayByteLength(tmp, cx) == sizeof(float) * 2) return JS_FALSE;
+      ${($level + 1) * '\t'}float *arr = JS_GetFloat32ArrayData(tmp, cx);
       ${($level + 1) * '\t'}${out_value} = cocos2d::CCSize(arr[0], arr[1]);
       ${($level + 0) * '\t'}} while (0)
     "const ccGridSize": |
       do {
       ${($level + 1) * '\t'}JSObject *tmp;
       ${($level + 1) * '\t'}if (!JS_ValueToObject(cx, ${in_value}, &tmp)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!js_IsTypedArray(tmp)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_GetTypedArrayByteLength(tmp) == sizeof(float) * 2) return JS_FALSE;
-      ${($level + 1) * '\t'}float *arr = (float *)JS_GetTypedArrayData(tmp);
+      ${($level + 1) * '\t'}if (!JS_IsTypedArrayObject(tmp, cx)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_GetTypedArrayByteLength(tmp, cx) == sizeof(float) * 2) return JS_FALSE;
+      ${($level + 1) * '\t'}float *arr = JS_GetFloat32ArrayData(tmp, cx);
       ${($level + 1) * '\t'}${out_value} = cocos2d::ccg(arr[0], arr[1]);
       ${($level + 0) * '\t'}} while (0)
     "const ccColor4B": |
       do {
       ${($level + 1) * '\t'}JSObject *tmp;
       ${($level + 1) * '\t'}if (!JS_ValueToObject(cx, ${in_value}, &tmp)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!js_IsTypedArray(tmp)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_GetTypedArrayByteLength(tmp) == sizeof(GLubyte) * 4) return JS_FALSE;
-      ${($level + 1) * '\t'}GLubyte *arr = (GLubyte *)JS_GetTypedArrayData(tmp);
+      ${($level + 1) * '\t'}if (!JS_IsTypedArrayObject(tmp, cx)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_GetTypedArrayByteLength(tmp, cx) == sizeof(GLubyte) * 4) return JS_FALSE;
+      ${($level + 1) * '\t'}GLubyte *arr = (GLubyte *)JS_GetUint8ArrayData(tmp, cx);
       ${($level + 1) * '\t'}${out_value} = cocos2d::ccc4(arr[0], arr[1], arr[2], arr[3]);
       ${($level + 0) * '\t'}} while (0)
     "const ccColor3B": |
       do {
       ${($level + 1) * '\t'}JSObject *tmp;
       ${($level + 1) * '\t'}if (!JS_ValueToObject(cx, ${in_value}, &tmp)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!js_IsTypedArray(tmp)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_GetTypedArrayByteLength(tmp) == sizeof(GLubyte) * 3) return JS_FALSE;
-      ${($level + 1) * '\t'}GLubyte *arr = (GLubyte *)JS_GetTypedArrayData(tmp);
+      ${($level + 1) * '\t'}if (!JS_IsTypedArrayObject(tmp, cx)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_GetTypedArrayByteLength(tmp, cx) == sizeof(GLubyte) * 3) return JS_FALSE;
+      ${($level + 1) * '\t'}GLubyte *arr = (GLubyte *)JS_GetUint8ArrayData(tmp, cx);
       ${($level + 1) * '\t'}${out_value} = cocos2d::ccc3(arr[0], arr[1], arr[2]);
       ${($level + 0) * '\t'}} while (0)
     "const ccColor4F": |
       do {
       ${($level + 1) * '\t'}JSObject *tmp;
       ${($level + 1) * '\t'}if (!JS_ValueToObject(cx, ${in_value}, &tmp)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!js_IsTypedArray(tmp)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_GetTypedArrayByteLength(tmp) == sizeof(float) * 4) return JS_FALSE;
-      ${($level + 1) * '\t'}float *arr = (float *)JS_GetTypedArrayData(tmp);
+      ${($level + 1) * '\t'}if (!JS_IsTypedArrayObject(tmp, cx)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_GetTypedArrayByteLength(tmp, cx) == sizeof(float) * 4) return JS_FALSE;
+      ${($level + 1) * '\t'}float *arr = JS_GetFloat32ArrayData(tmp, cx);
       ${($level + 1) * '\t'}${out_value} = cocos2d::ccc4f(arr[0], arr[1], arr[2], arr[3]);
       ${($level + 0) * '\t'}} while (0)
 
@@ -152,16 +152,16 @@ conversions:
       ${($level) * '\t'}} while (0)
     "CCPoint": |
       do {
-      ${($level + 1) * '\t'}JSObject *tmp = js_CreateTypedArray(cx, js::TypedArray::TYPE_FLOAT32, 2);
-      ${($level + 1) * '\t'}float *data = (float *)JS_GetTypedArrayData(tmp);
+      ${($level + 1) * '\t'}JSObject *tmp = JS_NewFloat32Array(cx, 2);
+      ${($level + 1) * '\t'}float *data = JS_GetFloat32ArrayData(tmp, cx);
       ${($level + 1) * '\t'}data[0] = ${in_value}.x;
       ${($level + 1) * '\t'}data[1] = ${in_value}.y;
       ${($level + 1) * '\t'}${out_value} = OBJECT_TO_JSVAL(tmp);
       ${($level + 0) * '\t'}} while (0)
     "CCRect": |
       do {
-      ${($level + 1) * '\t'}JSObject *tmp = js_CreateTypedArray(cx, js::TypedArray::TYPE_FLOAT32, 4);
-      ${($level + 1) * '\t'}float *data = (float *)JS_GetTypedArrayData(tmp);
+      ${($level + 1) * '\t'}JSObject *tmp = JS_NewFloat32Array(cx, 4);
+      ${($level + 1) * '\t'}float *data = JS_GetFloat32ArrayData(tmp, cx);
       ${($level + 1) * '\t'}data[0] = ${in_value}.origin.x;
       ${($level + 1) * '\t'}data[1] = ${in_value}.origin.y;
       ${($level + 1) * '\t'}data[2] = ${in_value}.size.width;
@@ -170,24 +170,24 @@ conversions:
       ${($level + 0) * '\t'}} while (0)
     "CCSize": |
       do {
-      ${($level + 1) * '\t'}JSObject *tmp = js_CreateTypedArray(cx, js::TypedArray::TYPE_FLOAT32, 2);
-      ${($level + 1) * '\t'}float *data = (float *)JS_GetTypedArrayData(tmp);
+      ${($level + 1) * '\t'}JSObject *tmp = JS_NewFloat32Array(cx, 2);
+      ${($level + 1) * '\t'}float *data = JS_GetFloat32ArrayData(tmp, cx);
       ${($level + 1) * '\t'}data[0] = ${in_value}.width;
       ${($level + 1) * '\t'}data[1] = ${in_value}.height;
       ${($level + 1) * '\t'}${out_value} = OBJECT_TO_JSVAL(tmp);
       ${($level + 0) * '\t'}} while (0)
     "const ccGridSize":
       do {
-      ${($level + 1) * '\t'}JSObject *tmp = js_CreateTypedArray(cx, js::TypedArray::TYPE_FLOAT32, 2);
-      ${($level + 1) * '\t'}float *data = (float *)JS_GetTypedArrayData(tmp);
+      ${($level + 1) * '\t'}JSObject *tmp = JS_NewFloat32Array(cx, 2);
+      ${($level + 1) * '\t'}float *data = JS_GetFloat32ArrayData(tmp, cx);
       ${($level + 1) * '\t'}data[0] = ${in_value}.x;
       ${($level + 1) * '\t'}data[1] = ${in_value}.y;
       ${($level + 1) * '\t'}${out_value} = OBJECT_TO_JSVAL(tmp);
       ${($level + 0) * '\t'}} while (0)
     "const ccColor4B": |
       do {
-      ${($level + 1) * '\t'}JSObject *tmp = js_CreateTypedArray(cx, js::TypedArray::TYPE_UINT8, 4);
-      ${($level + 1) * '\t'}GLubyte *data = (GLubyte *)JS_GetTypedArrayData(tmp);
+      ${($level + 1) * '\t'}JSObject *tmp = JS_NewUint8Array(cx, 4);
+      ${($level + 1) * '\t'}GLubyte *data = (GLubyte *)JS_GetUint8ArrayData(tmp, cx);
       ${($level + 1) * '\t'}data[0] = ${in_value}.r;
       ${($level + 1) * '\t'}data[1] = ${in_value}.g;
       ${($level + 1) * '\t'}data[1] = ${in_value}.b;
@@ -196,8 +196,8 @@ conversions:
       ${($level + 0) * '\t'}} while (0)
     "const ccColor3B": |
       do {
-      ${($level + 1) * '\t'}JSObject *tmp = js_CreateTypedArray(cx, js::TypedArray::TYPE_UINT8, 3);
-      ${($level + 1) * '\t'}GLubyte *data = (GLubyte *)JS_GetTypedArrayData(tmp);
+      ${($level + 1) * '\t'}JSObject *tmp = JS_NewUint8Array(cx, 3);
+      ${($level + 1) * '\t'}GLubyte *data = (GLubyte *)JS_GetUint8ArrayData(tmp, cx);
       ${($level + 1) * '\t'}data[0] = ${in_value}.r;
       ${($level + 1) * '\t'}data[1] = ${in_value}.g;
       ${($level + 1) * '\t'}data[1] = ${in_value}.b;
@@ -205,8 +205,8 @@ conversions:
       ${($level + 0) * '\t'}} while (0)
     "const ccColor4F": |
       do {
-      ${($level + 1) * '\t'}JSObject *tmp = js_CreateTypedArray(cx, js::TypedArray::TYPE_FLOAT32, 4);
-      ${($level + 1) * '\t'}float *data = (float *)JS_GetTypedArrayData(tmp);
+      ${($level + 1) * '\t'}JSObject *tmp = JS_NewFloat32Array(cx, 4);
+      ${($level + 1) * '\t'}float *data = JS_GetFloat32ArrayData(tmp, cx);
       ${($level + 1) * '\t'}data[0] = ${in_value}.r;
       ${($level + 1) * '\t'}data[1] = ${in_value}.g;
       ${($level + 1) * '\t'}data[1] = ${in_value}.b;

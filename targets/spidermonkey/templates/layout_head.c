@@ -1,5 +1,5 @@
 \#include "jsapi.h"
-\#include "jstypedarray.h"
+\#include "jsfriendapi.h"
 \#include "${out_file}.hpp"
 #for header in $headers
 \#include "${os.path.basename(header)}"
@@ -38,8 +38,8 @@ js_proxy_t *js_get_or_create_proxy(JSContext *cx, T *native_obj) {
 		js_type_class_t *typeProxy = js_get_type_from_native<T>(native_obj);
 		assert(typeProxy);
 		JSObject* js_obj = JS_NewObject(cx, typeProxy->jsclass, typeProxy->proto, typeProxy->parentProto);
-		JS_AddObjectRoot(cx, &js_obj);
 		JS_NEW_PROXY(proxy, native_obj, js_obj);
+		JS_AddObjectRoot(cx, &proxy->obj);
 		return proxy;
 	} else {
 		return proxy;

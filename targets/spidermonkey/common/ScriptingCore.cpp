@@ -321,6 +321,54 @@ ScriptingCore::~ScriptingCore()
     }
 }
 
+void ScriptingCore::reportError(JSContext *cx, const char *message, JSErrorReport *report)
+{
+	js_log("%s:%u:%s\n",
+			report->filename ? report->filename : "<no filename=\"filename\">",
+			(unsigned int) report->lineno,
+			message);
+};
+
+
+JSBool ScriptingCore::log(JSContext* cx, uint32_t argc, jsval *vp)
+{
+	if (argc > 0) {
+		JSString *string = NULL;
+		JS_ConvertArguments(cx, argc, JS_ARGV(cx, vp), "S", &string);
+		if (string) {
+			char *cstr = JS_EncodeString(cx, string);
+			js_log(cstr);
+		}
+	}
+	return JS_TRUE;
+}
+
+JSBool ScriptingCore::setReservedSpot(uint32_t i, JSObject *obj, jsval value) {
+	JS_SetReservedSlot(obj, i, value);
+	return JS_TRUE;
+}
+
+JSBool ScriptingCore::executeScript(JSContext *cx, uint32_t argc, jsval *vp)
+{
+	JSBool ret = JS_FALSE;
+	if (argc == 1) {
+		JSString *string;
+		if (JS_ConvertArguments(cx, argc, JS_ARGV(cx, vp), "S", &string) == JS_TRUE) {
+			ret = ScriptingCore::getInstance()->runScript(JS_EncodeString(cx, string));
+		}
+	}
+	return ret;
+}
+
+JSBool ScriptingCore::forceGC(JSContext *cx, uint32_t argc, jsval *vp)
+{
+	JSRuntime *rt = JS_GetRuntime(cx);
+	JS_GC(rt);
+	return JS_TRUE;
+};
+
+
+
 int ScriptingCore::executeFunctionWithIntegerData(int nHandler, int data, CCNode *self) {
     js_proxy_t * p;
     JS_GET_PROXY(p, self);

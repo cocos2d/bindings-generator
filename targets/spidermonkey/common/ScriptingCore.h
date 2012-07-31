@@ -134,13 +134,7 @@ public:
 	 * @param message
 	 * @param report
 	 */
-	static void reportError(JSContext *cx, const char *message, JSErrorReport *report)
-	{
-		js_log("%s:%u:%s\n",
-			   report->filename ? report->filename : "<no filename=\"filename\">",
-			   (unsigned int) report->lineno,
-			   message);
-	};
+	static void reportError(JSContext *cx, const char *message, JSErrorReport *report);
 	
 	/**
 	 * Log something using CCLog
@@ -148,38 +142,14 @@ public:
 	 * @param argc
 	 * @param vp
 	 */
-	static JSBool log(JSContext *cx, uint32_t argc, jsval *vp)
-	{
-		if (argc > 0) {
-			JSString *string = NULL;
-			JS_ConvertArguments(cx, argc, JS_ARGV(cx, vp), "S", &string);
-			if (string) {
-				char *cstr = JS_EncodeString(cx, string);
-				js_log(cstr);
-			}
-		}
-		return JS_TRUE;
-	};
+	static JSBool log(JSContext *cx, uint32_t argc, jsval *vp);
 	
-	JSBool setReservedSpot(uint32_t i, JSObject *obj, jsval value) {
-	    JS_SetReservedSlot(obj, i, value);
-	    return JS_TRUE;
-	};
+	JSBool setReservedSpot(uint32_t i, JSObject *obj, jsval value);
 	
 	/**
 	 * run a script from script :)
 	 */
-	static JSBool executeScript(JSContext *cx, uint32_t argc, jsval *vp)
-	{
-		JSBool ret = JS_FALSE;
-		if (argc == 1) {
-			JSString *string;
-			if (JS_ConvertArguments(cx, argc, JS_ARGV(cx, vp), "S", &string) == JS_TRUE) {
-				ret = ScriptingCore::getInstance()->runScript(JS_EncodeString(cx, string));
-			}
-		}
-		return ret;
-	};
+	static JSBool executeScript(JSContext *cx, uint32_t argc, jsval *vp);
 	
 	/**
 	 * Force a cycle of GC
@@ -187,12 +157,7 @@ public:
 	 * @param argc
 	 * @param vp
 	 */
-	static JSBool forceGC(JSContext *cx, uint32_t argc, jsval *vp)
-	{
-        JSRuntime *rt = JS_GetRuntime(cx);
-        JS_GC(rt);
-		return JS_TRUE;
-	};
+	static JSBool forceGC(JSContext *cx, uint32_t argc, jsval *vp);
 
  private:
     void string_report(jsval val);

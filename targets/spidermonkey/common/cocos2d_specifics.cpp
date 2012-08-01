@@ -331,7 +331,7 @@ JSBool js_cocos2dx_CCMenuItemToggle_create(JSContext *cx, uint32_t argc, jsval *
 {
 	if (argc >= 1) {
 		jsval *argv = JS_ARGV(cx, vp);
-		cocos2d::CCMenuItemToggle* ret = cocos2d::CCMenuItemToggle::create(NULL, NULL, NULL);
+		cocos2d::CCMenuItemToggle* ret = cocos2d::CCMenuItemToggle::create();
 		JSObject *obj = bind_menu_item(cx, ret, (argc == 2 ? argv[1] : JSVAL_VOID), argv[0]);
 		for (int i=1; i < argc; i++) {
 			js_proxy_t *proxy;

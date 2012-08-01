@@ -1,4 +1,8 @@
 #!/usr/bin/env python
+# generator.py
+# simple C++ generator, originally targetted for Spidermonkey bindings
+#
+# Copyright (c) 2011 - Zynga Inc.
 
 from clang import cindex
 import sys

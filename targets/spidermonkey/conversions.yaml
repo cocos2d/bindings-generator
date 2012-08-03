@@ -164,8 +164,8 @@ conversions:
       do {
       ${($level + 1) * '\t'}JSObject *tmp = JS_NewObject(cx, NULL, NULL, NULL);
       ${($level + 1) * '\t'}if (!tmp) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_DefineProperty(cx, object, "x", ${in_value}.x, NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) ||
-      ${($level + 1) * '\t'}    !JS_DefineProperty(cx, object, "y", ${in_value}.y, NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT))
+      ${($level + 1) * '\t'}if (!JS_DefineProperty(cx, tmp, "x", ${in_value}.x, NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) ||
+      ${($level + 1) * '\t'}    !JS_DefineProperty(cx, tmp, "y", ${in_value}.y, NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT))
       ${($level + 1) * '\t'}   return JS_FALSE;
       ${($level + 1) * '\t'}${out_value} = OBJECT_TO_JSVAL(tmp);
       ${($level + 0) * '\t'}} while (0)
@@ -173,18 +173,18 @@ conversions:
       do {
       ${($level + 1) * '\t'}JSObject *tmp = JS_NewObject(cx, NULL, NULL, NULL);
       ${($level + 1) * '\t'}if (!tmp) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_DefineProperty(cx, object, "x", ${in_value}.origin.x, NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) ||
-      ${($level + 1) * '\t'}    !JS_DefineProperty(cx, object, "y", ${in_value}.origin.y, NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) ||
-      ${($level + 1) * '\t'}    !JS_DefineProperty(cx, object, "width", ${in_value}.size.width, NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) ||
-      ${($level + 1) * '\t'}    !JS_DefineProperty(cx, object, "height", ${in_value}.size.height, NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT))
+      ${($level + 1) * '\t'}if (!JS_DefineProperty(cx, tmp, "x", ${in_value}.origin.x, NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) ||
+      ${($level + 1) * '\t'}    !JS_DefineProperty(cx, tmp, "y", ${in_value}.origin.y, NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) ||
+      ${($level + 1) * '\t'}    !JS_DefineProperty(cx, tmp, "width", ${in_value}.size.width, NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) ||
+      ${($level + 1) * '\t'}    !JS_DefineProperty(cx, tmp, "height", ${in_value}.size.height, NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT))
       ${($level + 1) * '\t'}   return JS_FALSE;
       ${($level + 1) * '\t'}${out_value} = OBJECT_TO_JSVAL(tmp);
       ${($level + 0) * '\t'}} while (0)
     "CCSize": |
       ${($level + 1) * '\t'}JSObject *tmp = JS_NewObject(cx, NULL, NULL, NULL);
       ${($level + 1) * '\t'}if (!tmp) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_DefineProperty(cx, object, "width", ${in_value}.width, NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) ||
-      ${($level + 1) * '\t'}    !JS_DefineProperty(cx, object, "height", ${in_value}.height, NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT))
+      ${($level + 1) * '\t'}if (!JS_DefineProperty(cx, tmp, "width", ${in_value}.width, NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) ||
+      ${($level + 1) * '\t'}    !JS_DefineProperty(cx, tmp, "height", ${in_value}.height, NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT))
       ${($level + 1) * '\t'}   return JS_FALSE;
       ${($level + 1) * '\t'}${out_value} = OBJECT_TO_JSVAL(tmp);
       ${($level + 0) * '\t'}} while (0)
@@ -192,8 +192,8 @@ conversions:
       do {
       ${($level + 1) * '\t'}JSObject *tmp = JS_NewObject(cx, NULL, NULL, NULL);
       ${($level + 1) * '\t'}if (!tmp) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_DefineProperty(cx, object, "x", ${in_value}.x, NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) ||
-      ${($level + 1) * '\t'}    !JS_DefineProperty(cx, object, "y", ${in_value}.y, NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT))
+      ${($level + 1) * '\t'}if (!JS_DefineProperty(cx, tmp, "x", ${in_value}.x, NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) ||
+      ${($level + 1) * '\t'}    !JS_DefineProperty(cx, tmp, "y", ${in_value}.y, NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT))
       ${($level + 1) * '\t'}   return JS_FALSE;
       ${($level + 1) * '\t'}${out_value} = OBJECT_TO_JSVAL(tmp);
       ${($level + 0) * '\t'}} while (0)

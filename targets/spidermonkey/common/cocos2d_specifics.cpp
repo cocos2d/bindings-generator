@@ -19,7 +19,6 @@ void JSTouchDelegate::registerTargettedDelegate(int priority, bool swallowsTouch
 
 }
 
-
 static void addCallBackAndThis(JSObject *obj, jsval callback, jsval &thisObj) {
     if(callback != JSVAL_VOID) {
         ScriptingCore::getInstance()->setReservedSpot(0, obj, callback);
@@ -89,7 +88,7 @@ JSBool js_cocos2dx_CCMenu_create(JSContext *cx, uint32_t argc, jsval *vp)
 			array->addObject(item);
 			i++;
 		}
-		cocos2d::CCMenu* ret = cocos2d::CCMenu::create(array);
+		cocos2d::CCMenu* ret = cocos2d::CCMenu::createWithArray(array);
 		jsval jsret;
 		do {
 			if (ret) {

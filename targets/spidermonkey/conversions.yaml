@@ -53,39 +53,49 @@ conversions:
       ${($level + 0) * '\t'}} while (0)
     "CCPoint": |
       do {
-      ${($level + 1) * '\t'}JSObject *tmp;
+      ${($level + 1) * '\t'}JSObject *tmp; jsval jsx, jsy;
+      ${($level + 1) * '\t'}double x, y;
       ${($level + 1) * '\t'}if (!JS_ValueToObject(cx, ${in_value}, &tmp)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_IsTypedArrayObject(tmp, cx)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_GetTypedArrayByteLength(tmp, cx) == sizeof(float) * 2) return JS_FALSE;
-      ${($level + 1) * '\t'}float *arr = JS_GetFloat32ArrayData(tmp, cx);
-      ${($level + 1) * '\t'}${out_value} = cocos2d::CCPoint(arr[0], arr[1]);
+      ${($level + 1) * '\t'}if (!JS_GetProperty(cx, tmp, 'x', &jsx)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_GetProperty(cx, tmp, 'y', &jsy)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_ValueToNumber(cx, jsx, &x)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_ValueToNumber(cx, jsy, &y)) return JS_FALSE;
+      ${($level + 1) * '\t'}${out_value} = cocos2d::CCPoint(x, y);
       ${($level + 0) * '\t'}} while (0)
     "CCRect": |
-      do {
-      ${($level + 1) * '\t'}JSObject *tmp;
+      ${($level + 1) * '\t'}JSObject *tmp; jsval jsx, jsy, jswidth, jsheight;
+      ${($level + 1) * '\t'}double x, y, width, height;
       ${($level + 1) * '\t'}if (!JS_ValueToObject(cx, ${in_value}, &tmp)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_IsTypedArrayObject(tmp, cx)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_GetTypedArrayByteLength(tmp, cx) == sizeof(float) * 4) return JS_FALSE;
-      ${($level + 1) * '\t'}float *arr = JS_GetFloat32ArrayData(tmp, cx);
-      ${($level + 1) * '\t'}${out_value} = cocos2d::CCRect(arr[0], arr[1], arr[2], arr[3]);
+      ${($level + 1) * '\t'}if (!JS_GetProperty(cx, tmp, 'x', &jsx)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_GetProperty(cx, tmp, 'y', &jsy)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_GetProperty(cx, tmp, 'width', &jswidth)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_GetProperty(cx, tmp, 'height', &jsheight)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_ValueToNumber(cx, jsx, &x)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_ValueToNumber(cx, jsy, &y)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_ValueToNumber(cx, jswidth, &width)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_ValueToNumber(cx, jsheight, &height)) return JS_FALSE;
+      ${($level + 1) * '\t'}${out_value} = cocos2d::CCRect(x, y, width, height);
       ${($level + 0) * '\t'}} while (0)
     "CCSize": |
-      do {
-      ${($level + 1) * '\t'}JSObject *tmp;
+      ${($level + 1) * '\t'}JSObject *tmp; jsval jswidth, jsheight;
+      ${($level + 1) * '\t'}double width, height;
       ${($level + 1) * '\t'}if (!JS_ValueToObject(cx, ${in_value}, &tmp)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_IsTypedArrayObject(tmp, cx)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_GetTypedArrayByteLength(tmp, cx) == sizeof(float) * 2) return JS_FALSE;
-      ${($level + 1) * '\t'}float *arr = JS_GetFloat32ArrayData(tmp, cx);
-      ${($level + 1) * '\t'}${out_value} = cocos2d::CCSize(arr[0], arr[1]);
+      ${($level + 1) * '\t'}if (!JS_GetProperty(cx, tmp, 'width', &jswidth)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_GetProperty(cx, tmp, 'height', &jsheight)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_ValueToNumber(cx, jswidth, &width)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_ValueToNumber(cx, jsheight, &height)) return JS_FALSE;
+      ${($level + 1) * '\t'}${out_value} = cocos2d::CCSize(width, height);
       ${($level + 0) * '\t'}} while (0)
     "const ccGridSize": |
       do {
-      ${($level + 1) * '\t'}JSObject *tmp;
+      ${($level + 1) * '\t'}JSObject *tmp; jsval jsx, jsy;
+      ${($level + 1) * '\t'}double x, y;
       ${($level + 1) * '\t'}if (!JS_ValueToObject(cx, ${in_value}, &tmp)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_IsTypedArrayObject(tmp, cx)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_GetTypedArrayByteLength(tmp, cx) == sizeof(float) * 2) return JS_FALSE;
-      ${($level + 1) * '\t'}float *arr = JS_GetFloat32ArrayData(tmp, cx);
-      ${($level + 1) * '\t'}${out_value} = cocos2d::ccg(arr[0], arr[1]);
+      ${($level + 1) * '\t'}if (!JS_GetProperty(cx, tmp, 'x', &jsx)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_GetProperty(cx, tmp, 'y', &jsy)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_ValueToNumber(cx, jsx, &x)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_ValueToNumber(cx, jsy, &y)) return JS_FALSE;
+      ${($level + 1) * '\t'}${out_value} = cocos2d::ccg(x, y);
       ${($level + 0) * '\t'}} while (0)
     "const ccColor4B": |
       do {
@@ -152,36 +162,39 @@ conversions:
       ${($level) * '\t'}} while (0)
     "CCPoint": |
       do {
-      ${($level + 1) * '\t'}JSObject *tmp = JS_NewFloat32Array(cx, 2);
-      ${($level + 1) * '\t'}float *data = JS_GetFloat32ArrayData(tmp, cx);
-      ${($level + 1) * '\t'}data[0] = ${in_value}.x;
-      ${($level + 1) * '\t'}data[1] = ${in_value}.y;
+      ${($level + 1) * '\t'}JSObject *tmp = JS_NewObject(cx, NULL, NULL, NULL);
+      ${($level + 1) * '\t'}if (!tmp) return JSVAL_VOID;
+      ${($level + 1) * '\t'}if (!JS_DefineProperty(cx, object, "x", ${in_value}.x, NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) ||
+      ${($level + 1) * '\t'}    !JS_DefineProperty(cx, object, "y", ${in_value}.y, NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT))
+      ${($level + 1) * '\t'}   return JSVAL_VOID;
       ${($level + 1) * '\t'}${out_value} = OBJECT_TO_JSVAL(tmp);
       ${($level + 0) * '\t'}} while (0)
     "CCRect": |
       do {
-      ${($level + 1) * '\t'}JSObject *tmp = JS_NewFloat32Array(cx, 4);
-      ${($level + 1) * '\t'}float *data = JS_GetFloat32ArrayData(tmp, cx);
-      ${($level + 1) * '\t'}data[0] = ${in_value}.origin.x;
-      ${($level + 1) * '\t'}data[1] = ${in_value}.origin.y;
-      ${($level + 1) * '\t'}data[2] = ${in_value}.size.width;
-      ${($level + 1) * '\t'}data[3] = ${in_value}.size.height;
+      ${($level + 1) * '\t'}JSObject *tmp = JS_NewObject(cx, NULL, NULL, NULL);
+      ${($level + 1) * '\t'}if (!tmp) return JSVAL_VOID;
+      ${($level + 1) * '\t'}if (!JS_DefineProperty(cx, object, "x", ${in_value}.origin.x, NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) ||
+      ${($level + 1) * '\t'}    !JS_DefineProperty(cx, object, "y", ${in_value}.origin.y, NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) ||
+      ${($level + 1) * '\t'}    !JS_DefineProperty(cx, object, "width", ${in_value}.size.width, NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) ||
+      ${($level + 1) * '\t'}    !JS_DefineProperty(cx, object, "height", ${in_value}.size.height, NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT))
+      ${($level + 1) * '\t'}   return JSVAL_VOID;
       ${($level + 1) * '\t'}${out_value} = OBJECT_TO_JSVAL(tmp);
       ${($level + 0) * '\t'}} while (0)
     "CCSize": |
-      do {
-      ${($level + 1) * '\t'}JSObject *tmp = JS_NewFloat32Array(cx, 2);
-      ${($level + 1) * '\t'}float *data = JS_GetFloat32ArrayData(tmp, cx);
-      ${($level + 1) * '\t'}data[0] = ${in_value}.width;
-      ${($level + 1) * '\t'}data[1] = ${in_value}.height;
+      ${($level + 1) * '\t'}JSObject *tmp = JS_NewObject(cx, NULL, NULL, NULL);
+      ${($level + 1) * '\t'}if (!tmp) return JSVAL_VOID;
+      ${($level + 1) * '\t'}if (!JS_DefineProperty(cx, object, "width", ${in_value}.width, NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) ||
+      ${($level + 1) * '\t'}    !JS_DefineProperty(cx, object, "height", ${in_value}.height, NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT))
+      ${($level + 1) * '\t'}   return JSVAL_VOID;
       ${($level + 1) * '\t'}${out_value} = OBJECT_TO_JSVAL(tmp);
       ${($level + 0) * '\t'}} while (0)
     "const ccGridSize":
       do {
-      ${($level + 1) * '\t'}JSObject *tmp = JS_NewFloat32Array(cx, 2);
-      ${($level + 1) * '\t'}float *data = JS_GetFloat32ArrayData(tmp, cx);
-      ${($level + 1) * '\t'}data[0] = ${in_value}.x;
-      ${($level + 1) * '\t'}data[1] = ${in_value}.y;
+      ${($level + 1) * '\t'}JSObject *tmp = JS_NewObject(cx, NULL, NULL, NULL);
+      ${($level + 1) * '\t'}if (!tmp) return JSVAL_VOID;
+      ${($level + 1) * '\t'}if (!JS_DefineProperty(cx, object, "x", ${in_value}.x, NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) ||
+      ${($level + 1) * '\t'}    !JS_DefineProperty(cx, object, "y", ${in_value}.y, NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT))
+      ${($level + 1) * '\t'}   return JSVAL_VOID;
       ${($level + 1) * '\t'}${out_value} = OBJECT_TO_JSVAL(tmp);
       ${($level + 0) * '\t'}} while (0)
     "const ccColor4B": |

@@ -63,6 +63,7 @@ conversions:
       ${($level + 1) * '\t'}${out_value} = cocos2d::CCPoint(x, y);
       ${($level + 0) * '\t'}} while (0)
     "CCRect": |
+      do {
       ${($level + 1) * '\t'}JSObject *tmp; jsval jsx, jsy, jswidth, jsheight;
       ${($level + 1) * '\t'}double x, y, width, height;
       ${($level + 1) * '\t'}if (!JS_ValueToObject(cx, ${in_value}, &tmp)) return JS_FALSE;
@@ -77,6 +78,7 @@ conversions:
       ${($level + 1) * '\t'}${out_value} = cocos2d::CCRect(x, y, width, height);
       ${($level + 0) * '\t'}} while (0)
     "CCSize": |
+      do {
       ${($level + 1) * '\t'}JSObject *tmp; jsval jswidth, jsheight;
       ${($level + 1) * '\t'}double width, height;
       ${($level + 1) * '\t'}if (!JS_ValueToObject(cx, ${in_value}, &tmp)) return JS_FALSE;

@@ -181,6 +181,7 @@ conversions:
       ${($level + 1) * '\t'}${out_value} = OBJECT_TO_JSVAL(tmp);
       ${($level + 0) * '\t'}} while (0)
     "CCSize": |
+      do {
       ${($level + 1) * '\t'}JSObject *tmp = JS_NewObject(cx, NULL, NULL, NULL);
       ${($level + 1) * '\t'}if (!tmp) return JS_FALSE;
       ${($level + 1) * '\t'}if (!JS_DefineProperty(cx, tmp, "width", DOUBLE_TO_JSVAL(${in_value}.width), NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) ||

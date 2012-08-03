@@ -56,8 +56,8 @@ conversions:
       ${($level + 1) * '\t'}JSObject *tmp; jsval jsx, jsy;
       ${($level + 1) * '\t'}double x, y;
       ${($level + 1) * '\t'}if (!JS_ValueToObject(cx, ${in_value}, &tmp)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_GetProperty(cx, tmp, 'x', &jsx)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_GetProperty(cx, tmp, 'y', &jsy)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_GetProperty(cx, tmp, "x", &jsx)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_GetProperty(cx, tmp, "y", &jsy)) return JS_FALSE;
       ${($level + 1) * '\t'}if (!JS_ValueToNumber(cx, jsx, &x)) return JS_FALSE;
       ${($level + 1) * '\t'}if (!JS_ValueToNumber(cx, jsy, &y)) return JS_FALSE;
       ${($level + 1) * '\t'}${out_value} = cocos2d::CCPoint(x, y);
@@ -66,10 +66,10 @@ conversions:
       ${($level + 1) * '\t'}JSObject *tmp; jsval jsx, jsy, jswidth, jsheight;
       ${($level + 1) * '\t'}double x, y, width, height;
       ${($level + 1) * '\t'}if (!JS_ValueToObject(cx, ${in_value}, &tmp)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_GetProperty(cx, tmp, 'x', &jsx)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_GetProperty(cx, tmp, 'y', &jsy)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_GetProperty(cx, tmp, 'width', &jswidth)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_GetProperty(cx, tmp, 'height', &jsheight)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_GetProperty(cx, tmp, "x", &jsx)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_GetProperty(cx, tmp, "y", &jsy)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_GetProperty(cx, tmp, "width", &jswidth)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_GetProperty(cx, tmp, "height", &jsheight)) return JS_FALSE;
       ${($level + 1) * '\t'}if (!JS_ValueToNumber(cx, jsx, &x)) return JS_FALSE;
       ${($level + 1) * '\t'}if (!JS_ValueToNumber(cx, jsy, &y)) return JS_FALSE;
       ${($level + 1) * '\t'}if (!JS_ValueToNumber(cx, jswidth, &width)) return JS_FALSE;
@@ -80,8 +80,8 @@ conversions:
       ${($level + 1) * '\t'}JSObject *tmp; jsval jswidth, jsheight;
       ${($level + 1) * '\t'}double width, height;
       ${($level + 1) * '\t'}if (!JS_ValueToObject(cx, ${in_value}, &tmp)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_GetProperty(cx, tmp, 'width', &jswidth)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_GetProperty(cx, tmp, 'height', &jsheight)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_GetProperty(cx, tmp, "width", &jswidth)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_GetProperty(cx, tmp, "height", &jsheight)) return JS_FALSE;
       ${($level + 1) * '\t'}if (!JS_ValueToNumber(cx, jswidth, &width)) return JS_FALSE;
       ${($level + 1) * '\t'}if (!JS_ValueToNumber(cx, jsheight, &height)) return JS_FALSE;
       ${($level + 1) * '\t'}${out_value} = cocos2d::CCSize(width, height);
@@ -91,8 +91,8 @@ conversions:
       ${($level + 1) * '\t'}JSObject *tmp; jsval jsx, jsy;
       ${($level + 1) * '\t'}double x, y;
       ${($level + 1) * '\t'}if (!JS_ValueToObject(cx, ${in_value}, &tmp)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_GetProperty(cx, tmp, 'x', &jsx)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_GetProperty(cx, tmp, 'y', &jsy)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_GetProperty(cx, tmp, "x", &jsx)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_GetProperty(cx, tmp, "y", &jsy)) return JS_FALSE;
       ${($level + 1) * '\t'}if (!JS_ValueToNumber(cx, jsx, &x)) return JS_FALSE;
       ${($level + 1) * '\t'}if (!JS_ValueToNumber(cx, jsy, &y)) return JS_FALSE;
       ${($level + 1) * '\t'}${out_value} = cocos2d::ccg(x, y);
@@ -163,38 +163,38 @@ conversions:
     "CCPoint": |
       do {
       ${($level + 1) * '\t'}JSObject *tmp = JS_NewObject(cx, NULL, NULL, NULL);
-      ${($level + 1) * '\t'}if (!tmp) return JSVAL_VOID;
+      ${($level + 1) * '\t'}if (!tmp) return JS_FALSE;
       ${($level + 1) * '\t'}if (!JS_DefineProperty(cx, object, "x", ${in_value}.x, NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) ||
       ${($level + 1) * '\t'}    !JS_DefineProperty(cx, object, "y", ${in_value}.y, NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT))
-      ${($level + 1) * '\t'}   return JSVAL_VOID;
+      ${($level + 1) * '\t'}   return JS_FALSE;
       ${($level + 1) * '\t'}${out_value} = OBJECT_TO_JSVAL(tmp);
       ${($level + 0) * '\t'}} while (0)
     "CCRect": |
       do {
       ${($level + 1) * '\t'}JSObject *tmp = JS_NewObject(cx, NULL, NULL, NULL);
-      ${($level + 1) * '\t'}if (!tmp) return JSVAL_VOID;
+      ${($level + 1) * '\t'}if (!tmp) return JS_FALSE;
       ${($level + 1) * '\t'}if (!JS_DefineProperty(cx, object, "x", ${in_value}.origin.x, NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) ||
       ${($level + 1) * '\t'}    !JS_DefineProperty(cx, object, "y", ${in_value}.origin.y, NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) ||
       ${($level + 1) * '\t'}    !JS_DefineProperty(cx, object, "width", ${in_value}.size.width, NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) ||
       ${($level + 1) * '\t'}    !JS_DefineProperty(cx, object, "height", ${in_value}.size.height, NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT))
-      ${($level + 1) * '\t'}   return JSVAL_VOID;
+      ${($level + 1) * '\t'}   return JS_FALSE;
       ${($level + 1) * '\t'}${out_value} = OBJECT_TO_JSVAL(tmp);
       ${($level + 0) * '\t'}} while (0)
     "CCSize": |
       ${($level + 1) * '\t'}JSObject *tmp = JS_NewObject(cx, NULL, NULL, NULL);
-      ${($level + 1) * '\t'}if (!tmp) return JSVAL_VOID;
+      ${($level + 1) * '\t'}if (!tmp) return JS_FALSE;
       ${($level + 1) * '\t'}if (!JS_DefineProperty(cx, object, "width", ${in_value}.width, NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) ||
       ${($level + 1) * '\t'}    !JS_DefineProperty(cx, object, "height", ${in_value}.height, NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT))
-      ${($level + 1) * '\t'}   return JSVAL_VOID;
+      ${($level + 1) * '\t'}   return JS_FALSE;
       ${($level + 1) * '\t'}${out_value} = OBJECT_TO_JSVAL(tmp);
       ${($level + 0) * '\t'}} while (0)
     "const ccGridSize":
       do {
       ${($level + 1) * '\t'}JSObject *tmp = JS_NewObject(cx, NULL, NULL, NULL);
-      ${($level + 1) * '\t'}if (!tmp) return JSVAL_VOID;
+      ${($level + 1) * '\t'}if (!tmp) return JS_FALSE;
       ${($level + 1) * '\t'}if (!JS_DefineProperty(cx, object, "x", ${in_value}.x, NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) ||
       ${($level + 1) * '\t'}    !JS_DefineProperty(cx, object, "y", ${in_value}.y, NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT))
-      ${($level + 1) * '\t'}   return JSVAL_VOID;
+      ${($level + 1) * '\t'}   return JS_FALSE;
       ${($level + 1) * '\t'}${out_value} = OBJECT_TO_JSVAL(tmp);
       ${($level + 0) * '\t'}} while (0)
     "const ccColor4B": |

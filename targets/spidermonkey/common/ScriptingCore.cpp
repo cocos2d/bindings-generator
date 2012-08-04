@@ -114,7 +114,7 @@ ScriptingCore::ScriptingCore()
     JS_SetOptions(this->cx, JS_GetOptions(this->cx) & ~JSOPTION_METHODJIT);
     JS_SetOptions(this->cx, JS_GetOptions(this->cx) & ~JSOPTION_METHODJIT_ALWAYS);
     JS_SetErrorReporter(this->cx, ScriptingCore::reportError);
-    global = JS_NewGlobalObject(cx, &global_class, NULL);
+    global = JS_NewCompartmentAndGlobalObject(cx, &global_class, NULL);
     if (!JS_InitStandardClasses(cx, global)) {
         js_log("error initializing the VM");
     }

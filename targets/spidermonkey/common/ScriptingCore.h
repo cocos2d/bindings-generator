@@ -158,6 +158,9 @@ public:
 	 * @param vp
 	 */
 	static JSBool forceGC(JSContext *cx, uint32_t argc, jsval *vp);
+	static JSBool dumpRoot(JSContext *cx, uint32_t argc, jsval *vp);
+	static JSBool addRootJS(JSContext *cx, uint32_t argc, jsval *vp);
+	static JSBool removeRootJS(JSContext *cx, uint32_t argc, jsval *vp);
 
  private:
     void string_report(jsval val);

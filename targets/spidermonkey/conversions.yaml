@@ -104,30 +104,46 @@ conversions:
       ${($level + 0) * '\t'}} while (0)
     "const ccColor4B": |
       do {
-      ${($level + 1) * '\t'}JSObject *tmp;
+      ${($level + 1) * '\t'}JSObject *tmp; jsval jsr, jsg, jsb, jsa;
+      ${($level + 1) * '\t'}double r, g, b, a;
       ${($level + 1) * '\t'}if (!JS_ValueToObject(cx, ${in_value}, &tmp)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_IsTypedArrayObject(tmp, cx)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_GetTypedArrayByteLength(tmp, cx) == sizeof(GLubyte) * 4) return JS_FALSE;
-      ${($level + 1) * '\t'}GLubyte *arr = (GLubyte *)JS_GetUint8ArrayData(tmp, cx);
-      ${($level + 1) * '\t'}${out_value} = cocos2d::ccc4(arr[0], arr[1], arr[2], arr[3]);
-      ${($level + 0) * '\t'}} while (0)
-    "const ccColor3B": |
-      do {
-      ${($level + 1) * '\t'}JSObject *tmp;
-      ${($level + 1) * '\t'}if (!JS_ValueToObject(cx, ${in_value}, &tmp)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_IsTypedArrayObject(tmp, cx)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_GetTypedArrayByteLength(tmp, cx) == sizeof(GLubyte) * 3) return JS_FALSE;
-      ${($level + 1) * '\t'}GLubyte *arr = (GLubyte *)JS_GetUint8ArrayData(tmp, cx);
-      ${($level + 1) * '\t'}${out_value} = cocos2d::ccc3(arr[0], arr[1], arr[2]);
+      ${($level + 1) * '\t'}if (!JS_GetProperty(cx, tmp, "r", &jsr)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_GetProperty(cx, tmp, "g", &jsg)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_GetProperty(cx, tmp, "b", &jsb)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_GetProperty(cx, tmp, "a", &jsa)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_ValueToNumber(cx, jsr, &r)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_ValueToNumber(cx, jsg, &g)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_ValueToNumber(cx, jsb, &b)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_ValueToNumber(cx, jsa, &a)) return JS_FALSE;
+      ${($level + 1) * '\t'}${out_value} = cocos2d::ccc4(r, g, b, a);
       ${($level + 0) * '\t'}} while (0)
     "const ccColor4F": |
       do {
-      ${($level + 1) * '\t'}JSObject *tmp;
+      ${($level + 1) * '\t'}JSObject *tmp; jsval jsr, jsg, jsb, jsa;
+      ${($level + 1) * '\t'}double r, g, b, a;
       ${($level + 1) * '\t'}if (!JS_ValueToObject(cx, ${in_value}, &tmp)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_IsTypedArrayObject(tmp, cx)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_GetTypedArrayByteLength(tmp, cx) == sizeof(float) * 4) return JS_FALSE;
-      ${($level + 1) * '\t'}float *arr = JS_GetFloat32ArrayData(tmp, cx);
-      ${($level + 1) * '\t'}${out_value} = cocos2d::ccc4f(arr[0], arr[1], arr[2], arr[3]);
+      ${($level + 1) * '\t'}if (!JS_GetProperty(cx, tmp, "r", &jsr)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_GetProperty(cx, tmp, "g", &jsg)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_GetProperty(cx, tmp, "b", &jsb)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_GetProperty(cx, tmp, "a", &jsa)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_ValueToNumber(cx, jsr, &r)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_ValueToNumber(cx, jsg, &g)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_ValueToNumber(cx, jsb, &b)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_ValueToNumber(cx, jsa, &a)) return JS_FALSE;
+      ${($level + 1) * '\t'}${out_value} = cocos2d::ccc4f(r, g, b, a);
+      ${($level + 0) * '\t'}} while (0)
+    "const ccColor3B": |
+      do {
+      ${($level + 1) * '\t'}JSObject *tmp; jsval jsr, jsg, jsb;
+      ${($level + 1) * '\t'}double r, g, b;
+      ${($level + 1) * '\t'}if (!JS_ValueToObject(cx, ${in_value}, &tmp)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_GetProperty(cx, tmp, "r", &jsr)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_GetProperty(cx, tmp, "g", &jsg)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_GetProperty(cx, tmp, "b", &jsb)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_ValueToNumber(cx, jsr, &r)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_ValueToNumber(cx, jsg, &g)) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_ValueToNumber(cx, jsb, &b)) return JS_FALSE;
+      ${($level + 1) * '\t'}${out_value} = cocos2d::ccc3(r, g, b);
       ${($level + 0) * '\t'}} while (0)
 
   from_native:
@@ -205,30 +221,33 @@ conversions:
       ${($level + 0) * '\t'}} while (0)
     "const ccColor4B": |
       do {
-      ${($level + 1) * '\t'}JSObject *tmp = JS_NewUint8Array(cx, 4);
-      ${($level + 1) * '\t'}GLubyte *data = (GLubyte *)JS_GetUint8ArrayData(tmp, cx);
-      ${($level + 1) * '\t'}data[0] = ${in_value}.r;
-      ${($level + 1) * '\t'}data[1] = ${in_value}.g;
-      ${($level + 1) * '\t'}data[1] = ${in_value}.b;
-      ${($level + 1) * '\t'}data[1] = ${in_value}.a;
-      ${($level + 1) * '\t'}${out_value} = OBJECT_TO_JSVAL(tmp);
-      ${($level + 0) * '\t'}} while (0)
-    "const ccColor3B": |
-      do {
-      ${($level + 1) * '\t'}JSObject *tmp = JS_NewUint8Array(cx, 3);
-      ${($level + 1) * '\t'}GLubyte *data = (GLubyte *)JS_GetUint8ArrayData(tmp, cx);
-      ${($level + 1) * '\t'}data[0] = ${in_value}.r;
-      ${($level + 1) * '\t'}data[1] = ${in_value}.g;
-      ${($level + 1) * '\t'}data[1] = ${in_value}.b;
+      ${($level + 1) * '\t'}JSObject *tmp = JS_NewObject(cx, NULL, NULL, NULL);
+      ${($level + 1) * '\t'}if (!tmp) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_DefineProperty(cx, tmp, "r", DOUBLE_TO_JSVAL(${in_value}.r), NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) ||
+      ${($level + 1) * '\t'}    !JS_DefineProperty(cx, tmp, "g", DOUBLE_TO_JSVAL(${in_value}.g), NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) ||
+      ${($level + 1) * '\t'}    !JS_DefineProperty(cx, tmp, "b", DOUBLE_TO_JSVAL(${in_value}.b), NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) ||
+      ${($level + 1) * '\t'}    !JS_DefineProperty(cx, tmp, "a", DOUBLE_TO_JSVAL(${in_value}.a), NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT))
+      ${($level + 1) * '\t'}   return JS_FALSE;
       ${($level + 1) * '\t'}${out_value} = OBJECT_TO_JSVAL(tmp);
       ${($level + 0) * '\t'}} while (0)
     "const ccColor4F": |
       do {
-      ${($level + 1) * '\t'}JSObject *tmp = JS_NewFloat32Array(cx, 4);
-      ${($level + 1) * '\t'}float *data = JS_GetFloat32ArrayData(tmp, cx);
-      ${($level + 1) * '\t'}data[0] = ${in_value}.r;
-      ${($level + 1) * '\t'}data[1] = ${in_value}.g;
-      ${($level + 1) * '\t'}data[1] = ${in_value}.b;
-      ${($level + 1) * '\t'}data[1] = ${in_value}.a;
+      ${($level + 1) * '\t'}JSObject *tmp = JS_NewObject(cx, NULL, NULL, NULL);
+      ${($level + 1) * '\t'}if (!tmp) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_DefineProperty(cx, tmp, "r", DOUBLE_TO_JSVAL(${in_value}.r), NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) ||
+      ${($level + 1) * '\t'}    !JS_DefineProperty(cx, tmp, "g", DOUBLE_TO_JSVAL(${in_value}.g), NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) ||
+      ${($level + 1) * '\t'}    !JS_DefineProperty(cx, tmp, "b", DOUBLE_TO_JSVAL(${in_value}.b), NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) ||
+      ${($level + 1) * '\t'}    !JS_DefineProperty(cx, tmp, "a", DOUBLE_TO_JSVAL(${in_value}.a), NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT))
+      ${($level + 1) * '\t'}   return JS_FALSE;
+      ${($level + 1) * '\t'}${out_value} = OBJECT_TO_JSVAL(tmp);
+      ${($level + 0) * '\t'}} while (0)
+    "const ccColor3B": |
+      do {
+      ${($level + 1) * '\t'}JSObject *tmp = JS_NewObject(cx, NULL, NULL, NULL);
+      ${($level + 1) * '\t'}if (!tmp) return JS_FALSE;
+      ${($level + 1) * '\t'}if (!JS_DefineProperty(cx, tmp, "r", DOUBLE_TO_JSVAL(${in_value}.r), NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) ||
+      ${($level + 1) * '\t'}    !JS_DefineProperty(cx, tmp, "g", DOUBLE_TO_JSVAL(${in_value}.g), NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) ||
+      ${($level + 1) * '\t'}    !JS_DefineProperty(cx, tmp, "b", DOUBLE_TO_JSVAL(${in_value}.b), NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT))
+      ${($level + 1) * '\t'}   return JS_FALSE;
       ${($level + 1) * '\t'}${out_value} = OBJECT_TO_JSVAL(tmp);
       ${($level + 0) * '\t'}} while (0)

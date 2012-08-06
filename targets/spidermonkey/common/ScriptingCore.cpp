@@ -119,6 +119,19 @@ ScriptingCore::ScriptingCore()
         js_log("error initializing the VM");
     }
 
+    // 
+    // Javascript controller (__jsc__)
+    //
+    JSObject *jsc = JS_NewObject(cx, NULL, NULL, NULL);
+    jsval jscVal = OBJECT_TO_JSVAL(jsc);
+    JS_SetProperty(this->cx, global, "__jsc__", &jscVal);
+
+    JS_DefineFunction(this->cx, jsc, "garbageCollect", ScriptingCore::forceGC, 0, JSPROP_READONLY | JSPROP_PERMANENT | JSPROP_ENUMERATE );
+    JS_DefineFunction(this->cx, jsc, "dumpRoot", ScriptingCore::dumpRoot, 0, JSPROP_READONLY | JSPROP_PERMANENT | JSPROP_ENUMERATE );
+    JS_DefineFunction(this->cx, jsc, "addGCRootObject", ScriptingCore::addRootJS, 1, JSPROP_READONLY | JSPROP_PERMANENT | JSPROP_ENUMERATE );
+    JS_DefineFunction(this->cx, jsc, "removeGCRootObject", ScriptingCore::removeRootJS, 1, JSPROP_READONLY | JSPROP_PERMANENT | JSPROP_ENUMERATE );
+    JS_DefineFunction(this->cx, jsc, "executeScript", ScriptingCore::executeScript, 1, JSPROP_READONLY | JSPROP_PERMANENT | JSPROP_ENUMERATE );
+
     // register some global functions
     JS_DefineFunction(this->cx, global, "require", ScriptingCore::executeScript, 1, JSPROP_READONLY | JSPROP_PERMANENT);
     JS_DefineFunction(this->cx, global, "log", ScriptingCore::log, 0, JSPROP_READONLY | JSPROP_PERMANENT);
@@ -365,9 +378,45 @@ JSBool ScriptingCore::forceGC(JSContext *cx, uint32_t argc, jsval *vp)
 	JSRuntime *rt = JS_GetRuntime(cx);
 	JS_GC(rt);
 	return JS_TRUE;
-};
+}
 
+JSBool ScriptingCore::dumpRoot(JSContext *cx, uint32_t argc, jsval *vp)
+{
+    // JS_DumpNamedRoots is only available on DEBUG versions of SpiderMonkey.
+    // Mac and Simulator versions were compiled with DEBUG.
+#if DEBUG && (defined(__CC_PLATFORM_MAC) || TARGET_IPHONE_SIMULATOR )
+    JSContext *cx = ScriptingCore::getInstance()->getGlobalContext();
+    JSRuntime *rt = JS_GetRuntime(cx);
+    JS_DumpNamedRoots(rt, dumpNamedRoot, NULL);
+#endif
+    return JS_TRUE;
+}
 
+JSBool ScriptingCore::addRootJS(JSContext *cx, uint32_t argc, jsval *vp)
+{
+    if (argc == 1) {
+        JSObject *o = NULL;
+        if (JS_ConvertArguments(cx, argc, JS_ARGV(cx, vp), "o", &o) == JS_TRUE) {
+            if (JS_AddObjectRoot(cx, &o) == JS_FALSE) {
+                LOGD("something went wrong when setting an object to the root");
+            }
+        }
+        return JS_TRUE;
+    }
+    return JS_FALSE;
+}
+
+JSBool ScriptingCore::removeRootJS(JSContext *cx, uint32_t argc, jsval *vp)
+{
+    if (argc == 1) {
+        JSObject *o = NULL;
+        if (JS_ConvertArguments(cx, argc, JS_ARGV(cx, vp), "o", &o) == JS_TRUE) {
+            JS_RemoveObjectRoot(cx, &o);
+        }
+        return JS_TRUE;
+    }
+    return JS_FALSE;
+}
 
 int ScriptingCore::executeFunctionWithIntegerData(int nHandler, int data, CCNode *self) {
     js_proxy_t * p;
@@ -519,25 +568,6 @@ int ScriptingCore::executeTouchesEvent(int nHandler, int eventType,
     executeFunctionWithObjectData(1,  funcName.c_str(), jsretArr, self);
     
     JS_RemoveObjectRoot(this->cx, &jsretArr);
-
-    
-//    
-//    js_proxy_t *lP;
-//    JS_GET_PROXY(lP, self);
-//    if(!lP) return 0;
-//    
-//    //if (!JS_EnterLocalRootScope(this->cx))
-//    //    return JS_FALSE;
-//
-//    //rootObject(this->cx, jsretArr);
-//
-//    jsval jsretArrVal = OBJECT_TO_JSVAL(jsretArr);
-//    
-//    
-//    executeJSFunctionWithName(this->cx, lP->obj, funcName.c_str(), jsretArrVal, retval);
-//    
-//    //JS_LeaveLocalRootScope(this->cx);
-//    //unRootObject(this->cx, jsretArr);
     
     return 1;
 }

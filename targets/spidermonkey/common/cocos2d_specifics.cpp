@@ -52,7 +52,7 @@ JSObject* bind_menu_item(JSContext *cx, T* nativeObj, jsval callback, jsval this
 
 JSBool js_cocos2dx_CCNode_getChildren(JSContext *cx, uint32_t argc, jsval *vp)
 {
-	JSObject *thisObj = JSVAL_TO_OBJECT(JS_THIS(cx, vp));
+	JSObject *thisObj = JS_THIS_OBJECT(cx, vp);
 	if (thisObj) {
 		js_proxy_t *proxy;
 		JS_GET_NATIVE_PROXY(proxy, thisObj);
@@ -477,7 +477,7 @@ JSBool js_cocos2dx_swap_native_object(JSContext *cx, uint32_t argc, jsval *vp)
 JSBool js_cocos2dx_CCNode_copy(JSContext *cx, uint32_t argc, jsval *vp)
 {
 	if (argc == 0) {
-		JSObject *obj = JSVAL_TO_OBJECT(JS_THIS(cx, vp));
+		JSObject *obj = JS_THIS_OBJECT(cx, vp);
 		js_proxy_t *proxy;
 		JS_GET_NATIVE_PROXY(proxy, obj);
 		cocos2d::CCNode *node = (cocos2d::CCNode *)(proxy ? proxy->ptr : NULL);
@@ -583,6 +583,34 @@ JSBool js_break(JSContext *cx, uint32_t argc, jsval *vp)
 }
 #endif
 
+JSBool js_cocos2dx_retain(JSContext *cx, uint32_t argc, jsval *vp)
+{
+	JSObject *thisObj = JS_THIS_OBJECT(cx, vp);
+	if (thisObj) {
+		js_proxy_t *proxy;
+		JS_GET_NATIVE_PROXY(proxy, thisObj);
+		if (proxy) {
+			((CCObject *)proxy->ptr)->retain();
+			return JS_TRUE;
+		}
+	}
+	return JS_FALSE;
+}
+
+JSBool js_cocos2dx_release(JSContext *cx, uint32_t argc, jsval *vp)
+{
+	JSObject *thisObj = JS_THIS_OBJECT(cx, vp);
+	if (thisObj) {
+		js_proxy_t *proxy;
+		JS_GET_NATIVE_PROXY(proxy, thisObj);
+		if (proxy) {
+			((CCObject *)proxy->ptr)->release();
+			return JS_TRUE;
+		}
+	}
+	return JS_FALSE;
+}
+
 /**
  * You don't need to manage the returned pointer. They live for the whole life of
  * the app.
@@ -654,7 +682,11 @@ void register_cocos2dx_js_extensions()
 	JSObject *tmpObj;
 	JS_DefineFunction(cx, js_cocos2dx_CCNode_prototype, "getChildren", js_cocos2dx_CCNode_getChildren, 1, JSPROP_READONLY | JSPROP_PERMANENT);
 	JS_DefineFunction(cx, js_cocos2dx_CCNode_prototype, "copy", js_cocos2dx_CCNode_copy, 1, JSPROP_READONLY | JSPROP_PERMANENT);
+	JS_DefineFunction(cx, js_cocos2dx_CCNode_prototype, "retain", js_cocos2dx_retain, 0, JSPROP_READONLY | JSPROP_PERMANENT);
+	JS_DefineFunction(cx, js_cocos2dx_CCNode_prototype, "release", js_cocos2dx_release, 0, JSPROP_READONLY | JSPROP_PERMANENT);
 	JS_DefineFunction(cx, js_cocos2dx_CCAction_prototype, "copy", js_cocos2dx_CCNode_copy, 1, JSPROP_READONLY | JSPROP_PERMANENT);
+	JS_DefineFunction(cx, js_cocos2dx_CCAction_prototype, "retain", js_cocos2dx_retain, 0, JSPROP_READONLY | JSPROP_PERMANENT);
+	JS_DefineFunction(cx, js_cocos2dx_CCAction_prototype, "release", js_cocos2dx_release, 0, JSPROP_READONLY | JSPROP_PERMANENT);
 	JS_DefineFunction(cx, js_cocos2dx_CCMenuItem_prototype, "setCallback", js_cocos2dx_setCallback, 2, JSPROP_READONLY | JSPROP_PERMANENT);
 	tmpObj = JSVAL_TO_OBJECT(anonEvaluate(cx, global, "(function () { return cc.Node.prototype; })()"));
 	JS_DefineFunction(cx, tmpObj, "copy", js_cocos2dx_CCNode_copy, 1, JSPROP_READONLY | JSPROP_PERMANENT);

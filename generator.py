@@ -11,6 +11,7 @@ import ConfigParser
 import yaml
 import re
 import os
+import inspect
 from Cheetah.Template import Template
 
 type_map = {
@@ -442,7 +443,7 @@ class Generator(object):
         self.base_objects = opts['base_objects'].split(' ')
         self.abstract_classes = opts['abstract_classes'].split(' ')
         self.clang_args = opts['clang_args']
-        self.target = os.path.join("targets", opts['target'])
+        self.target = opts['target']
         self.remove_prefix = opts['remove_prefix']
         self.target_ns = opts['target_ns']
         self.impl_file = None
@@ -614,12 +615,15 @@ def main():
 
     (opts, args) = parser.parse_args()
 
+    # script directory
+    workingdir = os.path.dirname(inspect.getfile(inspect.currentframe()))
+
     if len(args) == 0:
         parser.error('invalid number of arguments')
 
     userconfig = ConfigParser.SafeConfigParser()
     userconfig.read('userconf.ini')
-    print userconfig.items('DEFAULT')
+    print 'Using userconfig \n ', userconfig.items('DEFAULT')
 
     config = ConfigParser.SafeConfigParser()
     config.read(args[0])
@@ -639,12 +643,13 @@ def main():
         sections = config.sections()
 
     # find available targets
+    targetdir = os.path.join(workingdir, "targets")
     targets = []
-    if (os.path.isdir("targets")):
-        targets = [entry for entry in os.listdir("targets")
-                    if (os.path.isdir(os.path.join("targets", entry)))]
-        if 0 == len(targets):
-            raise Exception("No targets defined")
+    if (os.path.isdir(targetdir)):
+        targets = [entry for entry in os.listdir(targetdir)
+                    if (os.path.isdir(os.path.join(targetdir, entry)))]
+    if 0 == len(targets):
+        raise Exception("No targets defined")
 
     if opts.target:
         if (opts.target in targets):
@@ -654,7 +659,7 @@ def main():
     if opts.outdir:
         outdir = opts.outdir
     else:
-        outdir = "gen"
+        outdir = os.path.join(workingdir, "gen")
     if not os.path.exists(outdir):
         os.makedirs(outdir)
 
@@ -664,10 +669,10 @@ def main():
             print "\n.... .... Processing section", s, "\n"
             gen_opts = {
                 'prefix': config.get(s, 'prefix'),
-                'headers': config.get(s, 'headers'),
+                'headers':    (config.get(s, 'headers'        , 0, dict(userconfig.items('DEFAULT')))),
                 'classes': config.get(s, 'classes').split(' '),
                 'clang_args': (config.get(s, 'extra_arguments', 0, dict(userconfig.items('DEFAULT'))) or "").split(" "),
-                'target': t,
+                'target': os.path.join(workingdir, "targets", t),
                 'outdir': outdir,
                 'remove_prefix': config.get(s, 'remove_prefix'),
                 'target_ns': config.get(s, 'target_namespace'),

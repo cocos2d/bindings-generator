@@ -106,6 +106,9 @@ static JSClass global_class = {
 };
 
 #if !defined(JS_NewCompartmentAndGlobalObject)
+#if defined(JS_NewGlobalObject)
+#  undef(JS_NewGlobalObject)
+#endif
 #define JS_NewCompartmentAndGlobalObject(cx, clasp, ppals) JS_NewGlobalObject(cx, clasp, ppals)
 #endif
 

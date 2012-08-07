@@ -617,6 +617,10 @@ def main():
     if len(args) == 0:
         parser.error('invalid number of arguments')
 
+        userconfig = ConfigParser.SafeConfigParser()
+        userconfig.read('userconf.ini')
+        print userconfig.items('DEFAULT')
+
     config = ConfigParser.SafeConfigParser()
     config.read(args[0])
 
@@ -662,7 +666,7 @@ def main():
                 'prefix': config.get(s, 'prefix'),
                 'headers': config.get(s, 'headers'),
                 'classes': config.get(s, 'classes').split(' '),
-                'clang_args': (config.get(s, 'extra_arguments') or "").split(" "),
+                'clang_args': (config.get(s, 'extra_arguments', 0, dict(userconfig.items('DEFAULT'))) or "").split(" "),
                 'target': t,
                 'outdir': outdir,
                 'remove_prefix': config.get(s, 'remove_prefix'),

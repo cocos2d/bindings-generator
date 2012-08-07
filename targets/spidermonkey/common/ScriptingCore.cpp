@@ -646,11 +646,9 @@ int ScriptingCore::executeSchedule(int nHandler, float dt, CCNode *self) {
 
 long long jsval_to_long_long(JSContext *cx, jsval v) {
     JSObject *tmp = JSVAL_TO_OBJECT(v);
-    if (JS_IsTypedArrayObject(tmp, cx) && JS_GetTypedArrayByteLength(tmp, cx) == sizeof(long long)) {
+    if (JS_IsTypedArrayObject(tmp, cx) && JS_GetTypedArrayByteLength(tmp, cx) == 8) {
         int32_t *data = (int32_t *)JS_GetUint32ArrayData(tmp, cx);
-        long long r = data[0];
-        r = r << 32;
-        r |= data[1];
+        long long r = (long long)(*data);
         return r;
     }
 }

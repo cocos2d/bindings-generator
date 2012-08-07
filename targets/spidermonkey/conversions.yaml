@@ -113,8 +113,8 @@ conversions:
       do {
       ${($level + 1) * '\t'}JSObject *tmp = JS_NewUint32Array(cx, 2);
       ${($level + 1) * '\t'}int32_t *data = (int32_t *)JS_GetArrayBufferViewData(tmp, cx);
-      ${($level + 1) * '\t'}data[0] = (${in_value} >> 32);
-      ${($level + 1) * '\t'}data[1] = (${in_value} & 0xffffffff);
+      ${($level + 1) * '\t'}data[0] = ((uint32_t *)(&${in_value}))[0];
+      ${($level + 1) * '\t'}data[1] = ((uint32_t *)(&${in_value}))[1];
       ${($level + 1) * '\t'}${out_value} = OBJECT_TO_JSVAL(tmp);
       ${$level * '\t'}} while (0)
     "std::string": |

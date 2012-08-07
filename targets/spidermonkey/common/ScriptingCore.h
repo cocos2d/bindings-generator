@@ -13,6 +13,7 @@
 #include "cocos2d.h"
 #include "uthash.h"
 #include "jsapi.h"
+#include "jsfriendapi.h"
 #include "spidermonkey_specifics.h"
 
 void js_log(const char *format, ...);
@@ -165,5 +166,12 @@ public:
  private:
     void string_report(jsval val);
 };
+
+// some utility functions
+long long jsval_to_long_long(JSContext *cx, jsval v);
+std::string jsval_to_std_string(JSContext *cx, jsval v);
+const char* jsval_to_c_string(JSContext *cx, jsval v);
+CCPoint jsval_to_ccpoint(JSContext *cx, jsval v);
+CCRect jsval_to_ccrect(JSContext *cx, jsval v);
 
 #endif

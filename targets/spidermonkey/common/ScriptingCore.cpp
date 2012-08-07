@@ -634,3 +634,55 @@ int ScriptingCore::executeSchedule(int nHandler, float dt, CCNode *self) {
     executeFunctionWithFloatData(nHandler, dt, self);
     return 1;
 }
+
+long long jsval_to_long_long(JSContext *cx, jsval v) {
+    JSObject *tmp = JSVAL_TO_OBJECT(v);
+    if (JS_IsTypedArrayObject(tmp, cx) && JS_GetTypedArrayByteLength(tmp, cx) == sizeof(long long)) {
+        int32_t *data = (int32_t *)JS_GetUint32ArrayData(tmp, cx);
+        long long r = data[0];
+        r = r << 32;
+        r |= data[1];
+        return r;
+    }
+}
+
+std::string jsval_to_std_string(JSContext *cx, jsval v) {
+    JSString *tmp = JS_ValueToString(cx, v);
+    std::string ret = JS_EncodeString(cx, tmp);
+    return ret;
+}
+
+const char* jsval_to_c_string(JSContext *cx, jsval v) {
+    JSString *tmp = JS_ValueToString(cx, v);
+    return JS_EncodeString(cx, tmp);
+}
+
+CCPoint jsval_to_ccpoint(JSContext *cx, jsval v) {
+    JSObject *tmp;
+    jsval jsx, jsy;
+    double x, y;
+    JSBool ok = JS_ValueToObject(cx, v, &tmp) &&
+        JS_GetProperty(cx, tmp, "x", &jsx) &&
+        JS_GetProperty(cx, tmp, "y", &jsy) &&
+        JS_ValueToNumber(cx, jsx, &x) &&
+        JS_ValueToNumber(cx, jsy, &y);
+    assert(ok == JS_TRUE);
+    return cocos2d::CCPoint(x, y);
+}
+
+CCRect jsval_to_ccrect(JSContext *cx, jsval v) {
+    JSObject *tmp;
+    jsval jsx, jsy, jswidth, jsheight;
+    double x, y, width, height;
+    JSBool ok = JS_ValueToObject(cx, v, &tmp) &&
+        JS_GetProperty(cx, tmp, "x", &jsx) &&
+        JS_GetProperty(cx, tmp, "y", &jsy) &&
+        JS_GetProperty(cx, tmp, "width", &jswidth) &&
+        JS_GetProperty(cx, tmp, "height", &jsheight) &&
+        JS_ValueToNumber(cx, jsx, &x) &&
+        JS_ValueToNumber(cx, jsy, &y) &&
+        JS_ValueToNumber(cx, jswidth, &width) &&
+        JS_ValueToNumber(cx, jsheight, &height);
+    assert(ok == JS_TRUE);
+    return cocos2d::CCRect(x, y, width, height);
+}

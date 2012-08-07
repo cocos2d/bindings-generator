@@ -2,6 +2,7 @@
 #define __SIMPLE_CLASS_H__
 
 #include <string>
+#include <stdint.h>
 
 enum someThingEnumerated {
 	kValue1 = 1,

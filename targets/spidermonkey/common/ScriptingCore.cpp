@@ -105,6 +105,10 @@ static JSClass global_class = {
     JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
+#if !defined(JS_NewCompartmentAndGlobalObject)
+#define JS_NewCompartmentAndGlobalObject(cx, clasp, ppals) JS_NewGlobalObject(cx, clasp, ppals)
+#endif
+
 ScriptingCore::ScriptingCore()
 {
     this->rt = JS_NewRuntime(10 * 1024 * 1024);

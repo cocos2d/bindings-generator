@@ -43,6 +43,7 @@ JSObject* bind_menu_item(JSContext *cx, T* nativeObj, jsval callback, jsval this
 		// bind nativeObj <-> JSObject
 		js_proxy_t *proxy;
 		JS_NEW_PROXY(proxy, nativeObj, tmp);
+		JS_AddObjectRoot(cx, &proxy->obj);
         
 		addCallBackAndThis(tmp, callback, thisObj);
 
@@ -618,14 +619,14 @@ JSBool js_cocos2dx_release(JSContext *cx, uint32_t argc, jsval *vp)
 template <class T>
 js_type_class_t *js_get_type_from_native(T* native_obj) {
 	js_type_class_t *typeProxy;
-	uint32_t typeId = reinterpret_cast<int>(typeid(*native_obj).name());
+	long typeId = reinterpret_cast<long>(typeid(*native_obj).name());
 	HASH_FIND_INT(_js_global_type_ht, &typeId, typeProxy);
 	if (!typeProxy) {
 		TypeInfo *typeInfo = dynamic_cast<TypeInfo *>(native_obj);
 		if (typeInfo) {
 			typeId = typeInfo->getClassTypeInfo();
 		} else {
-			typeId = reinterpret_cast<int>(typeid(T).name());
+			typeId = reinterpret_cast<long>(typeid(T).name());
 		}
 		HASH_FIND_INT(_js_global_type_ht, &typeId, typeProxy);
 	}

@@ -125,6 +125,8 @@ ScriptingCore::ScriptingCore()
     if (!JS_InitStandardClasses(cx, global)) {
         js_log("error initializing the VM");
     }
+    JSVersion vers = JS_GetVersion(this->cx);
+    js_log("Spidermonkey Version: %s", JS_VersionToString(vers));
 
     // 
     // Javascript controller (__jsc__)

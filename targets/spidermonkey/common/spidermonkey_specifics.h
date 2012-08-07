@@ -32,7 +32,7 @@ class TypeTest
 	{
 		// return id unique for DERIVED
 		// NOT SURE IT WILL BE REALLY UNIQUE FOR EACH CLASS!!
-		static const int id = reinterpret_cast<int>(typeid( DERIVED ).name());
+		static const long id = reinterpret_cast<long>(typeid( DERIVED ).name());
 		return id;
 	}
 
@@ -48,7 +48,7 @@ class TypeTest
 class TypeInfo
 {
 public:
-	virtual uint32_t getClassTypeInfo() = 0;
+	virtual long getClassTypeInfo() = 0;
 };
 
 #define JS_NEW_PROXY(p, native_obj, js_obj) \

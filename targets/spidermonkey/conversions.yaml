@@ -26,8 +26,8 @@ conversions:
     double: "${out_value} = JSVAL_TO_DOUBLE(${in_value})"
     # jsval has to be a TypedArray, a UInt32Array with 2 elements
     "long long": "${out_value} = jsval_to_long_long(cx, ${in_value})"
-    "std::string": "${out_value} = jsval_to_c_string(cx, ${in_value})"
-    "const char*": "${out_value} = jsval_to_c_string(cx, ${in_value})"
+    "std::string": "${out_value} = jsval_to_std_string(cx, ${in_value})"
+    "const char*": "std::string ${out_value}_tmp = jsval_to_std_string(cx, ${in_value}); ${out_value} = ${out_value}_tmp.c_str()"
     "CCPoint": "${out_value} = jsval_to_ccpoint(cx, ${in_value})"
     "CCRect": "${out_value} = jsval_to_ccrect(cx, ${in_value})"
     "CCSize": "${out_value} = jsval_to_ccsize(cx, ${in_value})"

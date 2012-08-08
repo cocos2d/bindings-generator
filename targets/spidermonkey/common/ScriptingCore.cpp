@@ -114,6 +114,8 @@ static JSClass global_class = {
 
 ScriptingCore::ScriptingCore()
 {
+    // set utf8 strings internally (we don't need utf16)
+    JS_SetCStringsAreUTF8();
     this->rt = JS_NewRuntime(10 * 1024 * 1024);
     this->cx = JS_NewContext(rt, 10240);
     JS_SetOptions(this->cx, JSOPTION_TYPE_INFERENCE);
@@ -649,11 +651,14 @@ long long jsval_to_long_long(JSContext *cx, jsval v) {
         long long r = (long long)(*data);
         return r;
     }
+    return 0;
 }
 
 std::string jsval_to_std_string(JSContext *cx, jsval v) {
     JSString *tmp = JS_ValueToString(cx, v);
-    std::string ret = JS_EncodeString(cx, tmp);
+    char *rawStr = JS_EncodeString(cx, tmp);
+    std::string ret = std::string(rawStr);
+    JS_free(cx, rawStr);
     return ret;
 }
 

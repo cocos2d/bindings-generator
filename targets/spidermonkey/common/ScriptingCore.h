@@ -171,6 +171,7 @@ public:
 // to native
 long long jsval_to_long_long(JSContext *cx, jsval v);
 std::string jsval_to_std_string(JSContext *cx, jsval v);
+// you should free this pointer after you're done with it
 const char* jsval_to_c_string(JSContext *cx, jsval v);
 CCPoint jsval_to_ccpoint(JSContext *cx, jsval v);
 CCRect jsval_to_ccrect(JSContext *cx, jsval v);

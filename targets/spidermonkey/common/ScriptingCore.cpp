@@ -645,7 +645,7 @@ int ScriptingCore::executeSchedule(int nHandler, float dt, CCNode *self) {
 long long jsval_to_long_long(JSContext *cx, jsval v) {
     JSObject *tmp = JSVAL_TO_OBJECT(v);
     if (JS_IsTypedArrayObject(tmp, cx) && JS_GetTypedArrayByteLength(tmp, cx) == 8) {
-        int32_t *data = (int32_t *)JS_GetUint32ArrayData(tmp, cx);
+        uint32_t *data = (uint32_t *)JS_GetUint32ArrayData(tmp, cx);
         long long r = (long long)(*data);
         return r;
     }
@@ -769,7 +769,7 @@ ccColor3B jsval_to_cccolor3b(JSContext *cx, jsval v) {
 
 jsval long_long_to_jsval(JSContext* cx, long long v) {
     JSObject *tmp = JS_NewUint32Array(cx, 2);
-    int32_t *data = (int32_t *)JS_GetArrayBufferViewData(tmp, cx);
+    uint32_t *data = (uint32_t *)JS_GetArrayBufferViewData(tmp, cx);
     data[0] = ((uint32_t *)(&v))[0];
     data[1] = ((uint32_t *)(&v))[1];
     return OBJECT_TO_JSVAL(tmp);

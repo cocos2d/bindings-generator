@@ -168,10 +168,27 @@ public:
 };
 
 // some utility functions
+// to native
 long long jsval_to_long_long(JSContext *cx, jsval v);
 std::string jsval_to_std_string(JSContext *cx, jsval v);
 const char* jsval_to_c_string(JSContext *cx, jsval v);
 CCPoint jsval_to_ccpoint(JSContext *cx, jsval v);
 CCRect jsval_to_ccrect(JSContext *cx, jsval v);
+CCSize jsval_to_ccsize(JSContext *cx, jsval v);
+ccGridSize jsval_to_ccgridsize(JSContext *cx, jsval v);
+ccColor4B jsval_to_cccolor4b(JSContext *cx, jsval v);
+ccColor4F jsval_to_cccolor4f(JSContext *cx, jsval v);
+ccColor3B jsval_to_cccolor3b(JSContext *cx, jsval v);
+// from native
+jsval long_long_to_jsval(JSContext* cx, long long v);
+jsval std_string_to_jsval(JSContext* cx, std::string& v);
+jsval c_string_to_jsval(JSContext* cx, const char* v);
+jsval ccpoint_to_jsval(JSContext* cx, CCPoint& v);
+jsval ccrect_to_jsval(JSContext* cx, CCRect& v);
+jsval ccsize_to_jsval(JSContext* cx, CCSize& v);
+jsval ccgridsize_to_jsval(JSContext* cx, ccGridSize& v);
+jsval cccolor4b_to_jsval(JSContext* cx, ccColor4B& v);
+jsval cccolor4f_to_jsval(JSContext* cx, ccColor4F& v);
+jsval cccolor3b_to_jsval(JSContext* cx, ccColor3B& v);
 
 #endif

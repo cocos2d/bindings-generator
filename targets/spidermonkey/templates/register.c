@@ -82,7 +82,6 @@ void js_register_${generator.prefix}_${current_class.class_name}(JSContext *cx, 
 	uint32_t typeId = t.s_id();
 	HASH_FIND_INT(_js_global_type_ht, &typeId, p);
 	if (!p) {
-		printf("jsclass for %s: %d\n", "${current_class.class_name}", typeId);
 		p = (js_type_class_t *)malloc(sizeof(js_type_class_t));
 		p->type = typeId;
 		p->jsclass = js_${generator.prefix}_${current_class.class_name}_class;

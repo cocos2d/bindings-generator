@@ -1,81 +1,24 @@
 // cocos2d Helper
-//function ccp(x, y)
-//{
-//	var floats = new Float32Array(2);
-//	floats[0] = x;
-//	floats[1] = y;
-//
-//	return floats;
-//}
 
-//var cc = cc || {};
-
-cc.log = log;
-cc.AudioEngine = cc.SimpleAudioEngine;
-
-cc.p = function (x, y) {
-	var tmp = new Float32Array(2);
-	tmp[0] = x;
-	tmp[1] = y;
-	return tmp;
-};
-cc._reuse_point = cc.p(0, 0);
-
-cc.c3 = function (r, g, b) {
-	var tmp = new Uint8Array(3);
-	tmp[0] = r;
-	tmp[1] = g;
-	tmp[2] = b;
-	return tmp;
+cc.c3 = cc.c3 || function (r, g, b) {
+	return {r: r, g: g, b: b};
 };
 
-cc.c4 = function (r, g, b, o) {
-	var tmp = new Uint8Array(4);
-	tmp[0] = r;
-	tmp[1] = g;
-	tmp[2] = b;
-	tmp[3] = o;
-	return tmp;
+cc.c4 = cc.c4 || function (r, g, b, o) {
+	return {r: r, g: g, b: b, a: o};
 };
 
-cc.c4f = function (r, g, b, o) {
-	var tmp = new Float32Array(4);
-	tmp[0] = r;
-	tmp[1] = g;
-	tmp[2] = b;
-	tmp[3] = o;
-	return tmp;
+cc.c4f = cc.c4f || function (r, g, b, o) {
+	return {r: r, g: g, b: b, a: o};
 };
 
-cc.g = cc.p;
-
-cc.Node.prototype.retain = function () {
-	cc.log("someone's calling retain... wtf?");
+cc.p = cc.p || function( x, y )
+{
+    return {x:x, y:y};
 };
 
-cc.pSub = function (p1, p2) {
-	cc._reuse_point[0] = p1[0] - p2[0];
-	cc._reuse_point[1] = p1[1] - p2[1];
-	return cc._reuse_point;
-};
-
-cc.pAdd = function (p1, p2) {
-	cc._reuse_point[0] = p1[0] + p2[0];
-	cc._reuse_point[1] = p1[1] + p2[1];
-	return cc._reuse_point;
-};
-
-cc.pMult = function (p1, scale) {
-	cc._reuse_point[0] = p1[0] * scale;
-	cc._reuse_point[1] = p1[1] * scale;
-	return cc._reuse_point;
-};
-
-cc.pDistance = function (p1, p2) {
-	var dx = (p2[0] - p1[0]);
-	var dy = (p2[1] - p1[1]);
-	return Math.sqrt(dx * dx + dy * dy);
-};
+cc.g = cc.g || cc.p;
+cc.log = cc.log || log;
 
 //
 // cocos2d constants
@@ -92,15 +35,23 @@ cc.TEXTURE_PIXELFORMAT_PVRTC4 = 8;
 cc.TEXTURE_PIXELFORMAT_PVRTC4 = 9;
 cc.TEXTURE_PIXELFORMAT_DEFAULT = cc.TEXTURE_PIXELFORMAT_RGBA8888;
 
+cc.TEXT_ALIGNMENT_LEFT  = 0;
+cc.TEXT_ALIGNMENT_CENTER = 1;
+cc.TEXT_ALIGNMENT_RIGHT = 2;
+
+cc.VERTICAL_TEXT_ALIGNMENT_TOP = 0;
+cc.VERTICAL_TEXT_ALIGNMENT_CENTER = 1;
+cc.VERTICAL_TEXT_ALIGNMENT_BOTTOM = 2;
+
 cc.IMAGE_FORMAT_JPEG = 0;
 cc.IMAGE_FORMAT_PNG = 0;
 
 cc.PROGRESS_TIMER_TYPE_RADIAL = 0;
 cc.PROGRESS_TIMER_TYPE_BAR = 1;
 
-cc.PARTICLE_TYPE_RELATIVE = 0;
-cc.PARTICLE_TYPE_GROUPED = 1;
-cc.PARTICLE_TYPE_FREE = 2;
+cc.PARTICLE_TYPE_FREE = 0;
+cc.PARTICLE_TYPE_RELATIVE = 1;
+cc.PARTICLE_TYPE_GROUPED = 2;
 cc.PARTICLE_DURATION_INFINITY = -1;
 cc.PARTICLE_MODE_GRAVITY = 0;
 cc.PARTICLE_MODE_RADIUS = 1;
@@ -113,37 +64,65 @@ cc.BLUE = cc.c3(0,0,255);
 cc.BLACK = cc.c3(0,0,0);
 cc.WHITE = cc.c3(255,255,255);
 
-cc.POINT_ZERO = cc.p(0,0);
+cc.POINT_ZERO = {x:0, y:0};
 
-cc._reuse_p0 = cc.p(0,0);
-cc._reuse_p1 = cc.p(0,0);
+cc._reuse_p0 = {x:0, y:0};
+cc._reuse_p1 = {x:0, y:0};
 cc._reuse_p_index = 0;
 cc._reuse_color3b = cc.c3(255, 255, 255 );
 cc._reuse_color4b = cc.c4(255, 255, 255, 255 );
 cc._reuse_grid = cc.g(0,0);
 
+// dump config info, but only in debug mode
+cc.dumpConfig = function()
+{
+    if( cc.config.debug ) {
+        for(var i in cc.config)
+            cc.log( i + " = " + cc.config[i] );
+    }
+};
+
+//
+// Point
+//
 cc._p = function( x, y )
 {
-    if( cc._reuse_p_index == 0 ) {
-        cc._reuse_p0[0] = x;
-        cc._reuse_p0[1] = y;
+    if( cc._reuse_p_index === 0 ) {
+        cc._reuse_p0.x = x;
+        cc._reuse_p0.y = y;
         cc._reuse_p_index = 1;
         return cc._reuse_p0;
     } else {
-        cc._reuse_p1[0] = x;
-        cc._reuse_p1[1] = y;
+        cc._reuse_p1.x = x;
+        cc._reuse_p1.y = y;
         cc._reuse_p_index = 0;
         return cc._reuse_p1;
     }
-}
+};
 
+cc._to_p = function( point )
+{
+    return point;
+};
+
+cc._from_p = function( size )
+{
+    return size;
+};
+
+//
+// Grid 
+//
 cc._g = function( x, y )
 {
-    cc._reuse_grid[0] = x;
-    cc._reuse_grid[1] = y;
+    cc._reuse_grid.x = x;
+    cc._reuse_grid.y = y;
     return cc._reuse_grid;
 }
 
+//
+// Color
+//
 cc._c3 = function( r, g, b )
 {
     cc._reuse_color3b[0] = r;
@@ -161,60 +140,75 @@ cc._c4 = function( r, g, b, a )
     return cc._reuse_color4b;
 }
 
-cc.rect = function(x,y,w,h)
-{
-    var platform = __getPlatform();
-    if( platform.substring(0,7) == 'desktop' )
-        var rect = new Float64Array(4)
-    else
-        var rect = new Float32Array(4)
-
-	rect[0] = x;
-	rect[1] = y;
-	rect[2] = w;
-	rect[3] = h;
-	return rect;
-}
-
+//
+// Size
+//
 cc.size = function(w,h)
 {
-    var platform = __getPlatform();
-    if( platform.substring(0,7) == 'desktop' )
-        var size = new Float64Array(2)
-    else
-        var size = new Float32Array(2)
-	size[0] = w;
-	size[1] = h;
-	return size;
+    return {width:w, height:h};
 }
 
-cc.size_get_width = function (size )
+cc._to_size = function( size )
 {
-	return size[0];
+    return size;
 }
 
-cc.size_get_height = function (size )
+cc._from_size = function( size )
 {
-	return size[1];
+    return size;
 }
 
-cc.Touch.prototype.getLocation = function () {
-    var pt = this.locationInView();
-    return cc.Director.getInstance().convertToGL(pt);
+//
+// Rect
+//
+cc.rect = function(x,y,w,h)
+{
+    return {x:x, y:y, width:w, height:h};
+}
+
+cc._to_rect = function( rect )
+{
+    return rect;
+}
+
+cc._from_rect = function( rect )
+{
+    return rect;
+}
+
+// XXX Should be done in native
+cc.rectIntersectsRect = function( rectA, rectB )
+{
+    var bool = ! (  rectA.x > rectB.x + rectB.width ||
+                    rectA.x + rectA.width < rectB.x ||
+                    rectA.y > rectB.y +rectB.height ||
+                    rectA.y + rectA.height < rectB.y );
+
+    return bool;
+}
+
+// point functions
+cc.pAdd = cc.pAdd || function (p1, p2) {
+    return {x: p1.x + p2.x, y: p1.y + p2.y};
 };
 
-cc.Touch.prototype.getDelta = function () {
-    var current = this.locationInView();
-    var last = this.previousLocationInView();
-    cc._reuse_point[0] = current[0] - last[0];
-    cc._reuse_point[1] = last[1] - current[1];
-    return cc._reuse_point;
+cc.pSub = cc.pSub || function (p1, p2) {
+    return {x: p1.x - p2.x, y: p1.y - p2.y};
+}
+
+cc.pMult = cc.pMult || function (p1, s) {
+    return {x: p1.x * s, y: p1.y * s};
 };
 
-cc.ParticleSystem.createWithTotalParticles = function (count) {
-	var ps = new cc.ParticleSystem();
-	ps.initWithTotalParticles(count);
-	return ps;
+//
+// Array: for cocos2d-hmtl5 compatibility
+//
+cc.ArrayRemoveObject = function (arr, delObj) {
+    for (var i = 0; i < arr.length; i++) {
+        if (arr[i] == delObj) {
+            arr.splice(i, 1);
+        }
+    }
 };
 
 //
@@ -275,7 +269,9 @@ goog.base = function(me, opt_methodName, var_args) {
 // Simple subclass
 //
 
-cc.Layer.extend = function (prop) {
+cc.Class = function(){};
+
+cc.Class.extend = function (prop) {
     var _super = this.prototype;
 
     // Instantiate a base class (but only create the instance,
@@ -283,13 +279,13 @@ cc.Layer.extend = function (prop) {
     initializing = true;
     var prototype = new this();
     initializing = false;
-//    fnTest = /xyz/.test(function(){xyz;}) ? /\b_super\b/ : /.*/;
+    fnTest = /xyz/.test(function(){xyz;}) ? /\b_super\b/ : /.*/;
 
     // Copy the properties over onto the new prototype
     for (var name in prop) {
         // Check if we're overwriting an existing function
         prototype[name] = typeof prop[name] == "function" &&
-            typeof _super[name] == "function" ?
+            typeof _super[name] == "function" && fnTest.test(prop[name]) ?
             (function (name, fn) {
                 return function () {
                     var tmp = this._super;
@@ -328,22 +324,40 @@ cc.Layer.extend = function (prop) {
     return Class;
 };
 
-cc.LayerGradient.extend = cc.Layer.extend;
+cc.Layer.extend = cc.Class.extend;
+cc.LayerGradient.extend = cc.Class.extend;
+cc.Sprite.extend = cc.Class.extend;
+cc.MenuItemFont.extend = cc.Class.extend;
 
 //
 // Chipmunk helpers
 //
 var cp = cp || {};
 
-cp.vzero  = cc.p(0,0);
-cp._v = cc._p
+cp.v = cc.p;
+cp._v = cc._p;
+cp.vzero  = cp.v(0,0);
 
-
+//
+// OpenGL Helpers
+//
 var gl = gl || {};
-gl.NEAREST = 0x2600;
-gl.LINEAR = 0x2601;
-gl.REPEAT = 0x2901;
-gl.CLAMP_TO_EDGE = 0x812F;
-gl.CLAMP_TO_BORDER = 0x812D;
-gl.LINEAR_MIPMAP_NEAREST = 0x2701;
-gl.GL_NEAREST_MIPMAP_NEAREST = 0x2700;
+gl.NEAREST                      = 0x2600;
+gl.LINEAR                       = 0x2601;
+gl.REPEAT                       = 0x2901;
+gl.CLAMP_TO_EDGE                = 0x812F;
+gl.CLAMP_TO_BORDER              = 0x812D;
+gl.LINEAR_MIPMAP_NEAREST        = 0x2701;
+gl.NEAREST_MIPMAP_NEAREST       = 0x2700;
+gl.ZERO                         = 0;
+gl.ONE                          = 1;
+gl.SRC_COLOR                    = 0x0300;
+gl.ONE_MINUS_SRC_COLOR          = 0x0301;
+gl.SRC_ALPHA                    = 0x0302;
+gl.ONE_MINUS_SRC_ALPHA          = 0x0303;
+gl.DST_ALPHA                    = 0x0304;
+gl.ONE_MINUS_DST_ALPHA          = 0x0305;
+gl.DST_COLOR                    = 0x0306;
+gl.ONE_MINUS_DST_COLOR          = 0x0307;
+gl.SRC_ALPHA_SATURATE           = 0x0308;
+

@@ -28,6 +28,13 @@ conversions:
     "long long": "${out_value} = jsval_to_long_long(cx, ${in_value})"
     "std::string": "${out_value} = jsval_to_c_string(cx, ${in_value})"
     "const char*": "${out_value} = jsval_to_c_string(cx, ${in_value})"
+    "CCPoint": "${out_value} = jsval_to_ccpoint(cx, ${in_value})"
+    "CCRect": "${out_value} = jsval_to_ccrect(cx, ${in_value})"
+    "CCSize": "${out_value} = jsval_to_ccsize(cx, ${in_value})"
+    "const ccGridSize": "${out_value} = jsval_to_ccgridsize(cx, ${in_value})"
+    "const ccColor4B": "${out_value} = jsval_to_cccolor4b(cx, ${in_value})"
+    "const ccColor4F": "${out_value} = jsval_to_cccolor4f(cx, ${in_value})"
+    "const ccColor3B": "${out_value} = jsval_to_cccolor3b(cx, ${in_value})"
     object: |
       do {
       ${($level + 1) * '\t'}js_proxy_t *proxy;
@@ -36,100 +43,25 @@ conversions:
       ${($level + 1) * '\t'}${out_value} = (${ntype})(proxy ? proxy->ptr : NULL);
       ${($level + 1) * '\t'}TEST_NATIVE_OBJECT(cx, ${out_value})
       ${($level + 0) * '\t'}} while (0)
-    "CCPoint": "${out_value} = jsval_to_ccpoint(cx, ${in_value})"
-    "CCRect": "${out_value} = jsval_to_ccrect(cx, ${in_value})"
-    "CCSize": |
-      do {
-      ${($level + 1) * '\t'}JSObject *tmp; jsval jswidth, jsheight;
-      ${($level + 1) * '\t'}double width, height;
-      ${($level + 1) * '\t'}if (!JS_ValueToObject(cx, ${in_value}, &tmp)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_GetProperty(cx, tmp, "width", &jswidth)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_GetProperty(cx, tmp, "height", &jsheight)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_ValueToNumber(cx, jswidth, &width)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_ValueToNumber(cx, jsheight, &height)) return JS_FALSE;
-      ${($level + 1) * '\t'}${out_value} = cocos2d::CCSize(width, height);
-      ${($level + 0) * '\t'}} while (0)
-    "const ccGridSize": |
-      do {
-      ${($level + 1) * '\t'}JSObject *tmp; jsval jsx, jsy;
-      ${($level + 1) * '\t'}double x, y;
-      ${($level + 1) * '\t'}if (!JS_ValueToObject(cx, ${in_value}, &tmp)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_GetProperty(cx, tmp, "x", &jsx)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_GetProperty(cx, tmp, "y", &jsy)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_ValueToNumber(cx, jsx, &x)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_ValueToNumber(cx, jsy, &y)) return JS_FALSE;
-      ${($level + 1) * '\t'}${out_value} = cocos2d::ccg(x, y);
-      ${($level + 0) * '\t'}} while (0)
-    "const ccColor4B": |
-      do {
-      ${($level + 1) * '\t'}JSObject *tmp; jsval jsr, jsg, jsb, jsa;
-      ${($level + 1) * '\t'}double r, g, b, a;
-      ${($level + 1) * '\t'}if (!JS_ValueToObject(cx, ${in_value}, &tmp)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_GetProperty(cx, tmp, "r", &jsr)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_GetProperty(cx, tmp, "g", &jsg)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_GetProperty(cx, tmp, "b", &jsb)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_GetProperty(cx, tmp, "a", &jsa)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_ValueToNumber(cx, jsr, &r)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_ValueToNumber(cx, jsg, &g)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_ValueToNumber(cx, jsb, &b)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_ValueToNumber(cx, jsa, &a)) return JS_FALSE;
-      ${($level + 1) * '\t'}${out_value} = cocos2d::ccc4(r, g, b, a);
-      ${($level + 0) * '\t'}} while (0)
-    "const ccColor4F": |
-      do {
-      ${($level + 1) * '\t'}JSObject *tmp; jsval jsr, jsg, jsb, jsa;
-      ${($level + 1) * '\t'}double r, g, b, a;
-      ${($level + 1) * '\t'}if (!JS_ValueToObject(cx, ${in_value}, &tmp)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_GetProperty(cx, tmp, "r", &jsr)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_GetProperty(cx, tmp, "g", &jsg)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_GetProperty(cx, tmp, "b", &jsb)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_GetProperty(cx, tmp, "a", &jsa)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_ValueToNumber(cx, jsr, &r)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_ValueToNumber(cx, jsg, &g)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_ValueToNumber(cx, jsb, &b)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_ValueToNumber(cx, jsa, &a)) return JS_FALSE;
-      ${($level + 1) * '\t'}${out_value} = cocos2d::ccc4f(r, g, b, a);
-      ${($level + 0) * '\t'}} while (0)
-    "const ccColor3B": |
-      do {
-      ${($level + 1) * '\t'}JSObject *tmp; jsval jsr, jsg, jsb;
-      ${($level + 1) * '\t'}double r, g, b;
-      ${($level + 1) * '\t'}if (!JS_ValueToObject(cx, ${in_value}, &tmp)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_GetProperty(cx, tmp, "r", &jsr)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_GetProperty(cx, tmp, "g", &jsg)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_GetProperty(cx, tmp, "b", &jsb)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_ValueToNumber(cx, jsr, &r)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_ValueToNumber(cx, jsg, &g)) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_ValueToNumber(cx, jsb, &b)) return JS_FALSE;
-      ${($level + 1) * '\t'}${out_value} = cocos2d::ccc3(r, g, b);
-      ${($level + 0) * '\t'}} while (0)
 
   from_native:
     # int to jsval
     int: "JS_NewNumberValue(cx, ${in_value}, &${out_value})"
     "unsigned int": "JS_NewNumberValue(cx, ${in_value}, &${out_value})"
     "unsigned char": "JS_NewNumberValue(cx, ${in_value}, &${out_value})"
-    "long long": |
-      do {
-      ${($level + 1) * '\t'}JSObject *tmp = JS_NewUint32Array(cx, 2);
-      ${($level + 1) * '\t'}int32_t *data = (int32_t *)JS_GetArrayBufferViewData(tmp, cx);
-      ${($level + 1) * '\t'}data[0] = ((uint32_t *)(&${in_value}))[0];
-      ${($level + 1) * '\t'}data[1] = ((uint32_t *)(&${in_value}))[1];
-      ${($level + 1) * '\t'}${out_value} = OBJECT_TO_JSVAL(tmp);
-      ${$level * '\t'}} while (0)
-    "std::string": |
-      do {
-      ${($level + 1) * '\t'}JSString *str = JS_NewStringCopyZ(cx, ${in_value}.c_str());
-      ${($level + 1) * '\t'}${out_value} = STRING_TO_JSVAL(str);
-      ${$level * '\t'}} while (0)
-    "const char*": |
-      do {
-      ${($level + 1) * '\t'}JSString *str = JS_NewStringCopyZ(cx, ${in_value});
-      ${($level + 1) * '\t'}${out_value} = STRING_TO_JSVAL(str);
-      ${$level * '\t'}} while (0)
+    "long long": "${out_value} = long_long_to_jsval(cx, ${in_value})"
+    "std::string": "${out_value} = std_string_to_jsval(cx, ${in_value})"
+    "const char*": "${out_value} = c_string_to_jsval(cx, ${in_value})"
     bool: "${out_value} = BOOLEAN_TO_JSVAL(${in_value})"
     float: "JS_NewNumberValue(cx, ${in_value}, &${out_value})"
     double: "JS_NewNumberValue(cx, ${in_value}, &${out_value})"
+    "CCPoint": "${out_value} = ccpoint_to_jsval(cx, ${in_value})"
+    "CCRect": "${out_value} = ccrect_to_jsval(cx, ${in_value})"
+    "CCSize": "${out_value} = ccsize_to_jsval(cx, ${in_value})"
+    "const ccGridSize": "${out_value} = ccgridsize_to_jsval(cx, ${in_value})"
+    "const ccColor4B": "${out_value} = cccolor4b_to_jsval(cx, ${in_value})"
+    "const ccColor4F": "${out_value} = cccolor4f_to_jsval(cx, ${in_value})"
+    "const ccColor3B": "${out_value} = cccolor3b_to_jsval(cx, ${in_value})"
     object: |
       do {
       ${($level + 1) * '\t'}if (${in_value}) {
@@ -139,73 +71,3 @@ conversions:
       ${($level + 2) * '\t'}${out_value} = JSVAL_NULL;
       ${($level + 1) * '\t'}}
       ${($level) * '\t'}} while (0)
-    "CCPoint": |
-      do {
-      ${($level + 1) * '\t'}JSObject *tmp = JS_NewObject(cx, NULL, NULL, NULL);
-      ${($level + 1) * '\t'}if (!tmp) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_DefineProperty(cx, tmp, "x", DOUBLE_TO_JSVAL(${in_value}.x), NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) ||
-      ${($level + 1) * '\t'}    !JS_DefineProperty(cx, tmp, "y", DOUBLE_TO_JSVAL(${in_value}.y), NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT))
-      ${($level + 1) * '\t'}   return JS_FALSE;
-      ${($level + 1) * '\t'}${out_value} = OBJECT_TO_JSVAL(tmp);
-      ${($level + 0) * '\t'}} while (0)
-    "CCRect": |
-      do {
-      ${($level + 1) * '\t'}JSObject *tmp = JS_NewObject(cx, NULL, NULL, NULL);
-      ${($level + 1) * '\t'}if (!tmp) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_DefineProperty(cx, tmp, "x", DOUBLE_TO_JSVAL(${in_value}.origin.x), NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) ||
-      ${($level + 1) * '\t'}    !JS_DefineProperty(cx, tmp, "y", DOUBLE_TO_JSVAL(${in_value}.origin.y), NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) ||
-      ${($level + 1) * '\t'}    !JS_DefineProperty(cx, tmp, "width", DOUBLE_TO_JSVAL(${in_value}.size.width), NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) ||
-      ${($level + 1) * '\t'}    !JS_DefineProperty(cx, tmp, "height", DOUBLE_TO_JSVAL(${in_value}.size.height), NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT))
-      ${($level + 1) * '\t'}   return JS_FALSE;
-      ${($level + 1) * '\t'}${out_value} = OBJECT_TO_JSVAL(tmp);
-      ${($level + 0) * '\t'}} while (0)
-    "CCSize": |
-      do {
-      ${($level + 1) * '\t'}JSObject *tmp = JS_NewObject(cx, NULL, NULL, NULL);
-      ${($level + 1) * '\t'}if (!tmp) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_DefineProperty(cx, tmp, "width", DOUBLE_TO_JSVAL(${in_value}.width), NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) ||
-      ${($level + 1) * '\t'}    !JS_DefineProperty(cx, tmp, "height", DOUBLE_TO_JSVAL(${in_value}.height), NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT))
-      ${($level + 1) * '\t'}   return JS_FALSE;
-      ${($level + 1) * '\t'}${out_value} = OBJECT_TO_JSVAL(tmp);
-      ${($level + 0) * '\t'}} while (0)
-    "const ccGridSize":
-      do {
-      ${($level + 1) * '\t'}JSObject *tmp = JS_NewObject(cx, NULL, NULL, NULL);
-      ${($level + 1) * '\t'}if (!tmp) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_DefineProperty(cx, tmp, "x", DOUBLE_TO_JSVAL(${in_value}.x), NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) ||
-      ${($level + 1) * '\t'}    !JS_DefineProperty(cx, tmp, "y", DOUBLE_TO_JSVAL(${in_value}.y), NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT))
-      ${($level + 1) * '\t'}   return JS_FALSE;
-      ${($level + 1) * '\t'}${out_value} = OBJECT_TO_JSVAL(tmp);
-      ${($level + 0) * '\t'}} while (0)
-    "const ccColor4B": |
-      do {
-      ${($level + 1) * '\t'}JSObject *tmp = JS_NewObject(cx, NULL, NULL, NULL);
-      ${($level + 1) * '\t'}if (!tmp) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_DefineProperty(cx, tmp, "r", DOUBLE_TO_JSVAL(${in_value}.r), NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) ||
-      ${($level + 1) * '\t'}    !JS_DefineProperty(cx, tmp, "g", DOUBLE_TO_JSVAL(${in_value}.g), NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) ||
-      ${($level + 1) * '\t'}    !JS_DefineProperty(cx, tmp, "b", DOUBLE_TO_JSVAL(${in_value}.b), NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) ||
-      ${($level + 1) * '\t'}    !JS_DefineProperty(cx, tmp, "a", DOUBLE_TO_JSVAL(${in_value}.a), NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT))
-      ${($level + 1) * '\t'}   return JS_FALSE;
-      ${($level + 1) * '\t'}${out_value} = OBJECT_TO_JSVAL(tmp);
-      ${($level + 0) * '\t'}} while (0)
-    "const ccColor4F": |
-      do {
-      ${($level + 1) * '\t'}JSObject *tmp = JS_NewObject(cx, NULL, NULL, NULL);
-      ${($level + 1) * '\t'}if (!tmp) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_DefineProperty(cx, tmp, "r", DOUBLE_TO_JSVAL(${in_value}.r), NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) ||
-      ${($level + 1) * '\t'}    !JS_DefineProperty(cx, tmp, "g", DOUBLE_TO_JSVAL(${in_value}.g), NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) ||
-      ${($level + 1) * '\t'}    !JS_DefineProperty(cx, tmp, "b", DOUBLE_TO_JSVAL(${in_value}.b), NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) ||
-      ${($level + 1) * '\t'}    !JS_DefineProperty(cx, tmp, "a", DOUBLE_TO_JSVAL(${in_value}.a), NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT))
-      ${($level + 1) * '\t'}   return JS_FALSE;
-      ${($level + 1) * '\t'}${out_value} = OBJECT_TO_JSVAL(tmp);
-      ${($level + 0) * '\t'}} while (0)
-    "const ccColor3B": |
-      do {
-      ${($level + 1) * '\t'}JSObject *tmp = JS_NewObject(cx, NULL, NULL, NULL);
-      ${($level + 1) * '\t'}if (!tmp) return JS_FALSE;
-      ${($level + 1) * '\t'}if (!JS_DefineProperty(cx, tmp, "r", DOUBLE_TO_JSVAL(${in_value}.r), NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) ||
-      ${($level + 1) * '\t'}    !JS_DefineProperty(cx, tmp, "g", DOUBLE_TO_JSVAL(${in_value}.g), NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) ||
-      ${($level + 1) * '\t'}    !JS_DefineProperty(cx, tmp, "b", DOUBLE_TO_JSVAL(${in_value}.b), NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT))
-      ${($level + 1) * '\t'}   return JS_FALSE;
-      ${($level + 1) * '\t'}${out_value} = OBJECT_TO_JSVAL(tmp);
-      ${($level + 0) * '\t'}} while (0)

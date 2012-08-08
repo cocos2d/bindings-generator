@@ -125,8 +125,6 @@ ScriptingCore::ScriptingCore()
     if (!JS_InitStandardClasses(cx, global)) {
         js_log("error initializing the VM");
     }
-    JSVersion vers = JS_GetVersion(this->cx);
-    js_log("Spidermonkey Version: %s", JS_VersionToString(vers));
 
     // 
     // Javascript controller (__jsc__)
@@ -692,4 +690,181 @@ CCRect jsval_to_ccrect(JSContext *cx, jsval v) {
         JS_ValueToNumber(cx, jsheight, &height);
     assert(ok == JS_TRUE);
     return cocos2d::CCRect(x, y, width, height);
+}
+
+CCSize jsval_to_ccsize(JSContext *cx, jsval v) {
+    JSObject *tmp;
+    jsval jsw, jsh;
+    double w, h;
+    JSBool ok = JS_ValueToObject(cx, v, &tmp) &&
+        JS_GetProperty(cx, tmp, "width", &jsw) &&
+        JS_GetProperty(cx, tmp, "height", &jsh) &&
+        JS_ValueToNumber(cx, jsw, &w) &&
+        JS_ValueToNumber(cx, jsh, &h);
+    assert(ok == JS_TRUE);
+    return cocos2d::CCSize(w, h);
+}
+
+ccGridSize jsval_to_ccgridsize(JSContext *cx, jsval v) {
+    JSObject *tmp;
+    jsval jsx, jsy;
+    double x, y;
+    JSBool ok = JS_ValueToObject(cx, v, &tmp) &&
+        JS_GetProperty(cx, tmp, "x", &jsx) &&
+        JS_GetProperty(cx, tmp, "y", &jsy) &&
+        JS_ValueToNumber(cx, jsx, &x) &&
+        JS_ValueToNumber(cx, jsy, &y);
+    assert(ok == JS_TRUE);
+    return cocos2d::ccg(x, y);
+}
+
+ccColor4B jsval_to_cccolor4b(JSContext *cx, jsval v) {
+    JSObject *tmp;
+    jsval jsr, jsg, jsb, jsa;
+    double r, g, b, a;
+    JSBool ok = JS_ValueToObject(cx, v, &tmp) &&
+        JS_GetProperty(cx, tmp, "r", &jsr) &&
+        JS_GetProperty(cx, tmp, "g", &jsg) &&
+        JS_GetProperty(cx, tmp, "b", &jsb) &&
+        JS_GetProperty(cx, tmp, "a", &jsa) &&
+        JS_ValueToNumber(cx, jsr, &r) &&
+        JS_ValueToNumber(cx, jsg, &g) &&
+        JS_ValueToNumber(cx, jsb, &b) &&
+        JS_ValueToNumber(cx, jsa, &a);
+    assert(ok == JS_TRUE);
+    return cocos2d::ccc4(r, g, b, a);
+}
+
+ccColor4F jsval_to_cccolor4f(JSContext *cx, jsval v) {
+    JSObject *tmp;
+    jsval jsr, jsg, jsb, jsa;
+    double r, g, b, a;
+    JSBool ok = JS_ValueToObject(cx, v, &tmp) &&
+        JS_GetProperty(cx, tmp, "r", &jsr) &&
+        JS_GetProperty(cx, tmp, "g", &jsg) &&
+        JS_GetProperty(cx, tmp, "b", &jsb) &&
+        JS_GetProperty(cx, tmp, "a", &jsa) &&
+        JS_ValueToNumber(cx, jsr, &r) &&
+        JS_ValueToNumber(cx, jsg, &g) &&
+        JS_ValueToNumber(cx, jsb, &b) &&
+        JS_ValueToNumber(cx, jsa, &a);
+    assert(ok == JS_TRUE);
+    return cocos2d::ccc4f(r, g, b, a);
+}
+
+ccColor3B jsval_to_cccolor3b(JSContext *cx, jsval v) {
+    JSObject *tmp;
+    jsval jsr, jsg, jsb;
+    double r, g, b;
+    JSBool ok = JS_ValueToObject(cx, v, &tmp) &&
+        JS_GetProperty(cx, tmp, "r", &jsr) &&
+        JS_GetProperty(cx, tmp, "g", &jsg) &&
+        JS_GetProperty(cx, tmp, "b", &jsb) &&
+        JS_ValueToNumber(cx, jsr, &r) &&
+        JS_ValueToNumber(cx, jsg, &g) &&
+        JS_ValueToNumber(cx, jsb, &b);
+    assert(ok == JS_TRUE);
+    return cocos2d::ccc3(r, g, b);
+}
+
+jsval long_long_to_jsval(JSContext* cx, long long v) {
+    JSObject *tmp = JS_NewUint32Array(cx, 2);
+    int32_t *data = (int32_t *)JS_GetArrayBufferViewData(tmp, cx);
+    data[0] = ((uint32_t *)(&v))[0];
+    data[1] = ((uint32_t *)(&v))[1];
+    return OBJECT_TO_JSVAL(tmp);
+}
+
+jsval std_string_to_jsval(JSContext* cx, std::string& v) {
+    JSString *str = JS_NewStringCopyZ(cx, v.c_str());
+    return STRING_TO_JSVAL(str);
+}
+
+jsval c_string_to_jsval(JSContext* cx, const char* v) {
+    JSString *str = JS_NewStringCopyZ(cx, v);
+    return STRING_TO_JSVAL(str);
+}
+
+jsval ccpoint_to_jsval(JSContext* cx, CCPoint& v) {
+    JSObject *tmp = JS_NewObject(cx, NULL, NULL, NULL);
+    if (!tmp) return JSVAL_NULL;
+    JSBool ok = JS_DefineProperty(cx, tmp, "x", DOUBLE_TO_JSVAL(v.x), NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) &&
+                JS_DefineProperty(cx, tmp, "y", DOUBLE_TO_JSVAL(v.y), NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT);
+    if (ok) {
+        return OBJECT_TO_JSVAL(tmp);
+    }
+    return JSVAL_NULL;
+}
+
+jsval ccrect_to_jsval(JSContext* cx, CCRect& v) {
+    JSObject *tmp = JS_NewObject(cx, NULL, NULL, NULL);
+    if (!tmp) return JSVAL_NULL;
+    JSBool ok = JS_DefineProperty(cx, tmp, "x", DOUBLE_TO_JSVAL(v.origin.x), NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) &&
+                JS_DefineProperty(cx, tmp, "y", DOUBLE_TO_JSVAL(v.origin.y), NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) &&
+                JS_DefineProperty(cx, tmp, "width", DOUBLE_TO_JSVAL(v.size.width), NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) &&
+                JS_DefineProperty(cx, tmp, "height", DOUBLE_TO_JSVAL(v.size.height), NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT);
+    if (ok) {
+        return OBJECT_TO_JSVAL(tmp);
+    }
+    return JSVAL_NULL;
+}
+
+jsval ccsize_to_jsval(JSContext* cx, CCSize& v) {
+    JSObject *tmp = JS_NewObject(cx, NULL, NULL, NULL);
+    if (!tmp) return JSVAL_NULL;
+    JSBool ok = JS_DefineProperty(cx, tmp, "width", DOUBLE_TO_JSVAL(v.width), NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) &&
+                JS_DefineProperty(cx, tmp, "height", DOUBLE_TO_JSVAL(v.height), NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT);
+    if (ok) {
+        return OBJECT_TO_JSVAL(tmp);
+    }
+    return JSVAL_NULL;
+}
+
+jsval ccgridsize_to_jsval(JSContext* cx, ccGridSize& v) {
+    JSObject *tmp = JS_NewObject(cx, NULL, NULL, NULL);
+    if (!tmp) return JSVAL_NULL;
+    JSBool ok = JS_DefineProperty(cx, tmp, "x", DOUBLE_TO_JSVAL(v.x), NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) &&
+                JS_DefineProperty(cx, tmp, "y", DOUBLE_TO_JSVAL(v.y), NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT);
+    if (ok) {
+        return OBJECT_TO_JSVAL(tmp);
+    }
+    return JSVAL_NULL;
+}
+
+jsval cccolor4b_to_jsval(JSContext* cx, ccColor4B& v) {
+    JSObject *tmp = JS_NewObject(cx, NULL, NULL, NULL);
+    if (!tmp) return JSVAL_NULL;
+    JSBool ok = JS_DefineProperty(cx, tmp, "r", INT_TO_JSVAL(v.r), NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) &&
+                JS_DefineProperty(cx, tmp, "g", INT_TO_JSVAL(v.g), NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) &&
+                JS_DefineProperty(cx, tmp, "b", INT_TO_JSVAL(v.g), NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) &&
+                JS_DefineProperty(cx, tmp, "a", INT_TO_JSVAL(v.g), NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT);
+    if (ok) {
+        return OBJECT_TO_JSVAL(tmp);
+    }
+    return JSVAL_NULL;
+}
+
+jsval cccolor4f_to_jsval(JSContext* cx, ccColor4F& v) {
+    JSObject *tmp = JS_NewObject(cx, NULL, NULL, NULL);
+    if (!tmp) return JSVAL_NULL;
+    JSBool ok = JS_DefineProperty(cx, tmp, "r", DOUBLE_TO_JSVAL(v.r), NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) &&
+                JS_DefineProperty(cx, tmp, "g", DOUBLE_TO_JSVAL(v.g), NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) &&
+                JS_DefineProperty(cx, tmp, "b", DOUBLE_TO_JSVAL(v.g), NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) &&
+                JS_DefineProperty(cx, tmp, "a", DOUBLE_TO_JSVAL(v.g), NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT);
+    if (ok) {
+        return OBJECT_TO_JSVAL(tmp);
+    }
+    return JSVAL_NULL;
+}
+
+jsval cccolor3b_to_jsval(JSContext* cx, ccColor3B& v) {
+    JSObject *tmp = JS_NewObject(cx, NULL, NULL, NULL);
+    if (!tmp) return JSVAL_NULL;
+    JSBool ok = JS_DefineProperty(cx, tmp, "r", INT_TO_JSVAL(v.r), NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) &&
+                JS_DefineProperty(cx, tmp, "g", INT_TO_JSVAL(v.g), NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT) &&
+                JS_DefineProperty(cx, tmp, "b", INT_TO_JSVAL(v.g), NULL, NULL, JSPROP_ENUMERATE | JSPROP_PERMANENT);
+    if (ok) {
+        return OBJECT_TO_JSVAL(tmp);
+    }
+    return JSVAL_NULL;
 }

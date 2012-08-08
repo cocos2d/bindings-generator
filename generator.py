@@ -577,7 +577,7 @@ class Generator(object):
                 for d in tu.diagnostics:
                     if d.severity >= cindex.Diagnostic.Error:
                         is_fatal = True
-                    print(d.category_name + ": " + str(d.location))
+                    print(" ".join(["[", str(is_fatal), "]", d.category_name, ":", str(d.location)]))
                     print("  " + d.spelling)
                 if is_fatal:
                     print("*** Found errors - can not continue")

@@ -62,8 +62,8 @@ def native_name_from_type(ntype, underlying=False):
             # print >> sys.stderr, "probably a function pointer: " + str(decl.spelling)
             return const + decl.spelling
     else:
-        name = ntype.get_declaration().spelling
-        print >> sys.stderr, "Unknown type: " + str(kind) + " " + str(name)
+        # name = ntype.get_declaration().spelling
+        # print >> sys.stderr, "Unknown type: " + str(kind) + " " + str(name)
         return INVALID_NATIVE_TYPE
         # pdb.set_trace()
 
@@ -617,9 +617,9 @@ def main():
     if len(args) == 0:
         parser.error('invalid number of arguments')
 
-        userconfig = ConfigParser.SafeConfigParser()
-        userconfig.read('userconf.ini')
-        print userconfig.items('DEFAULT')
+    userconfig = ConfigParser.SafeConfigParser()
+    userconfig.read('userconf.ini')
+    print userconfig.items('DEFAULT')
 
     config = ConfigParser.SafeConfigParser()
     config.read(args[0])

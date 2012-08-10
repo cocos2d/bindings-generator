@@ -32,6 +32,12 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 	#end if
 	#if $is_constructor
 		cobj = new ${namespaced_class_name}(${arg_list});
+\#ifdef COCOS2D_JAVASCRIPT
+		cocos2d::CCObject *_ccobj = dynamic_cast<cocos2d::CCObject *>(cobj);
+		if (_ccobj) {
+			_ccobj->autorelease();
+		}
+\#endif
 		TypeTest<${namespaced_class_name}> t;
 		js_type_class_t *typeClass;
 		uint32_t typeId = t.s_id();
@@ -41,7 +47,7 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 		js_proxy_t *proxy;
 		JS_NEW_PROXY(proxy, cobj, obj);
 \#ifdef COCOS2D_JAVASCRIPT
-		JS_AddObjectRoot(cx, &proxy->obj);
+		JS_AddNamedObjectRoot(cx, &p->obj, "${namespaced_class_name}");
 \#endif
 	#else
 		#if str($func.ret_type) != "void"

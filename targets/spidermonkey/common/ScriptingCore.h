@@ -20,6 +20,10 @@ void js_log(const char *format, ...);
 
 using namespace cocos2d;
 
+typedef void (*sc_register_sth)(JSContext* cx, JSObject* global);
+
+void registerDefaultClasses(JSContext* cx, JSObject* global);
+
 class ScriptingCore : public CCScriptEngineProtocol
 {
 	JSRuntime *rt;
@@ -115,6 +119,23 @@ public:
 	 * @param string The path of the script to be run
 	 */
 	JSBool runScript(const char *path);
+
+	/**
+	 * initialize everything
+	 */
+	void start();
+
+	/**
+	 * will add the register_sth callback to the list of functions that need to be called
+	 * after the creation of the context
+	 */
+	void addRegisterCallback(sc_register_sth callback);
+
+	/**
+	 * Will create a new context. If one is already there, it will destroy the old context
+	 * and create a new one.
+	 */
+	void createGlobalContext();
 	
     
     int executeCustomTouchEvent(int eventType, 
@@ -180,6 +201,7 @@ ccGridSize jsval_to_ccgridsize(JSContext *cx, jsval v);
 ccColor4B jsval_to_cccolor4b(JSContext *cx, jsval v);
 ccColor4F jsval_to_cccolor4f(JSContext *cx, jsval v);
 ccColor3B jsval_to_cccolor3b(JSContext *cx, jsval v);
+CCArray* jsval_to_ccarray(JSContext* cx, jsval v);
 // from native
 jsval long_long_to_jsval(JSContext* cx, long long v);
 jsval std_string_to_jsval(JSContext* cx, std::string& v);

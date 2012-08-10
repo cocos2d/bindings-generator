@@ -1,6 +1,4 @@
-void register_all_${prefix}() {
-	JSContext *cx = ScriptingCore::getInstance()->getGlobalContext();
-	JSObject *obj = JS_GetGlobalObject(cx);
+void register_all_${prefix}(JSContext* cx, JSObject* obj) {
 	#if $target_ns
 	// first, try to get the ns
 	jsval nsval;

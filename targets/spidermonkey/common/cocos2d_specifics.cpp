@@ -1,6 +1,6 @@
 #include "cocos2d.h"
 #include "cocos2d_specifics.hpp"
-
+#include <typeinfo>
 
 void JSTouchDelegate::setJSObject(JSObject *obj) {
     _mObj = obj;
@@ -43,7 +43,7 @@ JSObject* bind_menu_item(JSContext *cx, T* nativeObj, jsval callback, jsval this
 		// bind nativeObj <-> JSObject
 		js_proxy_t *proxy;
 		JS_NEW_PROXY(proxy, nativeObj, tmp);
-		JS_AddObjectRoot(cx, &proxy->obj);
+		JS_AddNamedObjectRoot(cx, &p->obj, "MenuItem");
         
 		addCallBackAndThis(tmp, callback, thisObj);
 
@@ -369,23 +369,8 @@ JSBool js_cocos2dx_CCAnimation_create(JSContext *cx, uint32_t argc, jsval *vp)
 	jsval *argv = JS_ARGV(cx, vp);
 	if (argc <= 3) {
 		cocos2d::CCArray* arg0;
-		if (argc > 0 && argv[0].isObject()) {
-			arg0 = cocos2d::CCArray::create();
-			JSObject *jsarr = JSVAL_TO_OBJECT(argv[0]);
-			uint32_t len;
-			if (JS_IsArrayObject(cx, jsarr) && JS_GetArrayLength(cx, jsarr, &len)) {
-				for (int i=0; i < len; i++) {
-					jsval elt;
-					if (JS_GetElement(cx, jsarr, i, &elt)) {
-						js_proxy_t *proxy;
-						JSObject *tmpObj = JSVAL_TO_OBJECT(elt);
-						JS_GET_NATIVE_PROXY(proxy, tmpObj);
-						cocos2d::CCObject *tmpCObj = (cocos2d::CCObject *)(proxy ? proxy->ptr : NULL);
-						TEST_NATIVE_OBJECT(cx, tmpCObj);
-						arg0->addObject(tmpCObj);
-					}
-				}
-			}
+		if (argc > 0) {
+			arg0 = jsval_to_ccarray(cx, argv[0]);
 		}
 		cocos2d::CCAnimation* ret;
 		double arg1 = 0.0f;
@@ -612,57 +597,40 @@ JSBool js_cocos2dx_release(JSContext *cx, uint32_t argc, jsval *vp)
 	return JS_FALSE;
 }
 
-/**
- * You don't need to manage the returned pointer. They live for the whole life of
- * the app.
- */
-template <class T>
-js_type_class_t *js_get_type_from_native(T* native_obj) {
-	js_type_class_t *typeProxy;
-	long typeId = reinterpret_cast<long>(typeid(*native_obj).name());
-	HASH_FIND_INT(_js_global_type_ht, &typeId, typeProxy);
-	if (!typeProxy) {
-		TypeInfo *typeInfo = dynamic_cast<TypeInfo *>(native_obj);
-		if (typeInfo) {
-			typeId = typeInfo->getClassTypeInfo();
-		} else {
-			typeId = reinterpret_cast<long>(typeid(T).name());
-		}
-		HASH_FIND_INT(_js_global_type_ht, &typeId, typeProxy);
-	}
-	return typeProxy;
-}
+JSBool js_cocos2dx_CCSet_constructor(JSContext *cx, uint32_t argc, jsval *vp)
+{
+	JSObject *obj;
+	cocos2d::CCSet* cobj;
 
-/**
- * you don't need to manage the returned pointer. The returned pointer should be deleted
- * using JS_REMOVE_PROXY. Most of the time you do that in the C++ destructor.
- */
-template<class T>
-js_proxy_t *js_get_or_create_proxy(JSContext *cx, T *native_obj) {
-	js_proxy_t *proxy;
-	HASH_FIND_PTR(_native_js_global_ht, &native_obj, proxy);
-	if (!proxy) {
-		js_type_class_t *typeProxy = js_get_type_from_native<T>(native_obj);
-		assert(typeProxy);
-		JSObject* js_obj = JS_NewObject(cx, typeProxy->jsclass, typeProxy->proto, typeProxy->parentProto);
-		JS_NEW_PROXY(proxy, native_obj, js_obj);
-		JS_AddObjectRoot(cx, &proxy->obj);
-		return proxy;
-	} else {
-		return proxy;
+	if (argc == 0) {
+		cobj = new cocos2d::CCSet();
+		cobj->autorelease();
+		TypeTest<cocos2d::CCSet> t;
+		js_type_class_t *typeClass;
+		uint32_t typeId = t.s_id();
+		HASH_FIND_INT(_js_global_type_ht, &typeId, typeClass);
+		assert(typeClass);
+		obj = JS_NewObject(cx, typeClass->jsclass, typeClass->proto, typeClass->parentProto);
+		js_proxy_t *proxy;
+		JS_NEW_PROXY(proxy, cobj, obj);
+		JS_AddNamedObjectRoot(cx, &proxy->obj, typeid(cobj).name());
 	}
-	return NULL;
+	if (cobj) {
+		JS_SET_RVAL(cx, vp, OBJECT_TO_JSVAL(obj));
+		return JS_TRUE;
+	}
+	return JS_FALSE;
 }
 
 extern JSObject* js_cocos2dx_CCNode_prototype;
 extern JSObject* js_cocos2dx_CCAction_prototype;
+extern JSObject* js_cocos2dx_CCAnimation_prototype;
 extern JSObject* js_cocos2dx_CCMenuItem_prototype;
 extern JSObject* js_cocos2dx_CCSpriteFrame_prototype;
+extern JSObject* js_cocos2dx_CCSet_prototype;
 
-void register_cocos2dx_js_extensions()
+void register_cocos2dx_js_extensions(JSContext* cx, JSObject* global)
 {
-	JSContext *cx = ScriptingCore::getInstance()->getGlobalContext();
-	JSObject *global = JS_GetGlobalObject(cx);
 	// first, try to get the ns
 	jsval nsval;
 	JSObject *ns;
@@ -689,6 +657,9 @@ void register_cocos2dx_js_extensions()
 	JS_DefineFunction(cx, js_cocos2dx_CCAction_prototype, "copy", js_cocos2dx_CCNode_copy, 1, JSPROP_READONLY | JSPROP_PERMANENT);
 	JS_DefineFunction(cx, js_cocos2dx_CCAction_prototype, "retain", js_cocos2dx_retain, 0, JSPROP_READONLY | JSPROP_PERMANENT);
 	JS_DefineFunction(cx, js_cocos2dx_CCAction_prototype, "release", js_cocos2dx_release, 0, JSPROP_READONLY | JSPROP_PERMANENT);
+	JS_DefineFunction(cx, js_cocos2dx_CCAnimation_prototype, "copy", js_cocos2dx_CCNode_copy, 1, JSPROP_READONLY | JSPROP_PERMANENT);
+	JS_DefineFunction(cx, js_cocos2dx_CCAnimation_prototype, "retain", js_cocos2dx_retain, 0, JSPROP_READONLY | JSPROP_PERMANENT);
+	JS_DefineFunction(cx, js_cocos2dx_CCAnimation_prototype, "release", js_cocos2dx_release, 0, JSPROP_READONLY | JSPROP_PERMANENT);
 	JS_DefineFunction(cx, js_cocos2dx_CCSpriteFrame_prototype, "retain", js_cocos2dx_retain, 0, JSPROP_READONLY | JSPROP_PERMANENT);
 	JS_DefineFunction(cx, js_cocos2dx_CCSpriteFrame_prototype, "release", js_cocos2dx_release, 0, JSPROP_READONLY | JSPROP_PERMANENT);
 	JS_DefineFunction(cx, js_cocos2dx_CCMenuItem_prototype, "setCallback", js_cocos2dx_setCallback, 2, JSPROP_READONLY | JSPROP_PERMANENT);
@@ -726,4 +697,8 @@ void register_cocos2dx_js_extensions()
      tmpObj = JSVAL_TO_OBJECT(anonEvaluate(cx, global, "(function () { return this; })()"));
     JS_DefineFunction(cx, tmpObj, "garbageCollect", js_forceGC, 1, JSPROP_READONLY | JSPROP_PERMANENT);
 
+    // add constructor for CCSet
+    JSFunction *ccSetConstructor = JS_NewFunction(cx, js_cocos2dx_CCSet_constructor, 0, JSPROP_READONLY | JSPROP_PERMANENT, NULL, "constructor");
+    JSObject *ctor = JS_GetFunctionObject(ccSetConstructor);
+    JS_LinkConstructorAndPrototype(cx, ctor, js_cocos2dx_CCSet_prototype);
 }

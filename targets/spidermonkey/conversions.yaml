@@ -35,6 +35,7 @@ conversions:
     "const ccColor4B": "${out_value} = jsval_to_cccolor4b(cx, ${in_value})"
     "const ccColor4F": "${out_value} = jsval_to_cccolor4f(cx, ${in_value})"
     "const ccColor3B": "${out_value} = jsval_to_cccolor3b(cx, ${in_value})"
+    "CCArray*": "${out_value} = jsval_to_ccarray(cx, ${in_value})"
     object: |
       do {
       ${($level + 1) * '\t'}js_proxy_t *proxy;

@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <vector>
 #include "ScriptingCore.h"
 #include "cocos2d.h"
 
@@ -31,6 +32,8 @@ js_proxy_t *_native_js_global_ht = NULL;
 js_proxy_t *_js_native_global_ht = NULL;
 js_type_class_t *_js_global_type_ht = NULL;
 char *_js_log_buf = NULL;
+
+std::vector<sc_register_sth> registrationList;
 
 static void executeJSFunctionFromReservedSpot(JSContext *cx, JSObject *obj, 
                                               jsval &dataVal, jsval &retval) {
@@ -94,6 +97,31 @@ void js_log(const char *format, ...) {
     }
 }
 
+void registerDefaultClasses(JSContext* cx, JSObject* global) {
+    if (!JS_InitStandardClasses(cx, global)) {
+        js_log("error initializing the standard classes");
+    }
+
+    // 
+    // Javascript controller (__jsc__)
+    //
+    JSObject *jsc = JS_NewObject(cx, NULL, NULL, NULL);
+    jsval jscVal = OBJECT_TO_JSVAL(jsc);
+    JS_SetProperty(cx, global, "__jsc__", &jscVal);
+
+    JS_DefineFunction(cx, jsc, "garbageCollect", ScriptingCore::forceGC, 0, JSPROP_READONLY | JSPROP_PERMANENT | JSPROP_ENUMERATE );
+    JS_DefineFunction(cx, jsc, "dumpRoot", ScriptingCore::dumpRoot, 0, JSPROP_READONLY | JSPROP_PERMANENT | JSPROP_ENUMERATE );
+    JS_DefineFunction(cx, jsc, "addGCRootObject", ScriptingCore::addRootJS, 1, JSPROP_READONLY | JSPROP_PERMANENT | JSPROP_ENUMERATE );
+    JS_DefineFunction(cx, jsc, "removeGCRootObject", ScriptingCore::removeRootJS, 1, JSPROP_READONLY | JSPROP_PERMANENT | JSPROP_ENUMERATE );
+    JS_DefineFunction(cx, jsc, "executeScript", ScriptingCore::executeScript, 1, JSPROP_READONLY | JSPROP_PERMANENT | JSPROP_ENUMERATE );
+
+    // register some global functions
+    JS_DefineFunction(cx, global, "require", ScriptingCore::executeScript, 1, JSPROP_READONLY | JSPROP_PERMANENT);
+    JS_DefineFunction(cx, global, "log", ScriptingCore::log, 0, JSPROP_READONLY | JSPROP_PERMANENT);
+    JS_DefineFunction(cx, global, "executeScript", ScriptingCore::executeScript, 1, JSPROP_READONLY | JSPROP_PERMANENT);
+    JS_DefineFunction(cx, global, "forceGC", ScriptingCore::forceGC, 0, JSPROP_READONLY | JSPROP_PERMANENT);
+}
+
 void sc_finalize(JSFreeOp *freeOp, JSObject *obj) {
     return;
 }
@@ -116,36 +144,7 @@ ScriptingCore::ScriptingCore()
 {
     // set utf8 strings internally (we don't need utf16)
     JS_SetCStringsAreUTF8();
-    this->rt = JS_NewRuntime(10 * 1024 * 1024);
-    this->cx = JS_NewContext(rt, 10240);
-    JS_SetOptions(this->cx, JSOPTION_TYPE_INFERENCE);
-    JS_SetVersion(this->cx, JSVERSION_LATEST);
-    JS_SetOptions(this->cx, JS_GetOptions(this->cx) & ~JSOPTION_METHODJIT);
-    JS_SetOptions(this->cx, JS_GetOptions(this->cx) & ~JSOPTION_METHODJIT_ALWAYS);
-    JS_SetErrorReporter(this->cx, ScriptingCore::reportError);
-    global = JS_NewCompartmentAndGlobalObject(cx, &global_class, NULL);
-    if (!JS_InitStandardClasses(cx, global)) {
-        js_log("error initializing the VM");
-    }
-
-    // 
-    // Javascript controller (__jsc__)
-    //
-    JSObject *jsc = JS_NewObject(cx, NULL, NULL, NULL);
-    jsval jscVal = OBJECT_TO_JSVAL(jsc);
-    JS_SetProperty(this->cx, global, "__jsc__", &jscVal);
-
-    JS_DefineFunction(this->cx, jsc, "garbageCollect", ScriptingCore::forceGC, 0, JSPROP_READONLY | JSPROP_PERMANENT | JSPROP_ENUMERATE );
-    JS_DefineFunction(this->cx, jsc, "dumpRoot", ScriptingCore::dumpRoot, 0, JSPROP_READONLY | JSPROP_PERMANENT | JSPROP_ENUMERATE );
-    JS_DefineFunction(this->cx, jsc, "addGCRootObject", ScriptingCore::addRootJS, 1, JSPROP_READONLY | JSPROP_PERMANENT | JSPROP_ENUMERATE );
-    JS_DefineFunction(this->cx, jsc, "removeGCRootObject", ScriptingCore::removeRootJS, 1, JSPROP_READONLY | JSPROP_PERMANENT | JSPROP_ENUMERATE );
-    JS_DefineFunction(this->cx, jsc, "executeScript", ScriptingCore::executeScript, 1, JSPROP_READONLY | JSPROP_PERMANENT | JSPROP_ENUMERATE );
-
-    // register some global functions
-    JS_DefineFunction(this->cx, global, "require", ScriptingCore::executeScript, 1, JSPROP_READONLY | JSPROP_PERMANENT);
-    JS_DefineFunction(this->cx, global, "log", ScriptingCore::log, 0, JSPROP_READONLY | JSPROP_PERMANENT);
-    JS_DefineFunction(this->cx, global, "executeScript", ScriptingCore::executeScript, 1, JSPROP_READONLY | JSPROP_PERMANENT);
-    JS_DefineFunction(this->cx, global, "forceGC", ScriptingCore::forceGC, 0, JSPROP_READONLY | JSPROP_PERMANENT);
+    this->addRegisterCallback(registerDefaultClasses);
 }
 
 void ScriptingCore::string_report(jsval val) {
@@ -189,13 +188,44 @@ JSBool ScriptingCore::evalString(const char *string, jsval *outVal, const char *
                                            fname, lineno, outVal);
 
     if (JS_FALSE == evaluatedOK) {
-        LOGD("evaluatedOK == JS_FALSE)");
+        LOGD("(evaluatedOK == JS_FALSE)");
     } else {
         this->string_report(*outVal);
     }
 
     return evaluatedOK;
 }
+
+void ScriptingCore::start() {
+    // for now just this
+    this->createGlobalContext();
+}
+
+void ScriptingCore::addRegisterCallback(sc_register_sth callback) {
+    registrationList.push_back(callback);
+}
+
+void ScriptingCore::createGlobalContext() {
+    if (this->cx && this->rt) {
+        JS_DestroyContext(this->cx);
+        JS_DestroyRuntime(this->rt);
+        this->cx = NULL;
+        this->rt = NULL;
+    }
+    this->rt = JS_NewRuntime(10 * 1024 * 1024);
+    this->cx = JS_NewContext(rt, 10240);
+    JS_SetOptions(this->cx, JSOPTION_TYPE_INFERENCE);
+    JS_SetVersion(this->cx, JSVERSION_LATEST);
+    JS_SetOptions(this->cx, JS_GetOptions(this->cx) & ~JSOPTION_METHODJIT);
+    JS_SetOptions(this->cx, JS_GetOptions(this->cx) & ~JSOPTION_METHODJIT_ALWAYS);
+    JS_SetErrorReporter(this->cx, ScriptingCore::reportError);
+    this->global = JS_NewCompartmentAndGlobalObject(cx, &global_class, NULL);
+    for (std::vector<sc_register_sth>::iterator it = registrationList.begin(); it != registrationList.end(); it++) {
+        sc_register_sth callback = *it;
+        callback(this->cx, this->global);
+    }
+}
+
 
 #ifdef ANDROID
 
@@ -389,13 +419,17 @@ JSBool ScriptingCore::forceGC(JSContext *cx, uint32_t argc, jsval *vp)
 	return JS_TRUE;
 }
 
+static void dumpNamedRoot(const char *name, void *addr,  JSGCRootType type, void *data)
+{
+    printf("There is a root named '%s' at %p\n", name, addr);
+}
 JSBool ScriptingCore::dumpRoot(JSContext *cx, uint32_t argc, jsval *vp)
 {
     // JS_DumpNamedRoots is only available on DEBUG versions of SpiderMonkey.
     // Mac and Simulator versions were compiled with DEBUG.
-#if DEBUG && (defined(__CC_PLATFORM_MAC) || TARGET_IPHONE_SIMULATOR )
-    JSContext *cx = ScriptingCore::getInstance()->getGlobalContext();
-    JSRuntime *rt = JS_GetRuntime(cx);
+#if DEBUG
+    JSContext *_cx = ScriptingCore::getInstance()->getGlobalContext();
+    JSRuntime *rt = JS_GetRuntime(_cx);
     JS_DumpNamedRoots(rt, dumpNamedRoot, NULL);
 #endif
     return JS_TRUE;
@@ -406,7 +440,7 @@ JSBool ScriptingCore::addRootJS(JSContext *cx, uint32_t argc, jsval *vp)
     if (argc == 1) {
         JSObject *o = NULL;
         if (JS_ConvertArguments(cx, argc, JS_ARGV(cx, vp), "o", &o) == JS_TRUE) {
-            if (JS_AddObjectRoot(cx, &o) == JS_FALSE) {
+            if (JS_AddNamedObjectRoot(cx, &o, "from-js") == JS_FALSE) {
                 LOGD("something went wrong when setting an object to the root");
             }
         }
@@ -532,7 +566,7 @@ static void getTouchFuncName(int eventType, std::string &funcName) {
 }
 
 static void rootObject(JSContext *cx, JSObject *obj) {
-    JS_AddObjectRoot(cx, &obj);
+    JS_AddNamedObjectRoot(cx, &obj, "unnamed");
 }
 
 
@@ -564,7 +598,7 @@ int ScriptingCore::executeTouchesEvent(int nHandler, int eventType,
         
     JSObject *jsretArr = JS_NewArrayObject(this->cx, 0, NULL);
     
-    JS_AddObjectRoot(this->cx, &jsretArr);
+    JS_AddNamedObjectRoot(this->cx, &jsretArr, "touchArray");
     int count = 0;
     for(CCSetIterator it = pTouches->begin(); it != pTouches->end(); ++it, ++count) {
         jsval jsret;
@@ -590,7 +624,7 @@ int ScriptingCore::executeCustomTouchesEvent(int eventType,
     getTouchesFuncName(eventType, funcName);
     
     JSObject *jsretArr = JS_NewArrayObject(this->cx, 0, NULL);
-    JS_AddObjectRoot(this->cx, &jsretArr);
+    JS_AddNamedObjectRoot(this->cx, &jsretArr, "touchArray");
     int count = 0;
     for(CCSetIterator it = pTouches->begin(); it != pTouches->end(); ++it, ++count) {
         jsval jsret;
@@ -771,6 +805,30 @@ ccColor3B jsval_to_cccolor3b(JSContext *cx, jsval v) {
     assert(ok == JS_TRUE);
     return cocos2d::ccc3(r, g, b);
 }
+
+CCArray* jsval_to_ccarray(JSContext* cx, jsval v) {
+    JSObject *arr;
+    if (JS_ValueToObject(cx, v, &arr) && JS_IsArrayObject(cx, arr)) {
+        uint32_t len = 0;
+        JS_GetArrayLength(cx, arr, &len);
+        CCArray* ret = CCArray::createWithCapacity(len);
+        for (int i=0; i < len; i++) {
+            jsval elt;
+            JSObject *elto;
+            if (JS_GetElement(cx, arr, i, &elt) && JS_ValueToObject(cx, elt, &elto)) {
+                js_proxy_t *proxy;
+                JS_GET_NATIVE_PROXY(proxy, elto);
+                if (proxy) {
+                    ret->addObject((CCObject *)proxy->ptr);
+                }
+            }
+        }
+        return ret;
+    }
+    return NULL;
+}
+
+// from native
 
 jsval long_long_to_jsval(JSContext* cx, long long v) {
     JSObject *tmp = JS_NewUint32Array(cx, 2);

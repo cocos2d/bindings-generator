@@ -4,11 +4,54 @@
 #include "jsapi.h"
 #include "ScriptingCore.h"
 
+
+/**
+ * You don't need to manage the returned pointer. They live for the whole life of
+ * the app.
+ */
+template <class T>
+inline js_type_class_t *js_get_type_from_native(T* native_obj) {
+    js_type_class_t *typeProxy;
+    long typeId = reinterpret_cast<long>(typeid(*native_obj).name());
+    HASH_FIND_INT(_js_global_type_ht, &typeId, typeProxy);
+    if (!typeProxy) {
+        TypeInfo *typeInfo = dynamic_cast<TypeInfo *>(native_obj);
+        if (typeInfo) {
+            typeId = typeInfo->getClassTypeInfo();
+        } else {
+            typeId = reinterpret_cast<long>(typeid(T).name());
+        }
+        HASH_FIND_INT(_js_global_type_ht, &typeId, typeProxy);
+    }
+    return typeProxy;
+}
+
+/**
+ * The returned pointer should be deleted using JS_REMOVE_PROXY. Most of the
+ * time you do that in the C++ destructor.
+ */
 template<class T>
-js_type_class_t *js_get_type_from_native(T* native_obj);
-template<class T>
-js_proxy_t *js_get_or_create_proxy(JSContext *cx, T *native_obj);
-void register_cocos2dx_js_extensions();
+inline js_proxy_t *js_get_or_create_proxy(JSContext *cx, T *native_obj) {
+    js_proxy_t *proxy;
+    HASH_FIND_PTR(_native_js_global_ht, &native_obj, proxy);
+    if (!proxy) {
+        js_type_class_t *typeProxy = js_get_type_from_native<T>(native_obj);
+        assert(typeProxy);
+        JSObject* js_obj = JS_NewObject(cx, typeProxy->jsclass, typeProxy->proto, typeProxy->parentProto);
+        proxy = js_new_proxy(native_obj, js_obj);
+#ifdef DEBUG
+        JS_AddNamedObjectRoot(cx, &proxy->obj, typeid(*native_obj).name());
+#else
+        JS_AddObjectRoot(cx, &proxy->obj);
+#endif
+        return proxy;
+    } else {
+        return proxy;
+    }
+    return NULL;
+}
+
+void register_cocos2dx_js_extensions(JSContext* cx, JSObject* obj);
 
 class JSCallFunc: public CCObject {
 public:

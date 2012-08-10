@@ -153,13 +153,13 @@ class NativeType(object):
         return "#pragma warning NO CONVERSION FROM NATIVE FOR " + name
 
     def to_native(self, convert_opts):
-        assert(convert_opts.has_key('generator'))
+        assert('generator' in convert_opts)
         generator = convert_opts['generator']
         name = self.name
         if self.is_object:
-            if self.is_pointer:
+            if self.is_pointer and not name in generator.config['conversions']['to_native']:
                 name = "object"
-            elif not generator.config['conversions']['to_native'].has_key(name):
+            elif not name in generator.config['conversions']['to_native']:
                 name = "object"
         elif self.type.get_canonical().kind == cindex.TypeKind.ENUM:
             name = "int"

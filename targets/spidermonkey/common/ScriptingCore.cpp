@@ -133,13 +133,6 @@ static JSClass global_class = {
     JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
-#if !defined(JS_NewCompartmentAndGlobalObject)
-#if defined(JS_NewGlobalObject)
-#  undef(JS_NewGlobalObject)
-#endif
-#define JS_NewCompartmentAndGlobalObject(cx, clasp, ppals) JS_NewGlobalObject(cx, clasp, ppals)
-#endif
-
 ScriptingCore::ScriptingCore()
 {
     // set utf8 strings internally (we don't need utf16)

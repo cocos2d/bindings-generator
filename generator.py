@@ -239,13 +239,11 @@ class NativeFunction(object):
                     tpl = Template(config['definitions']['ifunction'],
                                     searchList=[current_class, self])
                     self.signature_name = str(tpl)
-                    print "ifunction", self.func_name
             else:
                 if config['definitions'].has_key('constructor'):
                     tpl = Template(config['definitions']['constructor'],
                                     searchList=[current_class, self])
                     self.signature_name = str(tpl)
-                    print "constructor", self.signature_name
             tpl = Template(file=os.path.join(gen.target, "templates", "ifunction.c"),
                             searchList=[current_class, self])
         gen.impl_file.write(str(tpl))
@@ -312,7 +310,6 @@ class NativeClass(object):
         else:
             self.target_class_name = self.class_name
         self.namespaced_class_name = namespaced_name(cursor)
-        print "Namespaced class name =", self.namespaced_class_name
         self.parse()
 
     def parse(self):
@@ -358,8 +355,13 @@ class NativeClass(object):
                             searchList=[{"current_class": self}])
         prelude_c = Template(file=os.path.join(self.generator.target, "templates", "prelude.c"),
                             searchList=[{"current_class": self}])
+        apidoc_classhead_js = Template(file=os.path.join(self.generator.target,
+                                                         "templates",
+                                                         "apidoc_classhead.js"),
+                                       searchList=[{"current_class": self}])
         self.generator.head_file.write(str(prelude_h))
         self.generator.impl_file.write(str(prelude_c))
+        self.generator.doc_file.write(str(apidoc_classhead_js))
         for m in self.methods_clean():
             m['impl'].generate_code(self)
         for m in self.static_methods_clean():
@@ -367,7 +369,12 @@ class NativeClass(object):
         # generate register section
         register = Template(file=os.path.join(self.generator.target, "templates", "register.c"),
                             searchList=[{"current_class": self}])
+        apidoc_classfoot_js = Template(file=os.path.join(self.generator.target,
+                                                         "templates",
+                                                         "apidoc_classfoot.js"),
+                                       searchList=[{"current_class": self}])
         self.generator.impl_file.write(str(register))
+        self.generator.doc_file.write(str(apidoc_classfoot_js))
 
     def _deep_iterate(self, cursor=None):
         for node in cursor.get_children():

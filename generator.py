@@ -230,6 +230,7 @@ class NativeFunction(object):
                 tpl = Template(config['definitions']['sfunction'],
                                     searchList=[current_class, self])
                 self.signature_name = str(tpl)
+                print "StaticFunction", self.func_name
             tpl = Template(file=os.path.join(gen.target, "templates", "sfunction.c"),
                             searchList=[current_class, self])
         else:
@@ -238,11 +239,13 @@ class NativeFunction(object):
                     tpl = Template(config['definitions']['ifunction'],
                                     searchList=[current_class, self])
                     self.signature_name = str(tpl)
+                    print "ifunction", self.func_name
             else:
                 if config['definitions'].has_key('constructor'):
                     tpl = Template(config['definitions']['constructor'],
                                     searchList=[current_class, self])
                     self.signature_name = str(tpl)
+                    print "constructor", self.signature_name
             tpl = Template(file=os.path.join(gen.target, "templates", "ifunction.c"),
                             searchList=[current_class, self])
         gen.impl_file.write(str(tpl))
@@ -309,6 +312,7 @@ class NativeClass(object):
         else:
             self.target_class_name = self.class_name
         self.namespaced_class_name = namespaced_name(cursor)
+        print "Namespaced class name =", self.namespaced_class_name
         self.parse()
 
     def parse(self):
@@ -548,15 +552,20 @@ class Generator(object):
         self.config = data
         implfilepath = os.path.join(self.outdir, self.out_file + ".cpp")
         headfilepath = os.path.join(self.outdir, self.out_file + ".hpp")
+        docfilepath = os.path.join(self.outdir, self.out_file + "api.js")
         self.impl_file = open(implfilepath, "w+")
         self.head_file = open(headfilepath, "w+")
+        self.doc_file = open(docfilepath, "w+")
 
         layout_h = Template(file=os.path.join(self.target, "templates", "layout_head.h"),
                             searchList=[self])
         layout_c = Template(file=os.path.join(self.target, "templates", "layout_head.c"),
                             searchList=[self])
+        apidoc_ns_js = Template(file=os.path.join(self.target, "templates", "apidoc_ns.js"),
+                                searchList=[self])
         self.head_file.write(str(layout_h))
         self.impl_file.write(str(layout_c))
+        self.doc_file.write(str(apidoc_ns_js))
 
         self._parse_headers()
 
@@ -569,6 +578,7 @@ class Generator(object):
 
         self.impl_file.close()
         self.head_file.close()
+        self.doc_file.close()
 
     def _parse_headers(self):
         for header in self.headers:

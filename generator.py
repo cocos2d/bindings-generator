@@ -600,11 +600,13 @@ class Generator(object):
                 for d in tu.diagnostics:
                     if d.severity >= cindex.Diagnostic.Error:
                         is_fatal = True
-                    print(" ".join(["[", str(is_fatal), "]", d.category_name, ":", str(d.location)]))
-                    print("  " + d.spelling)
+                    print(" ".join(["[", str(is_fatal), "]",
+                                    d.category_name, ":",
+                                    str(d.location),"\n",
+                                    d.spelling]))
                 if is_fatal:
                     print("*** Found errors - can not continue")
-                    return
+                    raise Exception("Fatal error in parsing headers")
             self._deep_iterate(tu.cursor)
 
     def _deep_iterate(self, cursor, depth=0):
@@ -708,4 +710,8 @@ def main():
             generator.generate_code()
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except Exception as e:
+        print e
+        sys.exit(1)

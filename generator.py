@@ -247,6 +247,11 @@ class NativeFunction(object):
             tpl = Template(file=os.path.join(gen.target, "templates", "ifunction.c"),
                             searchList=[current_class, self])
         gen.impl_file.write(str(tpl))
+        apidoc_function_js = Template(file=os.path.join(gen.target,
+                                                        "templates",
+                                                        "apidoc_function.js"),
+                                      searchList=[current_class, self])
+        gen.doc_file.write(str(apidoc_function_js))
 
 class NativeOverloadedFunction(object):
     def __init__(self, func_array):

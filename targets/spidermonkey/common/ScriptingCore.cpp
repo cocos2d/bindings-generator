@@ -480,6 +480,9 @@ int ScriptingCore::executeFunctionWithIntegerData(int nHandler, int data, CCNode
     } else if(data == kCCMenuItemActivated) {
         dataVal = (proxy ? OBJECT_TO_JSVAL(proxy->obj) : JSVAL_NULL);
         executeJSFunctionFromReservedSpot(this->cx, p->obj, dataVal, retval);
+    } else if(data == kCCNodeOnEnterTransitionDidFinish) {
+        executeJSFunctionWithName(this->cx, p->obj, "onEnterTransitionDidFinish", dataVal, retval);
+    } else if(data == kCCNodeOnExitTransitionDidStart) { executeJSFunctionWithName(this->cx, p->obj, "onExitTransitionDidStart", dataVal, retval);
     }
     
     
@@ -590,6 +593,19 @@ static void getJSTouchObject(JSContext *cx, CCTouch *x, jsval &jsret) {
 }
 
 
+static void removeJSTouchObject(JSContext *cx, CCTouch *x, jsval &jsret) {
+    js_proxy_t* nproxy;
+    js_proxy_t* jsproxy;
+    void *ptr = x;
+    JS_GET_PROXY(nproxy, ptr);
+    if (nproxy) {
+        JS_RemoveObjectRoot(cx, &nproxy->obj);
+        JS_GET_NATIVE_PROXY(jsproxy, nproxy->obj);
+        JS_REMOVE_PROXY(nproxy, jsproxy);
+    }
+}
+
+
 int ScriptingCore::executeTouchesEvent(int nHandler, int eventType, 
                                        CCSet *pTouches, CCNode *self) {
     
@@ -611,6 +627,12 @@ int ScriptingCore::executeTouchesEvent(int nHandler, int eventType,
     executeFunctionWithObjectData(1,  funcName.c_str(), jsretArr, self);
     
     JS_RemoveObjectRoot(this->cx, &jsretArr);
+    
+    for(CCSetIterator it = pTouches->begin(); it != pTouches->end(); ++it, ++count) {
+        jsval jsret;
+        removeJSTouchObject(this->cx, (CCTouch *) *it, jsret);
+    }
+
     
     return 1;
 }
@@ -636,7 +658,13 @@ int ScriptingCore::executeCustomTouchesEvent(int eventType,
     
     jsval jsretArrVal = OBJECT_TO_JSVAL(jsretArr);
     executeJSFunctionWithName(this->cx, obj, funcName.c_str(), jsretArrVal, retval);
-    JS_RemoveObjectRoot(this->cx, &jsretArr);    
+    JS_RemoveObjectRoot(this->cx, &jsretArr);
+    
+    for(CCSetIterator it = pTouches->begin(); it != pTouches->end(); ++it, ++count) {
+        jsval jsret;
+        removeJSTouchObject(this->cx, (CCTouch *) *it, jsret);
+    }
+    
     return 1;
 }
 

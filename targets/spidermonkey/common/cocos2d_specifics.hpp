@@ -38,7 +38,7 @@ inline js_proxy_t *js_get_or_create_proxy(JSContext *cx, T *native_obj) {
         js_type_class_t *typeProxy = js_get_type_from_native<T>(native_obj);
         assert(typeProxy);
         JSObject* js_obj = JS_NewObject(cx, typeProxy->jsclass, typeProxy->proto, typeProxy->parentProto);
-        proxy = js_new_proxy(native_obj, js_obj);
+	proxy = js_new_proxy(native_obj, js_obj);
 #ifdef DEBUG
         JS_AddNamedObjectRoot(cx, &proxy->obj, typeid(*native_obj).name());
 #else
@@ -51,6 +51,7 @@ inline js_proxy_t *js_get_or_create_proxy(JSContext *cx, T *native_obj) {
     return NULL;
 }
 
+jsval anonEvaluate(JSContext *cx, JSObject *thisObj, const char* string);
 void register_cocos2dx_js_extensions(JSContext* cx, JSObject* obj);
 
 class JSCallFunc: public CCObject {

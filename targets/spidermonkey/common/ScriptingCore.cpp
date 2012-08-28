@@ -395,6 +395,22 @@ JSBool ScriptingCore::log(JSContext* cx, uint32_t argc, jsval *vp)
 	return JS_TRUE;
 }
 
+
+void ScriptingCore::removeJSObjectByCCObject(void* cobj) {
+
+    js_proxy_t* nproxy;
+    js_proxy_t* jsproxy;
+    void *ptr = cobj;
+    JS_GET_PROXY(nproxy, ptr);
+    if (nproxy) {
+        JSContext *cx = ScriptingCore::getInstance()->getGlobalContext();
+        JS_RemoveObjectRoot(cx, &nproxy->obj);
+        JS_GET_NATIVE_PROXY(jsproxy, nproxy->obj);
+        JS_REMOVE_PROXY(nproxy, jsproxy);
+    }
+}
+
+
 JSBool ScriptingCore::setReservedSpot(uint32_t i, JSObject *obj, jsval value) {
 	JS_SetReservedSlot(obj, i, value);
 	return JS_TRUE;
@@ -521,14 +537,6 @@ int ScriptingCore::executeFunctionWithFloatData(int nHandler, float data, CCNode
     
     executeJSFunctionWithName(this->cx, p->obj, "update", dataVal, retval);
     
-    //    if(data == kCCNodeOnEnter) {
-    //        executeJSFunctionWithName(this->cx, p, "onEnter", dataVal, retval);
-    //    } else if(data == kCCNodeOnExit) {
-    //        executeJSFunctionWithName(this->cx, p, "onExit", dataVal, retval);
-    //    } else if(data == kCCMenuItemActivated) {
-    //        executeJSFunctionFromReservedSpot(this->cx, p, dataVal, retval);
-    //    }
-    
     return 1;
 }
 
@@ -587,8 +595,11 @@ static void getJSTouchObject(JSContext *cx, CCTouch *x, jsval &jsret) {
     HASH_FIND_INT(_js_global_type_ht, &typeId, classType);
     assert(classType);
     JSObject *_tmp = JS_NewObject(cx, classType->jsclass, classType->proto, classType->parentProto);
-    js_proxy_t *proxy;
+    js_proxy_t *proxy, *nproxy;
     JS_NEW_PROXY(proxy, x, _tmp);
+    void *ptr = x;
+    JS_GET_PROXY(nproxy, ptr);
+    JS_AddNamedObjectRoot(cx, &nproxy->obj, "CCTouch");
     jsret = OBJECT_TO_JSVAL(_tmp);
 }
 

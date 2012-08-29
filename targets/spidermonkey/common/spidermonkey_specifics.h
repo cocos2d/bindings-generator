@@ -1,7 +1,6 @@
 #ifndef __SPIDERMONKEY_SPECIFICS_H__
 #define __SPIDERMONKEY_SPECIFICS_H__
 
-#include <typeinfo>
 #include "jsapi.h"
 #include "uthash.h"
 
@@ -45,11 +44,6 @@ class TypeTest
 	}
 };
 
-class TypeInfo
-{
-public:
-	virtual long getClassTypeInfo() = 0;
-};
 
 #define JS_NEW_PROXY(p, native_obj, js_obj) \
 do { \

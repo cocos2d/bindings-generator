@@ -10,20 +10,20 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 	${arg.to_string($generator)} arg${count};
 		#set $count = $count + 1
 	#end for
-	if (argc >= ${min_args}) {
+	assert(argc >= ${min_args});
+
 	#set $count = 0
 	#for $arg in $arguments
-		${arg.to_native({"generator": $generator,
-						 "in_value": "argv[" + str(count) + "]",
-						 "out_value": "arg" + str(count),
-						 "class_name": $class_name,
-						 "level": 2,
-						 "ntype": str($arg)})};
-		#set $arg_array += ["arg"+str($count)]
-		#set $count = $count + 1
+	${arg.to_native({"generator": $generator,
+		"in_value": "argv[" + str(count) + "]",
+		"out_value": "arg" + str(count),
+		"class_name": $class_name,
+		"level": 2,
+		"ntype": str($arg)})};
+        #set $arg_array += ["arg"+str($count)]
+        #set $count = $count + 1
 	#end for
 	#set $arg_list = ", ".join($arg_array)
-	}
 #end if
 #if str($ret_type) != "void"
 	${ret_type} ret = ${namespaced_class_name}::${func_name}($arg_list);

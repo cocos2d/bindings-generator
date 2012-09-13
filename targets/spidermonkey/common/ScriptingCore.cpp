@@ -198,8 +198,19 @@ void ScriptingCore::addRegisterCallback(sc_register_sth callback) {
     registrationList.push_back(callback);
 }
 
+void ScriptingCore::removeAllRoots(JSContext *cx) {
+    js_proxy_t *current, *tmp;
+    HASH_ITER(hh, _js_native_global_ht, current, tmp) {
+        JS_RemoveObjectRoot(cx, &current->obj);
+    }
+    HASH_CLEAR(hh, _js_native_global_ht);
+    HASH_CLEAR(hh, _native_js_global_ht);
+    HASH_CLEAR(hh, _js_global_type_ht);
+}
+
 void ScriptingCore::createGlobalContext() {
-    if (this->cx && this->rt) {
+    if (this->cx && this->rt) {        
+        ScriptingCore::removeAllRoots(this->cx);
         JS_DestroyContext(this->cx);
         JS_DestroyRuntime(this->rt);
         this->cx = NULL;
@@ -397,8 +408,8 @@ void ScriptingCore::removeJSObjectByCCObject(void* cobj) {
     JS_GET_PROXY(nproxy, ptr);
     if (nproxy) {
         JSContext *cx = ScriptingCore::getInstance()->getGlobalContext();
-        JS_RemoveObjectRoot(cx, &nproxy->obj);
         JS_GET_NATIVE_PROXY(jsproxy, nproxy->obj);
+        JS_RemoveObjectRoot(cx, &jsproxy->obj);
         JS_REMOVE_PROXY(nproxy, jsproxy);
     }
 }

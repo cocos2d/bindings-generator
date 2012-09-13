@@ -69,10 +69,11 @@ do { \
 	HASH_FIND_PTR(_js_native_global_ht, &js_obj, p); \
 } while (0)
 
+// Removing proxy from hash. Added freeing of proxies, as suggested by James Chen.
 #define JS_REMOVE_PROXY(nproxy, jsproxy) \
 do { \
-	if (nproxy)  HASH_DEL(_native_js_global_ht, nproxy); \
-	if (jsproxy) HASH_DEL(_js_native_global_ht, jsproxy); \
+	if (nproxy) { HASH_DEL(_native_js_global_ht, nproxy); free(nproxy); } \
+	if (jsproxy) { HASH_DEL(_js_native_global_ht, jsproxy); free(jsproxy); } \
 } while (0)
 
 #define TEST_NATIVE_OBJECT(cx, native_obj) \

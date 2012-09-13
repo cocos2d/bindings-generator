@@ -137,6 +137,8 @@ public:
 	 * and create a new one.
 	 */
 	void createGlobalContext();
+    
+    static void removeAllRoots(JSContext *cx);
 	
     
     int executeCustomTouchEvent(int eventType, 

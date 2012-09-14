@@ -230,7 +230,6 @@ class NativeFunction(object):
                 tpl = Template(config['definitions']['sfunction'],
                                     searchList=[current_class, self])
                 self.signature_name = str(tpl)
-                print "StaticFunction", self.func_name
             tpl = Template(file=os.path.join(gen.target, "templates", "sfunction.c"),
                             searchList=[current_class, self])
         else:
@@ -592,18 +591,23 @@ class Generator(object):
         self.head_file.close()
         self.doc_file.close()
 
+    def _pretty_print(self, diagnostics):
+        print("====\nErrors in parsing headers:")
+        severities=['Ignored', 'Note', 'Warning', 'Error', 'Fatal']
+        for idx, d in enumerate(diagnostics):
+            print "%s. <severity = %s,\n    location = %r,\n    details = %r>" % (
+                idx+1, severities[d.severity], d.location, d.spelling)
+        print("====\n")
+        
     def _parse_headers(self):
         for header in self.headers:
             tu = self.index.parse(header, self.clang_args)
             if len(tu.diagnostics) > 0:
+                self._pretty_print(tu.diagnostics)
                 is_fatal = False
                 for d in tu.diagnostics:
                     if d.severity >= cindex.Diagnostic.Error:
                         is_fatal = True
-                    print(" ".join(["[", str(is_fatal), "]",
-                                    d.category_name, ":",
-                                    str(d.location),"\n",
-                                    d.spelling]))
                 if is_fatal:
                     print("*** Found errors - can not continue")
                     raise Exception("Fatal error in parsing headers")

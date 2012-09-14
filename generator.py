@@ -230,7 +230,6 @@ class NativeFunction(object):
                 tpl = Template(config['definitions']['sfunction'],
                                     searchList=[current_class, self])
                 self.signature_name = str(tpl)
-                print "StaticFunction", self.func_name
             tpl = Template(file=os.path.join(gen.target, "templates", "sfunction.c"),
                             searchList=[current_class, self])
         else:

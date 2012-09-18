@@ -138,7 +138,7 @@ class NativeType(object):
         generator = convert_opts['generator']
         name = self.name
         if self.is_object:
-            if self.is_pointer:
+            if self.is_pointer and not name in generator.config['conversions']['from_native']:
                 name = "object"
             elif not generator.config['conversions']['from_native'].has_key(name):
                 name = "object"

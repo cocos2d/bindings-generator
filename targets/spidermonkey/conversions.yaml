@@ -63,6 +63,7 @@ conversions:
     "const ccColor4B": "${out_value} = cccolor4b_to_jsval(cx, ${in_value})"
     "const ccColor4F": "${out_value} = cccolor4f_to_jsval(cx, ${in_value})"
     "const ccColor3B": "${out_value} = cccolor3b_to_jsval(cx, ${in_value})"
+    "CCArray*": "${out_value} = ccarray_to_jsval(cx, ${in_value})"
     object: |
       do {
       ${($level + 1) * '\t'}if (${in_value}) {

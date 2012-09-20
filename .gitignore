@@ -1,4 +1,5 @@
 .DS_Store
 gen/
 *.pyc
-userconf.ini
+test/user.cfg
+test/userconf.ini

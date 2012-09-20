@@ -138,7 +138,7 @@ class NativeType(object):
         generator = convert_opts['generator']
         name = self.name
         if self.is_object:
-            if self.is_pointer:
+            if self.is_pointer and not name in generator.config['conversions']['from_native']:
                 name = "object"
             elif not generator.config['conversions']['from_native'].has_key(name):
                 name = "object"
@@ -309,10 +309,12 @@ class NativeClass(object):
         self.generator = generator
         self.is_abstract = self.class_name in generator.abstract_classes
         self._current_visibility = cindex.AccessSpecifierKind.PRIVATE
+
+        registration_name = generator.get_class_or_rename_class(self.class_name)
         if generator.remove_prefix:
-            self.target_class_name = re.sub(generator.remove_prefix, '', self.class_name)
+            self.target_class_name = re.sub(generator.remove_prefix, '', registration_name)
         else:
-            self.target_class_name = self.class_name
+            self.target_class_name = registration_name
         self.namespaced_class_name = namespaced_name(cursor)
         self.parse()
 
@@ -409,7 +411,7 @@ class NativeClass(object):
             # skip if variadic
             if self._current_visibility == cindex.AccessSpecifierKind.PUBLIC and not cursor.type.is_function_variadic():
                 m = NativeFunction(cursor)
-                registration_name = self.generator.should_rename(self.class_name, m.func_name) or m.func_name
+                registration_name = self.generator.should_rename_function(self.class_name, m.func_name) or m.func_name
                 # bail if the function is not supported (at least one arg not supported)
                 if m.not_supported:
                     return
@@ -466,6 +468,7 @@ class Generator(object):
         self.skip_classes = {}
         self.generated_classes = {}
         self.rename_functions = {}
+        self.rename_classes = {}
         self.out_file = opts['out_file']
         if opts['skip']:
             list_of_skips = re.split(",\n?", opts['skip'])
@@ -477,9 +480,9 @@ class Generator(object):
                     self.skip_classes[class_name] = match.group(1).split(" ")
                 else:
                     raise Exception("invalid list of skip methods")
-        if opts['rename']:
-            list_of_renames = re.split(",\n?", opts['rename'])
-            for rename in list_of_renames:
+        if opts['rename_functions']:
+            list_of_function_renames = re.split(",\n?", opts['rename_functions'])
+            for rename in list_of_function_renames:
                 class_name, methods = rename.split("::")
                 self.rename_functions[class_name] = {}
                 match = re.match("\[([^]]+)\]", methods)
@@ -491,11 +494,24 @@ class Generator(object):
                 else:
                     raise Exception("invalid list of rename methods")
 
-    def should_rename(self, class_name, method_name):
+        if opts['rename_classes']:
+            list_of_class_renames = re.split(",\n?", opts['rename_classes'])
+            for rename in list_of_class_renames:
+                class_name, renamed_class_name = rename.split("::")
+                self.rename_classes[class_name] = renamed_class_name
+
+
+    def should_rename_function(self, class_name, method_name):
         if self.rename_functions.has_key(class_name) and self.rename_functions[class_name].has_key(method_name):
             # print >> sys.stderr, "will rename %s to %s" % (method_name, self.rename_functions[class_name][method_name])
             return self.rename_functions[class_name][method_name]
         return None
+
+    def get_class_or_rename_class(self, class_name):
+        if self.rename_classes.has_key(class_name):
+            # print >> sys.stderr, "will rename %s to %s" % (method_name, self.rename_functions[class_name][method_name])
+            return self.rename_classes[class_name]
+        return class_name
 
     def should_skip(self, class_name, method_name, verbose=False):
         if class_name == "*" and self.skip_classes.has_key("*"):
@@ -707,7 +723,8 @@ def main():
                 'base_objects': config.get(s, 'base_objects'),
                 'abstract_classes': config.get(s, 'abstract_classes'),
                 'skip': config.get(s, 'skip'),
-                'rename': config.get(s, 'rename'),
+                'rename_functions': config.get(s, 'rename_functions'),
+                'rename_classes': config.get(s, 'rename_classes'),
                 'out_file': opts.out_file or config.get(s, 'prefix')
                 }
             generator = Generator(gen_opts)

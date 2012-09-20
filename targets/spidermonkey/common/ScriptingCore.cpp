@@ -871,7 +871,23 @@ CCArray* jsval_to_ccarray(JSContext* cx, jsval v) {
     return NULL;
 }
 
-// from native
+
+jsval ccarray_to_jsval(JSContext* cx, CCArray *arr) {
+    
+  JSObject *jsretArr = JS_NewArrayObject(cx, 0, NULL);
+
+  for(int i = 0; i < arr->count(); ++i) {
+
+    CCObject *obj = arr->objectAtIndex(i);
+    js_proxy_t *proxy = js_get_or_create_proxy<cocos2d::CCObject>(cx, obj);
+    jsval arrElement = OBJECT_TO_JSVAL(proxy->obj);
+
+    if(!JS_SetElement(cx, jsretArr, i, &arrElement)) {
+      break;
+    }
+  }
+  return OBJECT_TO_JSVAL(jsretArr);
+}
 
 jsval long_long_to_jsval(JSContext* cx, long long v) {
     JSObject *tmp = JS_NewUint32Array(cx, 2);

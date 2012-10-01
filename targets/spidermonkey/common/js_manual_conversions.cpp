@@ -3,6 +3,7 @@
 //  Copyright (c) 2012 Zynga Inc. All rights reserved.
 //
 
+#include <inttypes.h>
 #include "jsapi.h"
 #include "jsfriendapi.h"
 #include "ScriptingCore.h"
@@ -208,18 +209,13 @@ JSBool jsval_to_long( JSContext *cx, jsval vp, long *r )
 
 JSBool jsval_to_longlong( JSContext *cx, jsval vp, long long *r )
 {
-	JSObject *tmp_arg;
-	if( ! JS_ValueToObject( cx, vp, &tmp_arg ) )
-		return JS_FALSE;
+	JSString *jsstring = JS_ValueToString(cx, vp);
+	JSB_PRECONDITION(jsstr, "Error converting value to string");
+
+	char *cstr = JS_EncodeString(cx, jsstring);
+	JSB_PRECONDITION(cstr, "Error encoding string");
 	
-	JSB_PRECONDITION( tmp_arg && JS_IsTypedArrayObject( tmp_arg, cx ), "Not a TypedArray object");
-    
-	JSB_PRECONDITION( JS_GetTypedArrayByteLength( tmp_arg, cx ) == sizeof(long long), "Invalid Typed Array lenght");
-	
-	int32_t* arg_array = (int32_t*)JS_GetArrayBufferViewData( tmp_arg, cx );
-	long long ret =  arg_array[0];
-	ret = ret << 32;
-	ret |= arg_array[1];
+	long long ret = stroll(cstr, NULL, 10);
 	
 	*r = ret;
 	return JS_TRUE;
@@ -297,10 +293,9 @@ jsval cpBB_to_jsval(JSContext *cx, cpBB bb )
 
 jsval longlong_to_jsval( JSContext *cx, long long number )
 {
-	//NSCAssert( sizeof(long long)==8, @"Error!");
-	JSObject *typedArray = JS_NewUint32Array( cx, 2 );
-	int32_t *buffer = (int32_t*)JS_GetArrayBufferViewData(typedArray, cx);
-	buffer[0] = number >> 32;
-	buffer[1] = number & 0xffffffff;
-	return OBJECT_TO_JSVAL(typedArray);
+	char chr[128];
+	snprintf(chr, sizeof(number)-1, "%lld", number);
+	JSString *ret_obj = JS_NewStringCopyZ(cx, chr);
+	return STRING_TO_JSVAL(ret_obj);
 }
+

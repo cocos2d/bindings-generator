@@ -34,13 +34,15 @@ js_type_class_t *_js_global_type_ht = NULL;
 char *_js_log_buf = NULL;
 
 std::vector<sc_register_sth> registrationList;
+std::map<std::string name, JSScript* script> filename_scripts_map;
+std::map<std::string, js::RootedObject*> globals;
 
-static void executeJSFunctionFromReservedSpot(JSContext *cx, JSObject *obj, 
+static void executeJSFunctionFromReservedSpot(JSContext *cx, JSObject *obj,
                                               jsval &dataVal, jsval &retval) {
 
     //  if(p->jsclass->JSCLASS_HAS_RESERVED_SLOTS(1)) {
     jsval func = JS_GetReservedSlot(obj, 0);
-    
+
     if(func == JSVAL_VOID) { return; }
     jsval thisObj = JS_GetReservedSlot(obj, 1);
     if(thisObj == JSVAL_VOID) {
@@ -48,7 +50,7 @@ static void executeJSFunctionFromReservedSpot(JSContext *cx, JSObject *obj,
     } else {
         assert(!JSVAL_IS_PRIMITIVE(thisObj));
         JS_CallFunctionValue(cx, JSVAL_TO_OBJECT(thisObj), func, 1, &dataVal, &retval);
-    }        
+    }
     //  }
 }
 
@@ -61,12 +63,12 @@ void ScriptingCore::executeJSFunctionWithThisObj(jsval thisObj, jsval callback,
 }
 
 
-static void executeJSFunctionWithName(JSContext *cx, JSObject *obj, 
+static void executeJSFunctionWithName(JSContext *cx, JSObject *obj,
                                       const char *funcName, jsval &dataVal,
                                       jsval &retval) {
     JSBool hasAction;
     jsval temp_retval;
-    
+
     if (JS_HasProperty(cx, obj, funcName, &hasAction) && hasAction) {
         if(!JS_GetProperty(cx, obj, funcName, &temp_retval)) {
             return;
@@ -74,10 +76,10 @@ static void executeJSFunctionWithName(JSContext *cx, JSObject *obj,
         if(temp_retval == JSVAL_VOID) {
             return;
         }
-        JS_CallFunctionName(cx, obj, funcName, 
+        JS_CallFunctionName(cx, obj, funcName,
                             1, &dataVal, &retval);
     }
-    
+
 }
 
 void js_log(const char *format, ...) {
@@ -102,7 +104,7 @@ void registerDefaultClasses(JSContext* cx, JSObject* global) {
         js_log("error initializing the standard classes");
     }
 
-    // 
+    //
     // Javascript controller (__jsc__)
     //
     JSObject *jsc = JS_NewObject(cx, NULL, NULL, NULL);
@@ -113,13 +115,12 @@ void registerDefaultClasses(JSContext* cx, JSObject* global) {
     JS_DefineFunction(cx, jsc, "dumpRoot", ScriptingCore::dumpRoot, 0, JSPROP_READONLY | JSPROP_PERMANENT | JSPROP_ENUMERATE );
     JS_DefineFunction(cx, jsc, "addGCRootObject", ScriptingCore::addRootJS, 1, JSPROP_READONLY | JSPROP_PERMANENT | JSPROP_ENUMERATE );
     JS_DefineFunction(cx, jsc, "removeGCRootObject", ScriptingCore::removeRootJS, 1, JSPROP_READONLY | JSPROP_PERMANENT | JSPROP_ENUMERATE );
-    JS_DefineFunction(cx, jsc, "executeScript", ScriptingCore::executeScript, 1, JSPROP_READONLY | JSPROP_PERMANENT | JSPROP_ENUMERATE );
 
     // register some global functions
     JS_DefineFunction(cx, global, "require", ScriptingCore::executeScript, 1, JSPROP_READONLY | JSPROP_PERMANENT);
     JS_DefineFunction(cx, global, "log", ScriptingCore::log, 0, JSPROP_READONLY | JSPROP_PERMANENT);
-    JS_DefineFunction(cx, global, "executeScript", ScriptingCore::executeScript, 1, JSPROP_READONLY | JSPROP_PERMANENT);
     JS_DefineFunction(cx, global, "forceGC", ScriptingCore::forceGC, 0, JSPROP_READONLY | JSPROP_PERMANENT);
+    JS_DefineFunction(cx, global, "newGlobal", jsNewGlobal, 1, JSPROP_READONLY | JSPROP_PERMANENT);
 }
 
 void sc_finalize(JSFreeOp *freeOp, JSObject *obj) {
@@ -170,23 +171,16 @@ void ScriptingCore::string_report(jsval val) {
 JSBool ScriptingCore::evalString(const char *string, jsval *outVal, const char *filename)
 {
     jsval rval;
-    const char *fname = (filename ? filename : "noname");
-    uint32_t lineno = 1;
-    if (outVal == NULL) {
-        outVal = &rval;
+    JSScript* script = JS_CompileScript(cx, global, string, strlen(string), filename, 1);
+    if (script) {
+        filename_script[filename] = script;
+        JSBool evaluatedOK = JS_ExecuteScript(_cx, global, script, &rval);
+        if (JS_FALSE == evaluatedOK) {
+            LOGD(stderr, "(evaluatedOK == JS_FALSE)");
+        }
+        return evaluatedOK;
     }
-
-    JSBool evaluatedOK = JS_EvaluateScript(cx, global,
-                                           string, strlen(string),
-                                           fname, lineno, outVal);
-
-    if (JS_FALSE == evaluatedOK) {
-        LOGD("(evaluatedOK == JS_FALSE)");
-    } else {
-        this->string_report(*outVal);
-    }
-
-    return evaluatedOK;
+    return false;
 }
 
 void ScriptingCore::start() {
@@ -208,8 +202,43 @@ void ScriptingCore::removeAllRoots(JSContext *cx) {
     HASH_CLEAR(hh, _js_global_type_ht);
 }
 
+JSObject* NewGlobalObject(JSContext* cx)
+{
+    JSObject* glob = JS_NewGlobalObject(cx, &global_class, NULL);
+    if (!glob) {
+        return NULL;
+    }
+    JSAutoCompartment ac(cx, glob);
+    if (!JS_InitStandardClasses(cx, glob))
+        return NULL;
+    if (!JS_InitReflect(cx, glob))
+        return NULL;
+    if (!JS_DefineDebuggerObject(cx, glob))
+        return NULL;
+
+    return glob;
+}
+
+JSBool jsNewGlobal(JSContext* cx, unsigned argc, jsval* vp)
+{
+    if (argc == 1) {
+        jsval *argv = JS_ARGV(cx, vp);
+        JSString *jsstr = JS_ValueToString(cx, argv[0]);
+        std::string key = JS_EncodeString(cx, jsstr);
+        js::RootedObject *global = globals[key];
+        if (!global) {
+            global = new js::RootedObject(cx, NewGlobalObject(cx));
+            JS_WrapObject(cx, global->address());
+            globals[key] = global;
+        }
+        JS_SET_RVAL(cx, vp, OBJECT_TO_JSVAL(*global));
+        return JS_TRUE;
+    }
+    return JS_FALSE;
+}
+
 void ScriptingCore::createGlobalContext() {
-    if (this->cx && this->rt) {        
+    if (this->cx && this->rt) {
         ScriptingCore::removeAllRoots(this->cx);
         JS_DestroyContext(this->cx);
         JS_DestroyRuntime(this->rt);
@@ -223,7 +252,7 @@ void ScriptingCore::createGlobalContext() {
     JS_SetOptions(this->cx, JS_GetOptions(this->cx) & ~JSOPTION_METHODJIT);
     JS_SetOptions(this->cx, JS_GetOptions(this->cx) & ~JSOPTION_METHODJIT_ALWAYS);
     JS_SetErrorReporter(this->cx, ScriptingCore::reportError);
-    this->global = JS_NewCompartmentAndGlobalObject(cx, &global_class, NULL);
+    this->global = NewGlobalObject(this->cx);//JS_NewCompartmentAndGlobalObject(cx, &global_class, NULL);
     for (std::vector<sc_register_sth>::iterator it = registrationList.begin(); it != registrationList.end(); it++) {
         sc_register_sth callback = *it;
         callback(this->cx, this->global);
@@ -252,7 +281,7 @@ fileutils_read_into_new_memory(const char* relativepath,
                            AASSET_MODE_UNKNOWN);
     if (NULL == asset) {
         LOGD("asset : is NULL");
-        return 0; 
+        return 0;
     }
 
     off_t size = AAsset_getLength(asset);
@@ -327,41 +356,36 @@ static size_t readFileInMemory(const char *path, unsigned char **buff) {
     return readBytes;
 }
 
-JSBool ScriptingCore::runScript(const char *path)
+JSBool ScriptingCore::runScript(const char *path, JSObject* glob, JSContext* cx_)
 {
     cocos2d::CCFileUtils *futil = cocos2d::CCFileUtils::sharedFileUtils();
-#ifdef DEBUG
-    /**
-     * dpath should point to the parent directory of the "JS" folder. If this is
-     * set to "" (as it is now) then it will take the scripts from the app bundle.
-     * By setting the absolute path you can iterate the development only by
-     * modifying those scripts and reloading from the simulator (no recompiling/
-     * relaunching)
-     */
-//  std::string dpath("/Users/rabarca/Desktop/testjs/testjs/");
-    std::string dpath("");
-    dpath += path;
-    const char *realPath = futil->fullPathFromRelativePath(dpath.c_str());
-#else
-    const char *realPath = NULL;
-    futil->fullPathFromRelativePath(path);
-#endif
-
-    if (!realPath) {
-        return JS_FALSE;
+    if (!path) {
+        return false;
     }
-
-    unsigned char *content = NULL;
-    unsigned long contentSize = 0;
-
-    contentSize = readFileInMemory(realPath, &content);
-    JSBool ret = JS_FALSE;
-    if (content && contentSize) {
-        jsval rval;
-        ret = this->evalString((const char *)content, &rval, path);
-        free(content);
+    std::string rpath;
+    if (path[0] == '/') {
+        rpath = path;
+    } else {
+        rpath = futil->fullPathFromRelativePath(path);
     }
-    return ret;
+    if (glob == NULL) {
+        glob = global;
+    }
+    if (cx_ == NULL) {
+        cx_ = cx;
+    }
+    JSScript* script = JS_CompileUTF8File(cx, glob, rpath.c_str());
+    jsval rval;
+    JSBool evaluatedOK = false;
+    if (script) {
+        filename_script[path] = script;
+        JSAutoCompartment ac(cx, glob);
+        evaluatedOK = JS_ExecuteScript(cx, glob, script, &rval);
+        if (JS_FALSE == evaluatedOK) {
+            fprintf(stderr, "(evaluatedOK == JS_FALSE)\n");
+        }
+    }
+    return evaluatedOK;
 }
 
 #endif
@@ -422,14 +446,29 @@ JSBool ScriptingCore::setReservedSpot(uint32_t i, JSObject *obj, jsval value) {
 
 JSBool ScriptingCore::executeScript(JSContext *cx, uint32_t argc, jsval *vp)
 {
-	JSBool ret = JS_FALSE;
-	if (argc == 1) {
-		JSString *string;
-		if (JS_ConvertArguments(cx, argc, JS_ARGV(cx, vp), "S", &string) == JS_TRUE) {
-			ret = ScriptingCore::getInstance()->runScript(JS_EncodeString(cx, string));
-		}
-	}
-	return ret;
+    if (argc >= 1) {
+        jsval* argv = JS_ARGV(cx, vp);
+        JSString* str = JS_ValueToString(cx, argv[0]);
+        const char* path = JS_EncodeString(cx, str);
+        JSBool res = false;
+        if (argc == 2 && argv[1].isString()) {
+            JSString* globalName = JSVAL_TO_STRING(argv[1]);
+            const char* name = JS_EncodeString(cx, globalName);
+            js::RootedObject* rootedGlobal = globals[name];
+            if (rootedGlobal) {
+                JS_free(cx, (void*)name);
+                res = ScriptingCore::getInstance()->runScript(path, rootedGlobal->get());
+            } else {
+                JS_ReportError(cx, "Invalid global object: %s", name);
+                return JS_FALSE;
+            }
+        } else {
+            res = ScriptingCore::getInstance()->runScript(path);
+        }
+        JS_free(cx, (void*)path);
+        return res;
+    }
+    return JS_TRUE;
 }
 
 JSBool ScriptingCore::forceGC(JSContext *cx, uint32_t argc, jsval *vp)
@@ -484,14 +523,14 @@ JSBool ScriptingCore::removeRootJS(JSContext *cx, uint32_t argc, jsval *vp)
 int ScriptingCore::executeFunctionWithIntegerData(int nHandler, int data, CCNode *self) {
     js_proxy_t * p;
     JS_GET_PROXY(p, self);
-    
+
     if (!p) return 0;
-    
+
     jsval retval;
     jsval dataVal = INT_TO_JSVAL(1);
     js_proxy_t *proxy;
     JS_GET_PROXY(proxy, self);
-    
+
     std::string funcName = "";
     if(data == kCCNodeOnEnter) {
         executeJSFunctionWithName(this->cx, p->obj, "onEnter", dataVal, retval);
@@ -502,45 +541,43 @@ int ScriptingCore::executeFunctionWithIntegerData(int nHandler, int data, CCNode
         executeJSFunctionFromReservedSpot(this->cx, p->obj, dataVal, retval);
     } else if(data == kCCNodeOnEnterTransitionDidFinish) {
         executeJSFunctionWithName(this->cx, p->obj, "onEnterTransitionDidFinish", dataVal, retval);
-    } else if(data == kCCNodeOnExitTransitionDidStart) { executeJSFunctionWithName(this->cx, p->obj, "onExitTransitionDidStart", dataVal, retval);
+    } else if(data == kCCNodeOnExitTransitionDidStart) {
+        executeJSFunctionWithName(this->cx, p->obj, "onExitTransitionDidStart", dataVal, retval);
     }
-    
-    
-    
     return 1;
 }
 
 
 int ScriptingCore::executeFunctionWithObjectData(int nHandler, const char *name, JSObject *obj, CCNode *self) {
-    
+
     js_proxy_t * p;
     JS_GET_PROXY(p, self);
     if (!p) return 0;
-    
+
     jsval retval;
     jsval dataVal = OBJECT_TO_JSVAL(obj);
-    
+
     executeJSFunctionWithName(this->cx, p->obj, name, dataVal, retval);
-    
+
     return 1;
 }
 
 
 int ScriptingCore::executeFunctionWithFloatData(int nHandler, float data, CCNode *self) {
-    
-    
+
+
     js_proxy_t * p;
     JS_GET_PROXY(p, self);
-    
+
     if (!p) return 0;
-    
+
     jsval retval;
     jsval dataVal = DOUBLE_TO_JSVAL(data);
-    
+
     std::string funcName = "";
-    
+
     executeJSFunctionWithName(this->cx, p->obj, "update", dataVal, retval);
-    
+
     return 1;
 }
 
@@ -559,7 +596,7 @@ static void getTouchesFuncName(int eventType, std::string &funcName) {
             funcName = "onTouchesCancelled";
             break;
     }
-    
+
 }
 
 static void getTouchFuncName(int eventType, std::string &funcName) {
@@ -577,7 +614,7 @@ static void getTouchFuncName(int eventType, std::string &funcName) {
             funcName = "onTouchCancelled";
             break;
     }
-    
+
 }
 
 static void rootObject(JSContext *cx, JSObject *obj) {
@@ -592,7 +629,7 @@ static void unRootObject(JSContext *cx, JSObject *obj) {
 
 
 
-static void getJSTouchObject(JSContext *cx, CCTouch *x, jsval &jsret) {    
+static void getJSTouchObject(JSContext *cx, CCTouch *x, jsval &jsret) {
     js_type_class_t *classType;
     TypeTest<cocos2d::CCTouch> t;
     uint32_t typeId = t.s_id();
@@ -621,14 +658,14 @@ static void removeJSTouchObject(JSContext *cx, CCTouch *x, jsval &jsret) {
 }
 
 
-int ScriptingCore::executeTouchesEvent(int nHandler, int eventType, 
+int ScriptingCore::executeTouchesEvent(int nHandler, int eventType,
                                        CCSet *pTouches, CCNode *self) {
-    
+
     std::string funcName = "";
     getTouchesFuncName(eventType, funcName);
-        
+
     JSObject *jsretArr = JS_NewArrayObject(this->cx, 0, NULL);
-    
+
     JS_AddNamedObjectRoot(this->cx, &jsretArr, "touchArray");
     int count = 0;
     for(CCSetIterator it = pTouches->begin(); it != pTouches->end(); ++it, ++count) {
@@ -638,28 +675,28 @@ int ScriptingCore::executeTouchesEvent(int nHandler, int eventType,
             break;
         }
     }
-    
+
     executeFunctionWithObjectData(1,  funcName.c_str(), jsretArr, self);
-    
+
     JS_RemoveObjectRoot(this->cx, &jsretArr);
-    
+
     for(CCSetIterator it = pTouches->begin(); it != pTouches->end(); ++it, ++count) {
         jsval jsret;
         removeJSTouchObject(this->cx, (CCTouch *) *it, jsret);
     }
 
-    
+
     return 1;
 }
 
-int ScriptingCore::executeCustomTouchesEvent(int eventType, 
+int ScriptingCore::executeCustomTouchesEvent(int eventType,
                                        CCSet *pTouches, JSObject *obj)
 {
-    
+
     jsval retval;
     std::string funcName;
     getTouchesFuncName(eventType, funcName);
-    
+
     JSObject *jsretArr = JS_NewArrayObject(this->cx, 0, NULL);
     JS_AddNamedObjectRoot(this->cx, &jsretArr, "touchArray");
     int count = 0;
@@ -670,53 +707,53 @@ int ScriptingCore::executeCustomTouchesEvent(int eventType,
             break;
         }
     }
-    
+
     jsval jsretArrVal = OBJECT_TO_JSVAL(jsretArr);
     executeJSFunctionWithName(this->cx, obj, funcName.c_str(), jsretArrVal, retval);
     JS_RemoveObjectRoot(this->cx, &jsretArr);
-    
+
     for(CCSetIterator it = pTouches->begin(); it != pTouches->end(); ++it, ++count) {
         jsval jsret;
         removeJSTouchObject(this->cx, (CCTouch *) *it, jsret);
     }
-    
+
     return 1;
 }
 
 
-int ScriptingCore::executeCustomTouchEvent(int eventType, 
+int ScriptingCore::executeCustomTouchEvent(int eventType,
                                            CCTouch *pTouch, JSObject *obj) {
     jsval retval;
     std::string funcName;
     getTouchFuncName(eventType, funcName);
-    
+
     jsval jsTouch;
     getJSTouchObject(this->cx, pTouch, jsTouch);
-    
+
     executeJSFunctionWithName(this->cx, obj, funcName.c_str(), jsTouch, retval);
     return 1;
-    
-}  
+
+}
 
 
-int ScriptingCore::executeCustomTouchEvent(int eventType, 
+int ScriptingCore::executeCustomTouchEvent(int eventType,
                                            CCTouch *pTouch, JSObject *obj,
                                            jsval &retval) {
 
     std::string funcName;
     getTouchFuncName(eventType, funcName);
-    
+
     jsval jsTouch;
     getJSTouchObject(this->cx, pTouch, jsTouch);
 
     executeJSFunctionWithName(this->cx, obj, funcName.c_str(), jsTouch, retval);
     return 1;
-    
-}  
+
+}
 
 
 int ScriptingCore::executeSchedule(int nHandler, float dt, CCNode *self) {
-    
+
     executeFunctionWithFloatData(nHandler, dt, self);
     return 1;
 }
@@ -873,7 +910,7 @@ CCArray* jsval_to_ccarray(JSContext* cx, jsval v) {
 
 
 jsval ccarray_to_jsval(JSContext* cx, CCArray *arr) {
-    
+
   JSObject *jsretArr = JS_NewArrayObject(cx, 0, NULL);
 
   for(int i = 0; i < arr->count(); ++i) {

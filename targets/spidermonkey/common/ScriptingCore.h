@@ -218,4 +218,10 @@ jsval cccolor4b_to_jsval(JSContext* cx, ccColor4B& v);
 jsval cccolor4f_to_jsval(JSContext* cx, ccColor4F& v);
 jsval cccolor3b_to_jsval(JSContext* cx, ccColor3B& v);
 
+// this is a server socket
+JSBool jsSocketOpen(JSContext* cx, unsigned argc, jsval* vp);
+JSBool jsSocketRead(JSContext* cx, unsigned argc, jsval* vp);
+JSBool jsSocketWrite(JSContext* cx, unsigned argc, jsval* vp);
+JSBool jsSocketClose(JSContext* cx, unsigned argc, jsval* vp);
+
 #endif

@@ -294,7 +294,7 @@ jsval cpBB_to_jsval(JSContext *cx, cpBB bb )
 jsval longlong_to_jsval( JSContext *cx, long long number )
 {
 	char chr[128];
-	snprintf(chr, sizeof(number)-1, "%lld", number);
+	snprintf(chr, sizeof(chr)-1, "%lld", number);
 	JSString *ret_obj = JS_NewStringCopyZ(cx, chr);
 	return STRING_TO_JSVAL(ret_obj);
 }

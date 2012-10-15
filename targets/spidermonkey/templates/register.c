@@ -75,6 +75,9 @@ void js_register_${generator.prefix}_${current_class.class_name}(JSContext *cx, 
 		funcs,
 		NULL, // no static properties
 		st_funcs);
+	// make the class enumerable in the registered namespace
+	JSBool found;
+	JS_SetPropertyAttributes(cx, globalObj, "${current_class.target_class_name}", JSPROP_ENUMERATE | JSPROP_READONLY, &found);
 
 	// add the proto and JSClass to the type->js info hash table
 	TypeTest<${current_class.namespaced_class_name}> t;

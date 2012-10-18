@@ -47,9 +47,9 @@ conversions:
 
   from_native:
     # int to jsval
-    int: "JS_NewNumberValue(cx, ${in_value}, &${out_value})"
-    "unsigned int": "JS_NewNumberValue(cx, ${in_value}, &${out_value})"
-    "unsigned char": "JS_NewNumberValue(cx, ${in_value}, &${out_value})"
+    int: "${out_value} = INT_TO_JSVAL(${in_value})"
+    "unsigned int": "${out_value} = UINT_TO_JSVAL(${in_value})"
+    "unsigned char": "${out_value} = UINT_TO_JSVAL(${in_value})"
     "long long": "${out_value} = long_long_to_jsval(cx, ${in_value})"
     "std::string": "${out_value} = std_string_to_jsval(cx, ${in_value})"
     "const char*": "${out_value} = c_string_to_jsval(cx, ${in_value})"

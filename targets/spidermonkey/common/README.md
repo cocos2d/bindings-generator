@@ -29,11 +29,12 @@ In your main javascript entry point, you need to add some code in order to setup
 environment:
 
 ```javascript
-// in the end of the script:
-
+// main.js
 if (typeof startDebugger !== "undefined") {
+	// when debugger.js is loaded
 	startDebugger(['hello.js'], 'startGame()');
 } else {
+	require('hello.js');
 	startGame();
 }
 ```

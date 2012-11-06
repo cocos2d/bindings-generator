@@ -312,7 +312,7 @@ class NativeClass(object):
 
         registration_name = generator.get_class_or_rename_class(self.class_name)
         if generator.remove_prefix:
-            self.target_class_name = re.sub(generator.remove_prefix, '', registration_name)
+            self.target_class_name = re.sub('^'+generator.remove_prefix, '', registration_name)
         else:
             self.target_class_name = registration_name
         self.namespaced_class_name = namespaced_name(cursor)

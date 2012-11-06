@@ -93,7 +93,8 @@ echo "will run debugger"
 open -a ${TERMINAL} ${PROJECT_DIR}/dbg_client.rb
 ```
 
-![Edit Scheme](debugger1.png)
-![Edit Scheme](debugger2.png)
+![Edit Scheme](https://raw.github.com/funkaster/cxx-generator/master/targets/spidermonkey/common/debugger1.png)
+
+![Edit Scheme](https://raw.github.com/funkaster/cxx-generator/master/targets/spidermonkey/common/debugger2.png)
 
 That's it. Now every time you run your game, the debugger client will open in a new terminal window.

@@ -21,7 +21,7 @@ bool AppDelegate::applicationDidFinishLaunching()
 {
 	...
     ScriptingCore::getInstance()->runScript("debugger.js");
-    ScriptingCore::getInstance()->runScript("main.js");
+    ScriptingCore::getInstance()->runScript("hello.js");
 }
 ```
 

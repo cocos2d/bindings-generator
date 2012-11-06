@@ -21,7 +21,7 @@ bool AppDelegate::applicationDidFinishLaunching()
 {
 	...
     ScriptingCore::getInstance()->runScript("debugger.js");
-    ScriptingCore::getInstance()->runScript("hello.js");
+    ScriptingCore::getInstance()->runScript("main.js");
 }
 ```
 
@@ -45,9 +45,13 @@ the main function that will actually start your game. If you don't have one, mak
 so the debugger can start your code. This is also a good idea to avoid cluttering the global
 namespace.
 
+It is important that the main entry point is separated from your game code, and you should not pass
+the entry point to `startDebugger`. If you keep it this way, then disabling the debugger is as
+simple as commenting the `runScript("debugger.js")` line.
+
 ## A debugging session
 
-One you start your game with a debugger session to be attached, the debugger will stop execution
+Once you start your game with a debugger session to be attached, the debugger will stop execution
 every time it loads a script, and it will also open a TCP socket on port 1337 (you can change that
 port in the `debugger.js` script) that will remain listening until your app dies.
 

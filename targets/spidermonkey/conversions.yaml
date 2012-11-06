@@ -22,8 +22,8 @@ conversions:
     short: "JS_ValueToInt32(cx, ${in_value}, &${out_value})"
     char: "JS_ValueToInt32(cx, ${in_value}, &${out_value})"
     bool: "JS_ValueToBoolean(cx, ${in_value}, &${out_value})"
-    float: "${out_value} = JSVAL_TO_DOUBLE(${in_value})"
-    double: "${out_value} = JSVAL_TO_DOUBLE(${in_value})"
+    float: "JS_ValueToNumber(cx, ${in_value}, &${out_value})"
+    double: "JS_ValueToNumber(cx, ${in_value}, &${out_value})"
     # jsval has to be a TypedArray, a UInt32Array with 2 elements
     "long long": "${out_value} = jsval_to_long_long(cx, ${in_value})"
     "std::string": "${out_value} = jsval_to_std_string(cx, ${in_value})"

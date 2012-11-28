@@ -5,13 +5,6 @@
 * cheetah (for target language templates)
 * libclang, from clang 3.1
 
-If using macports, you can easily install all requirements above.
-
-    sudo port install python27 py27-yaml py27-cheetah clang-3.1 llvm-3.1
-
-You should also modify the generator script, to point to the directory where libclang.dyld is
-located.
-
 # Usage
 
     Usage: generator.py [options] {configfile}
@@ -23,6 +16,47 @@ located.
 
 Basically, you specify a target vm (spidermonkey is the only current target vm) and the section from
 the `.ini` file you want to generate code for.
+
+## Test
+
+Included in this repository is a simple test. Use this to confirm the generator is working and that your environment is set up correctly.
+
+#### NOTE
+
+* The test uses &lt;string&gt; and &lt;stdint.h&gt; so you need a C++ implementation that provides these
+* Currently, the test script is setup to use the Android NDK's GNU libstdc++
+
+### Mac OS X
+
+* Use MacPorts to install the python dependencies
+
+<pre>
+    sudo port install python27 py27-yaml py27-cheetah
+</pre>
+
+* Download and extract [clang+llvm-3.1](http://llvm.org/releases/3.1/clang+llvm-3.1-x86_64-apple-darwin11.tar.gz) from http://llvm.org/releases/download.html#3.1
+* Download and extract the [Android NDK](http://dl.google.com/android/ndk/android-ndk-r8c-darwin-x86.tar.bz2) from http://d.android.com
+* Customize `test/userconf.ini` and `test/user.cfg` for your environment
+  * Copy the userconf.ini.sample and user.cfg.sample
+  * Since we are using MacPorts, set the absolute path to MacPorts' python `PYTHON_BIN` in `user.cfg`
+  * Set the absolute path to where you extracted the Android NDK `androidndkdir`  in `userconf.ini`
+  * Set the absolute path to where you extracted Clang+LLVM `clangllvmdir`  in `userconf.ini`
+  * Set the absolute path to your clone of this repository `cxxgeneratordir` in `userconf.ini`
+* Run the test using MacPorts' python and the downloaded clang
+
+<pre>
+    ./test.sh
+</pre>
+
+### Expected output
+
+Upon running the test you might see some warnings but should not see any errors.
+
+The test will create a directory named simple_test_bindings that contains 3 files
+
+* A .hpp header file for the bindings class
+* A .cpp file implementing the bindings class
+* A .js file that documents how to call (from JavaScript) the methods the C++ class exposes
 
 # The `.ini` file
 

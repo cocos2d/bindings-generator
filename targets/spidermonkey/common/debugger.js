@@ -1,17 +1,12 @@
-// first attempt at the debugger
-
-var g = newGlobal("debug-global");
-dbg = Debugger(g);
+dbg = {};
 
 // fallback for no cc
-cc = cc || {};
+cc = {};
 cc.log = log;
 
 var breakpointHandler = {
 	hit: function (frame) {
 		var script = frame.script;
-		_socketWrite(dbg.socket, "entering breakpoint: \n");
-		_socketWrite(dbg.socket, "  " + script.url + ":" + script.getOffsetLine(frame.offset) + "\n");
 		beginDebug(frame, frame.script);
 	}
 };
@@ -33,51 +28,41 @@ var beginDebug = function (frame, script) {
 		}
 	}
 	var processInput = function (str, socket) {
-		var md = str.match(/^break current:(\d+)/);
-		if (!frame && md) {
-			var codeFound = false, i;
-			offsets = script.getLineOffsets(parseInt(md[1], 10));
-			_socketWrite(socket, "offsets: " + JSON.stringify(offsets) + "\n");
-			for (i=0; i < offsets.lenth; i++) {
-				script.setBreakpoint(offsets[i], breakpointHandler);
-				codeFound = true;
-			}
-			if (offsets.length === 0) {
-				var lines = script.getAllOffsets();
-				var oldLine = parseInt(md[1], 10);
-				for (var line = oldLine; line < lines.length; ++line) {
-					if (lines[line]) {
-						for (i=0; i < lines[line].length; i++) {
-							script.setBreakpoint(lines[line][i], breakpointHandler);
-							codeFound = true;
-						}
+		var md = str.match(/^b(reak)?\s+([^:]+):(\d+)/);
+		if (md) {
+			var scripts = dbg.scripts[md[2]],
+				tmpScript = null;
+			if (scripts) {
+				var breakLine = parseInt(md[3], 10),
+					off = -1;
+				for (var n=0; n < scripts.length; n++) {
+					offsets = scripts[n].getLineOffsets(breakLine);
+					if (offsets.length > 0) {
+						off = offsets[0];
+						tmpScript = scripts[n];
 						break;
 					}
 				}
-			}
-			if (!codeFound) {
-				_socketWrite(socket, "invalid offset: " + offsets.join(",") + "\n");
+				if (off >= 0) {
+					tmpScript.setBreakpoint(off, breakpointHandler);
+					_socketWrite(socket, "breakpoint set for line " + breakLine + " of script " + md[2] + "\n");
+				} else {
+					_socketWrite(socket, "no valid offsets at that line\n");
+				}
 			} else {
-				_socketWrite(socket, "socket set at line " + md[1] + " for current file\n");
+				_socketWrite(socket, "no script named: " + md[2] + "\n");
 			}
 			return;
 		}
-		md = str.match(/^b(reak)?\s+([^:]+):(\d+)/);
+		md = str.match(/^scripts/);
 		if (md) {
-			script = _getScript(md[2]);
-			if (script) {
-				cc.log("here");
-				offsets = script.getLineOffsets(parseInt(md[3], 10));
-				cc.log("offsets: " + offsets.join(","));
-				// script.setBreakpoint(offsets[0], breakpointHandler);
-				// _socketWrite(socket, "breakpoint set for line " + md[3] + " of script " + md[2] + "\n");
-			} else {
-				_socketWrite(socket, "no script with that name" + "\n");
-			}
+			cc.log("sending list of available scripts");
+			_socketWrite(socket, "scripts:\n" + Object.keys(dbg.scripts).join("\n") + "\n");
 			return;
 		}
 		md = str.match(/^s(tep)?/);
 		if (md && frame) {
+			cc.log("will step");
 			dbg.breakLine = script.getOffsetLine(frame.offset) + 1;
 			frame.onStep = function () {
 				beginDebug(frame, frame.script);
@@ -121,15 +106,10 @@ var beginDebug = function (frame, script) {
 				}
 			} else if (res['throw']) {
 				_socketWrite(socket, "!! got exception: " + res['throw'].message + "\n");
-			} else {
-				_socketWrite(socket, "!!! invalid return for eval" + "\n");
-				for (k in res) {
-					_socketWrite(socket, "* " + k + ": " + res[k] + "\n");
-				}
 			}
 			return;
 		} else if (md) {
-			_socketWrite(socket, "! no frame to eval in\n");
+			_socketWrite(socket, "!! no frame to eval in\n");
 			return;
 		}
 		md = str.match(/^line/);
@@ -157,7 +137,11 @@ var beginDebug = function (frame, script) {
 	};
 
 	_socketOpen(1337, function (socket) {
-		_socketWrite(socket, "> " + script.url + "\n");
+		if (frame) {
+			_socketWrite(socket, "> " + script.url + ":" + script.getOffsetLine(frame.offset) + "\n");
+		} else if (script) {
+			_socketWrite(socket, "> " + script.url + "\n");
+		}
 		// set the client socket
 		dbg.socket = socket;
 		var str;
@@ -170,13 +154,25 @@ var beginDebug = function (frame, script) {
 	});
 };
 
+dbg.scripts = [];
+
 dbg.onNewScript = function (script) {
 	// skip if the url is this script
 	var last = script.url.split("/").pop();
-	if (last != "debugger.js" && script.url != "debugger eval code") {
-		cc.log("on new script: " + script.url + "; will enter debugger");
-		beginDebug(null, script);
+
+	var children = script.getChildScripts(),
+		arr = [script].concat(children);
+	/**
+	 * just dumping all the offsets from the scripts
+	for (var i in arr) {
+		cc.log("script: " + arr[i].url);
+		for (var start=arr[i].startLine, j=start; j < start+arr[i].lineCount; j++) {
+			var offsets = arr[i].getLineOffsets(j);
+			cc.log("  off: " + offsets.join(",") + "; line: " + j);
+		}
 	}
+	 */
+	dbg.scripts[last] = arr;
 };
 
 dbg.onDebuggerStatement = function (frame) {
@@ -192,11 +188,21 @@ dbg.onError = function (frame, report) {
 	beginDebug(frame, frame.script);
 };
 
-function startDebugger(files, startFunc) {
+function _prepareDebugger(global) {
+	var tmp = new Debugger(global);
+	tmp.onNewScript = dbg.onNewScript;
+	tmp.onDebuggerStatement = dbg.onDebuggerStatement;
+	tmp.onError = dbg.onError;
+	dbg.dbg = tmp;
+}
+
+function _startDebugger(global, files, startFunc) {
+	cc.log("starting with debugger enabled");
 	for (var i in files) {
-		g['eval']("require('" + files[i] + "');");
+		global['eval']("require('" + files[i] + "');");
 	}
 	if (startFunc) {
-		g['eval'](startFunc);
+		global['eval'](startFunc);
 	}
+	beginDebug();
 }

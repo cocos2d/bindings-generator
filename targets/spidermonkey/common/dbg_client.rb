@@ -62,6 +62,7 @@ class DebugClient
 					}
 					if out
 						client_socket.puts out
+						client_socket.flush
 					end
 				end
 				if income

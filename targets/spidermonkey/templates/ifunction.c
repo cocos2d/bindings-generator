@@ -3,12 +3,13 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 {
 #if $min_args > 0
 	jsval *argv = JS_ARGV(cx, vp);
+	JSBool ok = JS_TRUE;
 #end if
 #if not $is_constructor
 	JSObject *obj = JS_THIS_OBJECT(cx, vp);
 	js_proxy_t *proxy; JS_GET_NATIVE_PROXY(proxy, obj);
 	${namespaced_class_name}* cobj = (${namespaced_class_name} *)(proxy ? proxy->ptr : NULL);
-	TEST_NATIVE_OBJECT(cx, cobj)
+	JSB_PRECONDITION2( cobj, cx, JS_FALSE, "Invalid Native Object");
 #end if
 
 #set arg_list = ""
@@ -30,6 +31,9 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 	#set $arg_array += ["arg"+str(count)]
 	#set $count = $count + 1
 #end for
+	#if $min_args > 0
+		JSB_PRECONDITION2(ok, cx, JS_FALSE, "Error processing arguments");
+	#end if
 #set $arg_list = ", ".join($arg_array)
 #if $is_constructor
 		${namespaced_class_name}* cobj = new ${namespaced_class_name}($arg_list);
@@ -64,6 +68,7 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 		JS_SET_RVAL(cx, vp, jsret);
 	#else
 		cobj->${func_name}($arg_list);
+		JS_SET_RVAL(cx, vp, JSVAL_VOID);
 	#end if
 #end if
 		return JS_TRUE;

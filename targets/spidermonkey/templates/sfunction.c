@@ -5,12 +5,14 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 	#set arg_array = []
 #if $min_args > 0
 	jsval *argv = JS_ARGV(cx, vp);
+	JSBool ok = JS_TRUE;
+
 	#set $count = 0
 	#for $arg in $arguments
 	${arg.to_string($generator)} arg${count};
 		#set $count = $count + 1
 	#end for
-	assert(argc >= ${min_args});
+	JSB_PRECONDITION2( argc >= ${min_args}, cx, JS_FALSE, "Invalid number of arguments" );
 
 	#set $count = 0
 	#for $arg in $arguments
@@ -23,6 +25,7 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
         #set $arg_array += ["arg"+str($count)]
         #set $count = $count + 1
 	#end for
+	JSB_PRECONDITION2(ok, cx, JS_FALSE, "Error processing arguments");
 	#set $arg_list = ", ".join($arg_array)
 #end if
 #if str($ret_type) != "void"
@@ -36,6 +39,7 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 	JS_SET_RVAL(cx, vp, jsret);
 #else
 	${namespaced_class_name}::${func_name}($arg_list);
+	JS_SET_RVAL(cx, vp, JSVAL_VOID);
 #end if
 	return JS_TRUE;
 }

@@ -2,6 +2,7 @@
 JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 {
 	jsval *argv = JS_ARGV(cx, vp);
+	JSBool ok = JS_TRUE;
 	#for func in $implementations
 		#set arg_list = ""
 		#set arg_array = []
@@ -19,6 +20,7 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 		#set $arg_array += ["arg"+str(count)]
 		#set $count = $count + 1
 		#end for
+		JSB_PRECONDITION2(ok, cx, JS_FALSE, "Error processing arguments");
 		#set $arg_list = ", ".join($arg_array)
 		#end if
 		#if str($func.ret_type) != "void"
@@ -36,5 +38,6 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 		return JS_TRUE;
 	}
 	#end for
+	JS_ReportError(cx, "wrong number of arguments");
 	return JS_FALSE;
 }

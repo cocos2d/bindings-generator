@@ -1,5 +1,6 @@
 \#include "jsapi.h"
 \#include "jsfriendapi.h"
+\#include "js_bindings_config.h"
 \#include "${out_file}.hpp"
 #for header in $headers
 \#include "${os.path.basename(header)}"

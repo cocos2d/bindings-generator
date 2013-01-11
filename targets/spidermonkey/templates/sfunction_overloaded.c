@@ -20,10 +20,7 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 		#set $arg_array += ["arg"+str(count)]
 		#set $count = $count + 1
 		#end for
-		if (!ok) {
-			JS_ReportError(cx, "Error processing arguments");
-			return JS_FALSE;
-		}
+		JSB_PRECONDITION2(ok, cx, JS_FALSE, "Error processing arguments");
 		#set $arg_list = ", ".join($arg_array)
 		#end if
 		#if str($func.ret_type) != "void"
@@ -41,5 +38,6 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 		return JS_TRUE;
 	}
 	#end for
+	JS_ReportError(cx, "wrong number of arguments");
 	return JS_FALSE;
 }

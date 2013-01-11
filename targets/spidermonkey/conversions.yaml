@@ -42,7 +42,7 @@ conversions:
       ${($level + 1) * '\t'}JSObject *tmpObj = JSVAL_TO_OBJECT(${in_value});
       ${($level + 1) * '\t'}JS_GET_NATIVE_PROXY(proxy, tmpObj);
       ${($level + 1) * '\t'}${out_value} = (${ntype})(proxy ? proxy->ptr : NULL);
-      ${($level + 1) * '\t'}TEST_NATIVE_OBJECT(cx, ${out_value})
+      ${($level + 1) * '\t'}JSB_PRECONDITION2( ${out_value}, cx, JS_FALSE, "Invalid Native Object");
       ${($level + 0) * '\t'}} while (0)
 
   from_native:

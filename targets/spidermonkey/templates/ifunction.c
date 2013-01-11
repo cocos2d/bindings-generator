@@ -4,6 +4,7 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 #if $min_args > 0
 	jsval *argv = JS_ARGV(cx, vp);
 #end if
+	JSBool ok = JS_TRUE;
 #if not $is_constructor
 	JSObject *obj = JS_THIS_OBJECT(cx, vp);
 	js_proxy_t *proxy; JS_GET_NATIVE_PROXY(proxy, obj);
@@ -30,6 +31,10 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 	#set $arg_array += ["arg"+str(count)]
 	#set $count = $count + 1
 #end for
+		if (!ok) {
+			JS_ReportError(cx, "Error processing arguments");
+			return JS_FALSE;
+		}
 #set $arg_list = ", ".join($arg_array)
 #if $is_constructor
 		${namespaced_class_name}* cobj = new ${namespaced_class_name}($arg_list);

@@ -3,6 +3,7 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 {
 	#set arg_list = ""
 	#set arg_array = []
+	JSBool ok = JS_TRUE;
 #if $min_args > 0
 	jsval *argv = JS_ARGV(cx, vp);
 	#set $count = 0
@@ -23,6 +24,10 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
         #set $arg_array += ["arg"+str($count)]
         #set $count = $count + 1
 	#end for
+	if (!ok) {
+		JS_ReportError(cx, "Error processing arguments");
+		return JS_FALSE;
+	}
 	#set $arg_list = ", ".join($arg_array)
 #end if
 #if str($ret_type) != "void"

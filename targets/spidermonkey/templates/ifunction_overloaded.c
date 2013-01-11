@@ -2,6 +2,8 @@
 JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 {
 	jsval *argv = JS_ARGV(cx, vp);
+	JSBool ok = JS_TRUE;
+
 	JSObject *obj;
 	${namespaced_class_name}* cobj;
 #if not $is_constructor
@@ -28,6 +30,10 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 			#set $arg_array += ["arg"+str(count)]
 			#set $count = $count + 1
 		#end for
+		if (!ok) {
+			JS_ReportError(cx, "Error processing arguments");
+			return JS_FALSE;
+		}
 		#set $arg_list = ", ".join($arg_array)
 	#end if
 	#if $is_constructor

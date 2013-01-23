@@ -10,7 +10,12 @@ template<class T>
 static JSBool dummy_constructor(JSContext *cx, uint32_t argc, jsval *vp) {
 	TypeTest<T> t;
 	T* cobj = new T();
-	cobj->autorelease();
+\#ifdef COCOS2D_JAVASCRIPT
+	cocos2d::CCObject *_ccobj = dynamic_cast<cocos2d::CCObject *>(cobj);
+	if (_ccobj) {
+		_ccobj->autorelease();
+	}
+\#endif
 	js_type_class_t *p;
 	uint32_t typeId = t.s_id();
 	HASH_FIND_INT(_js_global_type_ht, &typeId, p);

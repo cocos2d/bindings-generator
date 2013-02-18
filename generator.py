@@ -708,6 +708,10 @@ def main():
         os.makedirs(outdir)
 
     for t in targets:
+        # Fix for hidden '.svn', '.cvs' and '.git' etc. folders - these must be ignored or otherwise they will be interpreted as a target.
+        if t == ".svn" or t == ".cvs" or t == ".git" or t == ".gitignore":
+            continue
+
         print "\n.... Generating bindings for target", t
         for s in sections:
             print "\n.... .... Processing section", s, "\n"

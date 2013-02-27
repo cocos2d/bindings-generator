@@ -36,7 +36,7 @@ void js_register_${generator.prefix}_${current_class.class_name}(JSContext *cx, 
 	static JSFunctionSpec funcs[] = {
 		#for m in methods
 		#set fn = m['impl']
-		JS_FN("${m['name']}", ${fn.signature_name}, ${fn.min_args}, JSPROP_PERMANENT | JSPROP_SHARED),
+		JS_FN("${m['name']}", ${fn.signature_name}, ${fn.min_args}, JSPROP_PERMANENT | JSPROP_ENUMERATE),
 		#end for
 		JS_FS_END
 	};
@@ -48,7 +48,7 @@ void js_register_${generator.prefix}_${current_class.class_name}(JSContext *cx, 
 	static JSFunctionSpec st_funcs[] = {
 		#for m in st_methods
 		#set fn = m['impl']
-		JS_FN("${m['name']}", ${fn.signature_name}, ${fn.min_args}, JSPROP_PERMANENT | JSPROP_SHARED),
+		JS_FN("${m['name']}", ${fn.signature_name}, ${fn.min_args}, JSPROP_PERMANENT | JSPROP_ENUMERATE),
 		#end for
 		JS_FS_END
 	};

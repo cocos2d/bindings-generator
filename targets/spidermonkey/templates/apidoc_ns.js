@@ -8,5 +8,5 @@
  * @module ${target_ns}
  */
 #end if
-var ${target_ns} = ${target_ns} = ${target_ns} || {};
+var ${target_ns} = ${target_ns} || {};
 #end if

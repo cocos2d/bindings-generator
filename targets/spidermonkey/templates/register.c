@@ -9,7 +9,7 @@ ${current_class.methods.constructor.generate_code($current_class)}
 #set st_methods = $current_class.static_methods_clean()
 
 #if len($current_class.parents) > 0
-extern JSObject *js_${generator.prefix}_${current_class.parents[0].class_name}_prototype;
+extern JSObject *jsb_${current_class.parents[0].class_name}_prototype;
 #end if
 
 void js_${generator.prefix}_${current_class.class_name}_finalize(JSFreeOp *fop, JSObject *obj) {
@@ -26,17 +26,17 @@ void js_${generator.prefix}_${current_class.class_name}_finalize(JSFreeOp *fop, 
 }
 
 void js_register_${generator.prefix}_${current_class.class_name}(JSContext *cx, JSObject *global) {
-	js_${generator.prefix}_${current_class.class_name}_class = (JSClass *)calloc(1, sizeof(JSClass));
-	js_${generator.prefix}_${current_class.class_name}_class->name = "${current_class.target_class_name}";
-	js_${generator.prefix}_${current_class.class_name}_class->addProperty = JS_PropertyStub;
-	js_${generator.prefix}_${current_class.class_name}_class->delProperty = JS_PropertyStub;
-	js_${generator.prefix}_${current_class.class_name}_class->getProperty = JS_PropertyStub;
-	js_${generator.prefix}_${current_class.class_name}_class->setProperty = JS_StrictPropertyStub;
-	js_${generator.prefix}_${current_class.class_name}_class->enumerate = JS_EnumerateStub;
-	js_${generator.prefix}_${current_class.class_name}_class->resolve = JS_ResolveStub;
-	js_${generator.prefix}_${current_class.class_name}_class->convert = JS_ConvertStub;
-	js_${generator.prefix}_${current_class.class_name}_class->finalize = js_${generator.prefix}_${current_class.class_name}_finalize;
-	js_${generator.prefix}_${current_class.class_name}_class->flags = JSCLASS_HAS_RESERVED_SLOTS(2);
+	jsb_${current_class.class_name}_class = (JSClass *)calloc(1, sizeof(JSClass));
+	jsb_${current_class.class_name}_class->name = "${current_class.target_class_name}";
+	jsb_${current_class.class_name}_class->addProperty = JS_PropertyStub;
+	jsb_${current_class.class_name}_class->delProperty = JS_PropertyStub;
+	jsb_${current_class.class_name}_class->getProperty = JS_PropertyStub;
+	jsb_${current_class.class_name}_class->setProperty = JS_StrictPropertyStub;
+	jsb_${current_class.class_name}_class->enumerate = JS_EnumerateStub;
+	jsb_${current_class.class_name}_class->resolve = JS_ResolveStub;
+	jsb_${current_class.class_name}_class->convert = JS_ConvertStub;
+	jsb_${current_class.class_name}_class->finalize = js_${generator.prefix}_${current_class.class_name}_finalize;
+	jsb_${current_class.class_name}_class->flags = JSCLASS_HAS_RESERVED_SLOTS(2);
 
 	#if len($current_class.fields) > 0
 	static JSPropertySpec properties[] = {
@@ -70,14 +70,14 @@ void js_register_${generator.prefix}_${current_class.class_name}(JSContext *cx, 
 	JSFunctionSpec *st_funcs = NULL;
 	#end if
 
-	js_${generator.prefix}_${current_class.class_name}_prototype = JS_InitClass(
+	jsb_${current_class.class_name}_prototype = JS_InitClass(
 		cx, global,
 #if len($current_class.parents) > 0
-		js_${generator.prefix}_${current_class.parents[0].class_name}_prototype,
+		jsb_${current_class.parents[0].class_name}_prototype,
 #else
 		NULL, // parent proto
 #end if
-		js_${generator.prefix}_${current_class.class_name}_class,
+		jsb_${current_class.class_name}_class,
 #if has_constructor
 		js_${generator.prefix}_${current_class.class_name}_constructor, 0, // constructor
 #else if $current_class.is_abstract
@@ -101,10 +101,10 @@ void js_register_${generator.prefix}_${current_class.class_name}(JSContext *cx, 
 	if (!p) {
 		p = (js_type_class_t *)malloc(sizeof(js_type_class_t));
 		p->type = typeId;
-		p->jsclass = js_${generator.prefix}_${current_class.class_name}_class;
-		p->proto = js_${generator.prefix}_${current_class.class_name}_prototype;
+		p->jsclass = jsb_${current_class.class_name}_class;
+		p->proto = jsb_${current_class.class_name}_prototype;
 #if len($current_class.parents) > 0
-		p->parentProto = js_${generator.prefix}_${current_class.parents[0].class_name}_prototype;
+		p->parentProto = jsb_${current_class.parents[0].class_name}_prototype;
 #else
 		p->parentProto = NULL;
 #end if

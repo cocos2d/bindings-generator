@@ -44,6 +44,30 @@ type_map = {
 
 INVALID_NATIVE_TYPE = "??"
 
+default_arg_type_arr = [
+
+# An integer literal.
+cindex.CursorKind.INTEGER_LITERAL,
+
+# A floating point number literal.
+cindex.CursorKind.FLOATING_LITERAL,
+
+# An imaginary number literal.
+cindex.CursorKind.IMAGINARY_LITERAL,
+
+# A string literal.
+cindex.CursorKind.STRING_LITERAL,
+
+# A character literal.
+cindex.CursorKind.CHARACTER_LITERAL,
+
+# [C++ 2.13.5] C++ Boolean Literal.
+cindex.CursorKind.CXX_BOOL_LITERAL_EXPR,
+
+# [C++0x 2.14.7] C++ Pointer Literal.
+cindex.CursorKind.CXX_NULL_PTR_LITERAL_EXPR
+
+]
 
 def native_name_from_type(ntype, underlying=False):
     kind = ntype.get_canonical().kind
@@ -75,15 +99,18 @@ def build_namespace(cursor, namespaces=[]):
     '''
     if cursor:
         parent = cursor.semantic_parent
-        if parent and parent.kind == cindex.CursorKind.NAMESPACE:
-            namespaces.append(parent.displayname)
-            build_namespace(parent, namespaces)
-    namespaces.reverse()
-    return "::".join(namespaces)
+        if parent:
+            if parent.kind == cindex.CursorKind.NAMESPACE or parent.kind == cindex.CursorKind.CLASS_DECL:
+                namespaces.append(parent.displayname)
+                build_namespace(parent, namespaces)
+
+    return namespaces
 
 
 def namespaced_name(declaration_cursor):
-    ns = build_namespace(declaration_cursor, [])
+    ns_list = build_namespace(declaration_cursor, [])
+    ns_list.reverse()
+    ns = "::".join(ns_list)
     if len(ns) > 0:
         return ns + "::" + declaration_cursor.displayname
     return declaration_cursor.displayname
@@ -193,6 +220,20 @@ class NativeField(object):
         else:
             self.pretty_name = self.name
 
+# return True if found default argument.
+def iterate_param_node(param_node):
+    for node in param_node.get_children():
+        if (node.kind == cindex.CursorKind.INTEGER_LITERAL):
+            print("node kind:" + str(node.kind))
+        if (node.kind in default_arg_type_arr):
+            print("------ "+str(node.kind))
+            return True
+
+        if (iterate_param_node(node)):
+            return True
+
+    return False
+
 class NativeFunction(object):
     def __init__(self, cursor):
         self.cursor = cursor
@@ -217,7 +258,19 @@ class NativeFunction(object):
             # mark the function as not supported if at least one argument is not supported
             if nt.not_supported:
                 self.not_supported = True
-        self.min_args = len(self.arguments)
+
+
+        found_default_arg = False
+        index = -1
+
+        for arg_node in self.cursor.get_children():
+            if arg_node.kind == cindex.CursorKind.PARM_DECL:
+                index+=1
+                if (iterate_param_node(arg_node)):
+                    found_default_arg = True
+                    break
+
+        self.min_args = index if found_default_arg else len(self.arguments)
 
     def generate_code(self, current_class=None, generator=None):
         gen = current_class.generator if current_class else generator
@@ -394,9 +447,10 @@ class NativeClass(object):
 
         @param: cursor the cursor to analyze
         '''
-        if cursor.kind == cindex.CursorKind.CXX_BASE_SPECIFIER and not self.class_name in self.generator.base_objects:
+        if cursor.kind == cindex.CursorKind.CXX_BASE_SPECIFIER and not self.class_name in self.generator.classes_have_no_parents:
             parent = cursor.get_definition()
-            if parent and self.generator.in_listed_classes(parent.displayname):
+            if parent.displayname not in self.generator.base_classes_to_skip:
+                #if parent and self.generator.in_listed_classes(parent.displayname):
                 if not self.generator.generated_classes.has_key(parent.displayname):
                     parent = NativeClass(parent, self.generator)
                     self.generator.generated_classes[parent.class_name] = parent
@@ -433,6 +487,8 @@ class NativeClass(object):
                             previous_m.append(m)
                         else:
                             self.methods[registration_name] = NativeOverloadedFunction([m, previous_m])
+            return True
+
         elif self._current_visibility == cindex.AccessSpecifierKind.PUBLIC and cursor.kind == cindex.CursorKind.CONSTRUCTOR and not self.is_abstract:
             m = NativeFunction(cursor)
             m.is_constructor = True
@@ -446,9 +502,10 @@ class NativeClass(object):
                     m = NativeOverloadedFunction([m, previous_m])
                     m.is_constructor = True
                     self.methods['constructor'] = m
+            return True
         # else:
             # print >> sys.stderr, "unknown cursor: %s - %s" % (cursor.kind, cursor.displayname)
-
+        return False
 
 class Generator(object):
     def __init__(self, opts):
@@ -457,7 +514,8 @@ class Generator(object):
         self.prefix = opts['prefix']
         self.headers = opts['headers'].split(' ')
         self.classes = opts['classes']
-        self.base_objects = opts['base_objects'].split(' ')
+        self.classes_have_no_parents = opts['classes_have_no_parents'].split(' ')
+        self.base_classes_to_skip = opts['base_classes_to_skip'].split(' ')
         self.abstract_classes = opts['abstract_classes'].split(' ')
         self.clang_args = opts['clang_args']
         self.target = opts['target']
@@ -470,6 +528,8 @@ class Generator(object):
         self.rename_functions = {}
         self.rename_classes = {}
         self.out_file = opts['out_file']
+        self.script_control_cpp = opts['script_control_cpp'] == "yes"
+
         if opts['skip']:
             list_of_skips = re.split(",\n?", opts['skip'])
             for skip in list_of_skips:
@@ -579,7 +639,7 @@ class Generator(object):
         self.config = data
         implfilepath = os.path.join(self.outdir, self.out_file + ".cpp")
         headfilepath = os.path.join(self.outdir, self.out_file + ".hpp")
-        docfilepath = os.path.join(self.outdir, self.out_file + "api.js")
+        docfilepath = os.path.join(self.outdir, self.out_file + "_api.js")
         self.impl_file = open(implfilepath, "w+")
         self.head_file = open(headfilepath, "w+")
         self.doc_file = open(docfilepath, "w+")
@@ -724,12 +784,14 @@ def main():
                 'outdir': outdir,
                 'remove_prefix': config.get(s, 'remove_prefix'),
                 'target_ns': config.get(s, 'target_namespace'),
-                'base_objects': config.get(s, 'base_objects'),
+                'classes_have_no_parents': config.get(s, 'classes_have_no_parents'),
+                'base_classes_to_skip': config.get(s, 'base_classes_to_skip'),
                 'abstract_classes': config.get(s, 'abstract_classes'),
                 'skip': config.get(s, 'skip'),
                 'rename_functions': config.get(s, 'rename_functions'),
                 'rename_classes': config.get(s, 'rename_classes'),
-                'out_file': opts.out_file or config.get(s, 'prefix')
+                'out_file': opts.out_file or config.get(s, 'prefix'),
+                'script_control_cpp': config.get(s, 'script_control_cpp') if config.has_option(s, 'script_control_cpp') else 'no'
                 }
             generator = Generator(gen_opts)
             generator.generate_code()

@@ -14,7 +14,6 @@ extern JSObject *jsb_${current_class.parents[0].class_name}_prototype;
 
 void js_${generator.prefix}_${current_class.class_name}_finalize(JSFreeOp *fop, JSObject *obj) {
 #if $generator.script_control_cpp
-	LOGD("js_${current_class.class_name}_finalize\n");
     js_proxy_t* nproxy;
     js_proxy_t* jsproxy;
     JS_GET_NATIVE_PROXY(jsproxy, obj);

@@ -223,10 +223,8 @@ class NativeField(object):
 # return True if found default argument.
 def iterate_param_node(param_node):
     for node in param_node.get_children():
-        if (node.kind == cindex.CursorKind.INTEGER_LITERAL):
-            print("node kind:" + str(node.kind))
         if (node.kind in default_arg_type_arr):
-            print("------ "+str(node.kind))
+            # print("------ "+str(node.kind))
             return True
 
         if (iterate_param_node(node)):

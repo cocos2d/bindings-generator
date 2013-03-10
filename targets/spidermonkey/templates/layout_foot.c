@@ -15,7 +15,9 @@ void register_all_${prefix}(JSContext* cx, JSObject* obj) {
 	#end if
 
 	#for jsclass in $sorted_classes
+	#if $in_listed_classes(jsclass)
 	js_register_${prefix}_${jsclass}(cx, obj);
+	#end if
 	#end for
 }
 

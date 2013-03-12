@@ -20,7 +20,7 @@ void js_${generator.prefix}_${current_class.class_name}_finalize(JSFreeOp *fop, 
     if (jsproxy) {
         JS_GET_PROXY(nproxy, jsproxy->ptr);
 
-        ${generator.prefix}::${current_class.class_name}* nobj = static_cast<${generator.prefix}::${current_class.class_name} *>(nproxy->ptr);
+        ${current_class.namespaced_class_name} *nobj = static_cast<${current_class.namespaced_class_name} *>(nproxy->ptr);
         if (nobj)
             delete nobj;
         

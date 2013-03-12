@@ -19,6 +19,11 @@ void js_${generator.prefix}_${current_class.class_name}_finalize(JSFreeOp *fop, 
     JS_GET_NATIVE_PROXY(jsproxy, obj);
     if (jsproxy) {
         JS_GET_PROXY(nproxy, jsproxy->ptr);
+
+        ${generator.prefix}::${current_class.class_name}* nobj = static_cast<${generator.prefix}::${current_class.class_name} *>(nproxy->ptr);
+        if (nobj)
+            delete nobj;
+        
         JS_REMOVE_PROXY(nproxy, jsproxy);
     }
 #end if

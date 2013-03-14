@@ -19,6 +19,11 @@ void js_${generator.prefix}_${current_class.class_name}_finalize(JSFreeOp *fop, 
     JS_GET_NATIVE_PROXY(jsproxy, obj);
     if (jsproxy) {
         JS_GET_PROXY(nproxy, jsproxy->ptr);
+
+        ${current_class.namespaced_class_name} *nobj = static_cast<${current_class.namespaced_class_name} *>(nproxy->ptr);
+        if (nobj)
+            delete nobj;
+        
         JS_REMOVE_PROXY(nproxy, jsproxy);
     }
 #end if
@@ -39,7 +44,7 @@ void js_register_${generator.prefix}_${current_class.class_name}(JSContext *cx, 
 
 	#if len($current_class.fields) > 0
 	static JSPropertySpec properties[] = {
-		{0, 0, 0, 0, 0}
+		{0, 0, 0, JSOP_NULLWRAPPER, JSOP_NULLWRAPPER}
 	};
 	#else
 	JSPropertySpec *properties = NULL;

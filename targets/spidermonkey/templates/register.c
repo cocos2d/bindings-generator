@@ -44,7 +44,7 @@ void js_register_${generator.prefix}_${current_class.class_name}(JSContext *cx, 
 
 	#if len($current_class.fields) > 0
 	static JSPropertySpec properties[] = {
-		{0, 0, 0, {0, 0}, {0, 0}}
+		{0, 0, 0, JSOP_NULLWRAPPER, JSOP_NULLWRAPPER}
 	};
 	#else
 	JSPropertySpec *properties = NULL;

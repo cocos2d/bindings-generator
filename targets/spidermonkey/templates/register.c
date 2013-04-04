@@ -29,6 +29,22 @@ void js_${generator.prefix}_${current_class.class_name}_finalize(JSFreeOp *fop, 
 #end if
 }
 
+#if not $current_class.is_abstract
+static JSBool js_${generator.prefix}_${current_class.class_name}_ctor(JSContext *cx, uint32_t argc, jsval *vp)
+{
+	JSObject *obj = JS_THIS_OBJECT(cx, vp);
+    ${current_class.namespaced_class_name} *nobj = new ${current_class.namespaced_class_name}();
+    js_proxy_t* p;
+    JS_NEW_PROXY(p, nobj, obj);
+#if not $generator.script_control_cpp
+    nobj->autorelease();
+    JS_AddNamedObjectRoot(cx, &p->obj, "${current_class.namespaced_class_name}");
+#end if 
+    JS_SET_RVAL(cx, vp, JSVAL_VOID);
+    return JS_TRUE;
+}
+
+#end if
 void js_register_${generator.prefix}_${current_class.class_name}(JSContext *cx, JSObject *global) {
 	jsb_${current_class.class_name}_class = (JSClass *)calloc(1, sizeof(JSClass));
 	jsb_${current_class.class_name}_class->name = "${current_class.target_class_name}";
@@ -56,7 +72,10 @@ void js_register_${generator.prefix}_${current_class.class_name}(JSContext *cx, 
 		#set fn = m['impl']
 		JS_FN("${m['name']}", ${fn.signature_name}, ${fn.min_args}, JSPROP_PERMANENT | JSPROP_ENUMERATE),
 		#end for
-		JS_FS_END
+#if not $current_class.is_abstract
+        JS_FN("ctor", js_${generator.prefix}_${current_class.class_name}_ctor, 0, JSPROP_PERMANENT | JSPROP_ENUMERATE),
+#end if
+        JS_FS_END
 	};
 	#else
 	JSFunctionSpec *funcs = NULL;

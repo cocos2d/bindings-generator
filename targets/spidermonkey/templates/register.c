@@ -13,6 +13,7 @@ extern JSObject *jsb_${current_class.parents[0].class_name}_prototype;
 #end if
 
 void js_${generator.prefix}_${current_class.class_name}_finalize(JSFreeOp *fop, JSObject *obj) {
+    CCLOGINFO("jsbindings: finalizing JS object %p (${current_class.class_name})", obj);
 #if $generator.script_control_cpp
     js_proxy_t* nproxy;
     js_proxy_t* jsproxy;

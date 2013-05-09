@@ -37,6 +37,7 @@ conversions:
     "CCArray*": "ok &= jsval_to_ccarray(cx, ${in_value}, &${out_value})"
     "CCDictionary*": "ok &= jsval_to_ccdictionary(cx, ${in_value}, &${out_value})"
     "CCAffineTransform": "ok &= jsval_to_ccaffinetransform(cx, ${in_value}, &${out_value})"
+    "ccFontDefinition":  "ok &= jsval_to_ccfontdefinition(cx, ${in_value}, &${out_value})"
     object: |
       do {
       ${($level + 1) * '\t'}js_proxy_t *proxy;

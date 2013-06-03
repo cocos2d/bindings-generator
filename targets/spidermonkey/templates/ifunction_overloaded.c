@@ -8,7 +8,7 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 	${namespaced_class_name}* cobj = NULL;
 #if not $is_constructor
 	obj = JS_THIS_OBJECT(cx, vp);
-	js_proxy_t *proxy; JS_GET_NATIVE_PROXY(proxy, obj);
+	js_proxy_t *proxy = jsb_get_js_proxy(obj);
 	cobj = (${namespaced_class_name} *)(proxy ? proxy->ptr : NULL);
 	JSB_PRECONDITION2( cobj, cx, JS_FALSE, "Invalid Native Object");
 #end if
@@ -54,8 +54,7 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 			HASH_FIND_INT(_js_global_type_ht, &typeId, typeClass);
 			assert(typeClass);
 			obj = JS_NewObject(cx, typeClass->jsclass, typeClass->proto, typeClass->parentProto);
-			js_proxy_t *proxy;
-			JS_NEW_PROXY(proxy, cobj, obj);
+			js_proxy_t* proxy = jsb_new_proxy(cobj, obj);
 #if not $generator.script_control_cpp
 			JS_AddNamedObjectRoot(cx, &proxy->obj, "${namespaced_class_name}");
 #end if

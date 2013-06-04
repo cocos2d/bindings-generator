@@ -17,15 +17,15 @@ void js_${generator.prefix}_${current_class.class_name}_finalize(JSFreeOp *fop, 
 #if $generator.script_control_cpp
     js_proxy_t* nproxy;
     js_proxy_t* jsproxy;
-    JS_GET_NATIVE_PROXY(jsproxy, obj);
+    jsproxy = jsb_get_js_proxy(obj);
     if (jsproxy) {
-        JS_GET_PROXY(nproxy, jsproxy->ptr);
+        nproxy = jsb_get_native_proxy(jsproxy->ptr);
 
         ${current_class.namespaced_class_name} *nobj = static_cast<${current_class.namespaced_class_name} *>(nproxy->ptr);
         if (nobj)
             delete nobj;
         
-        JS_REMOVE_PROXY(nproxy, jsproxy);
+        jsb_remove_proxy(nproxy, jsproxy);
     }
 #end if
 }
@@ -35,8 +35,7 @@ static JSBool js_${generator.prefix}_${current_class.class_name}_ctor(JSContext 
 {
 	JSObject *obj = JS_THIS_OBJECT(cx, vp);
     ${current_class.namespaced_class_name} *nobj = new ${current_class.namespaced_class_name}();
-    js_proxy_t* p;
-    JS_NEW_PROXY(p, nobj, obj);
+    js_proxy_t* p = jsb_new_proxy(nobj, obj);
 #if not $generator.script_control_cpp
     nobj->autorelease();
     JS_AddNamedObjectRoot(cx, &p->obj, "${current_class.namespaced_class_name}");

@@ -19,8 +19,7 @@ static JSBool dummy_constructor(JSContext *cx, uint32_t argc, jsval *vp) {
 	HASH_FIND_INT(_js_global_type_ht, &typeId, p);
 	assert(p);
 	JSObject *_tmp = JS_NewObject(cx, p->jsclass, p->proto, p->parentProto);
-	js_proxy_t *pp;
-	JS_NEW_PROXY(pp, cobj, _tmp);
+	js_proxy_t *pp = jsb_new_proxy(cobj, _tmp);
 #if not $script_control_cpp
 	JS_AddObjectRoot(cx, &pp->obj);
 #end if

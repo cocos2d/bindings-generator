@@ -433,10 +433,11 @@ class NativeClass(object):
         self.generator.impl_file.write(str(register))
         self.generator.doc_file.write(str(apidoc_classfoot_js))
 
-    def _deep_iterate(self, cursor=None):
+    def _deep_iterate(self, cursor=None, depth=0):
         for node in cursor.get_children():
+            # print("%s%s - %s" % ("> " * depth, node.displayname, node.kind))
             if self._process_node(node):
-                self._deep_iterate(node)
+                self._deep_iterate(node, depth + 1)
 
     def _process_node(self, cursor):
         '''
@@ -488,6 +489,11 @@ class NativeClass(object):
             return True
 
         elif self._current_visibility == cindex.AccessSpecifierKind.PUBLIC and cursor.kind == cindex.CursorKind.CONSTRUCTOR and not self.is_abstract:
+            # Skip copy constructor
+            if cursor.displayname == self.class_name + "(const " + self.namespaced_class_name + " &)":
+                # print "Skip copy constructor: " + cursor.displayname
+                return True
+
             m = NativeFunction(cursor)
             m.is_constructor = True
             if not self.methods.has_key('constructor'):

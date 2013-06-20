@@ -9,7 +9,7 @@ static JSBool dummy_constructor(JSContext *cx, uint32_t argc, jsval *vp) {
 	TypeTest<T> t;
 	T* cobj = new T();
 #if not $script_control_cpp
-	cocos2d::CCObject *_ccobj = dynamic_cast<cocos2d::CCObject *>(cobj);
+	cocos2d::Object *_ccobj = dynamic_cast<cocos2d::Object *>(cobj);
 	if (_ccobj) {
 		_ccobj->autorelease();
 	}

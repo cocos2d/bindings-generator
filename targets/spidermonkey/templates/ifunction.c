@@ -43,7 +43,7 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 		#if $is_constructor
 		${namespaced_class_name}* cobj = new ${namespaced_class_name}($arg_list);
 #if not $generator.script_control_cpp
-		cocos2d::CCObject *_ccobj = dynamic_cast<cocos2d::CCObject *>(cobj);
+		cocos2d::Object *_ccobj = dynamic_cast<cocos2d::Object *>(cobj);
 		if (_ccobj) {
 			_ccobj->autorelease();
 		}

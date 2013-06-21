@@ -3,7 +3,7 @@
 * python2.7
 * py-yaml
 * cheetah (for target language templates)
-* libclang, from clang 3.1
+* libclang, from clang 3.3
 
 # Usage
 
@@ -34,8 +34,8 @@ Included in this repository is a simple test. Use this to confirm the generator 
     sudo port install python27 py27-yaml py27-cheetah
 </pre>
 
-* Download and extract [clang+llvm-3.1](http://llvm.org/releases/3.1/clang+llvm-3.1-x86_64-apple-darwin11.tar.gz) from http://llvm.org/releases/download.html#3.1
-* Download and extract the [Android NDK](http://dl.google.com/android/ndk/android-ndk-r8c-darwin-x86.tar.bz2) from http://d.android.com
+* Download and extract [clang+llvm-3.3](http://llvm.org/releases/3.3/clang+llvm-3.3-x86_64-apple-darwin12.tar.gz) from http://llvm.org/releases/download.html#3.3
+* Download and extract the [Android NDK](http://dl.google.com/android/ndk/android-ndk-r8e-darwin-x86_64.tar.bz2) from http://d.android.com
 * Customize `test/userconf.ini` and `test/user.cfg` for your environment
   * Copy the userconf.ini.sample and user.cfg.sample
   * Since we are using MacPorts, set the absolute path to MacPorts' python `PYTHON_BIN` in `user.cfg`

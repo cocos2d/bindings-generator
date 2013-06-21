@@ -782,9 +782,14 @@ CursorKind.LABEL_REF = CursorKind(48)
 # that has not yet been resolved to a specific function or function template.
 CursorKind.OVERLOADED_DECL_REF = CursorKind(49)
 
+  # /**
+  #  * \brief A reference to a variable that occurs in some non-expression 
+  #  * context, e.g., a C++ lambda capture list.
+  #  */
+CursorKind.VARIABLE_REF = CursorKind(50)
+  
 ###
 # Invalid/Error Kinds
-
 CursorKind.INVALID_FILE = CursorKind(70)
 CursorKind.NO_DECL_FOUND = CursorKind(71)
 CursorKind.NOT_IMPLEMENTED = CursorKind(72)
@@ -965,6 +970,22 @@ CursorKind.PACK_EXPANSION_EXPR = CursorKind(142)
 # pack.
 CursorKind.SIZE_OF_PACK_EXPR = CursorKind(143)
 
+# Represents a C++ lambda expression that produces a local function object.
+# void abssort(float *x, unsigned N) {
+#   std::sort(x, x + N,
+#             [](float a, float b) {
+#               return std::abs(a) < std::abs(b);
+#             });
+# }
+
+CursorKind.LAMBDA_EXPR = CursorKind(144)
+
+# Objective-c Boolean Literal.
+CursorKind.OBJC_BOOL_LITERAL_EXPR = CursorKind(145)
+
+# Represents the "self" expression in a ObjC method.
+CursorKind.OBJC_SELF_EXPR = CursorKind(146)
+
 # A statement whose specific kind is not exposed via this interface.
 #
 # Unexposed statements have the same operations as any other kind of statement;
@@ -1092,6 +1113,11 @@ CursorKind.PREPROCESSING_DIRECTIVE = CursorKind(500)
 CursorKind.MACRO_DEFINITION = CursorKind(501)
 CursorKind.MACRO_INSTANTIATION = CursorKind(502)
 CursorKind.INCLUSION_DIRECTIVE = CursorKind(503)
+
+# Extra Declarations
+
+# A module import declaration.
+CursorKind.MODULE_IMPORT_DECL = CursorKind(600)
 
 ### Cursors ###
 
@@ -1474,12 +1500,7 @@ class TypeKind(object):
     @property
     def spelling(self):
         """Retrieve the spelling of this TypeKind."""
-        TypeKind_spelling = conf.lib.clang_getTypeKindSpelling
-        TypeKind_spelling.argtypes = [c_uint]
-        TypeKind_spelling.restype = _CXString
-        TypeKind_spelling.errcheck = _CXString.from_result
-
-        return TypeKind_spelling(self.value)
+        return conf.lib.clang_getTypeKindSpelling(self.value)
 
     @staticmethod
     def from_id(id):
@@ -1489,9 +1510,6 @@ class TypeKind(object):
 
     def __repr__(self):
         return 'TypeKind.%s' % (self.name,)
-
-
-
 
 TypeKind.INVALID = TypeKind(0)
 TypeKind.UNEXPOSED = TypeKind(1)

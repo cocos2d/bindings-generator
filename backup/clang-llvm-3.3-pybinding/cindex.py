@@ -380,63 +380,6 @@ class FixIt(object):
     def __repr__(self):
         return "<FixIt range %r, value %r>" % (self.range, self.value)
 
-
-### Access Specifier Kinds ###
-
-class AccessSpecifierKind(object):
-    """
-    An AccessSpecifierKind describes the kind of access specifier a cursor
-    points to.
-    """
-
-    _kinds = []
-    _name_map = None
-
-    def __init__(self, value):
-        if value >= len(AccessSpecifierKind._kinds):
-            AccessSpecifierKind._kinds += [None] * (value - len(AccessSpecifierKind._kinds) + 1)
-        if AccessSpecifierKind._kinds[value] is not None:
-            raise ValueError,'AccessSpecifierKind already loaded'
-        self.value = value
-        AccessSpecifierKind._kinds[value] = self
-        AccessSpecifierKind._name_map = None
-
-    def from_param(self):
-        return self.value
-
-    @property
-    def name(self):
-        """Get the enumeration name of this access specifier kind"""
-        if self._name_map is None:
-            self._name_map = {}
-            for key,value in AccessSpecifierKind.__dict__.items():
-                if isinstance(value,AccessSpecifierKind):
-                    self._name_map[value] = key
-        return self._name_map[self]
-
-    @staticmethod
-    def from_id(id):
-        if id >= len(AccessSpecifierKind._kinds) or AccessSpecifierKind._kinds[id] is None:
-            raise ValueError,'Unknown access specifier kind'
-        return AccessSpecifierKind._kinds[id]
-
-    @staticmethod
-    def get_all_kinds():
-        """Return all AccessSpecifierKind enumeration instances."""
-        return filter(None, AccessSpecifierKind._kinds)
-
-    def __repr__(self):
-        return 'AccessSpecifierKind.%s' % (self.name,)
-
-###
-# Declaration Kinds
-
-AccessSpecifierKind.INVALID = AccessSpecifierKind(0)
-AccessSpecifierKind.PUBLIC = AccessSpecifierKind(1)
-AccessSpecifierKind.PROTECTED = AccessSpecifierKind(2)
-AccessSpecifierKind.PRIVATE = AccessSpecifierKind(3)
-
-
 class TokenGroup(object):
     """Helper class to facilitate token management.
 
@@ -782,14 +725,9 @@ CursorKind.LABEL_REF = CursorKind(48)
 # that has not yet been resolved to a specific function or function template.
 CursorKind.OVERLOADED_DECL_REF = CursorKind(49)
 
-  # /**
-  #  * \brief A reference to a variable that occurs in some non-expression 
-  #  * context, e.g., a C++ lambda capture list.
-  #  */
-CursorKind.VARIABLE_REF = CursorKind(50)
-  
 ###
 # Invalid/Error Kinds
+
 CursorKind.INVALID_FILE = CursorKind(70)
 CursorKind.NO_DECL_FOUND = CursorKind(71)
 CursorKind.NOT_IMPLEMENTED = CursorKind(72)
@@ -970,22 +908,6 @@ CursorKind.PACK_EXPANSION_EXPR = CursorKind(142)
 # pack.
 CursorKind.SIZE_OF_PACK_EXPR = CursorKind(143)
 
-# Represents a C++ lambda expression that produces a local function object.
-# void abssort(float *x, unsigned N) {
-#   std::sort(x, x + N,
-#             [](float a, float b) {
-#               return std::abs(a) < std::abs(b);
-#             });
-# }
-
-CursorKind.LAMBDA_EXPR = CursorKind(144)
-
-# Objective-c Boolean Literal.
-CursorKind.OBJC_BOOL_LITERAL_EXPR = CursorKind(145)
-
-# Represents the "self" expression in a ObjC method.
-CursorKind.OBJC_SELF_EXPR = CursorKind(146)
-
 # A statement whose specific kind is not exposed via this interface.
 #
 # Unexposed statements have the same operations as any other kind of statement;
@@ -1113,11 +1035,6 @@ CursorKind.PREPROCESSING_DIRECTIVE = CursorKind(500)
 CursorKind.MACRO_DEFINITION = CursorKind(501)
 CursorKind.MACRO_INSTANTIATION = CursorKind(502)
 CursorKind.INCLUSION_DIRECTIVE = CursorKind(503)
-
-# Extra Declarations
-
-# A module import declaration.
-CursorKind.MODULE_IMPORT_DECL = CursorKind(600)
 
 ### Cursors ###
 
@@ -1389,24 +1306,6 @@ class Cursor(Structure):
             children)
         return iter(children)
 
-    def get_children_array(self):
-        """Return an iterator for accessing the children of this cursor."""
-
-        # FIXME: Expose iteration from CIndex, PR6125.
-        def visitor(child, parent, children):
-            # FIXME: Document this assertion in API.
-            # FIXME: There should just be an isNull method.
-            assert child != conf.lib.clang_getNullCursor()
-
-            # Create reference to TU so it isn't GC'd before Cursor.
-            child._tu = self._tu
-            children.append(child)
-            return 1 # continue
-        children = []
-        conf.lib.clang_visitChildren(self, callbacks['cursor_visit'](visitor),
-            children)
-        return children
-
     def get_tokens(self):
         """Obtain Token instances formulating that compose this Cursor.
 
@@ -1426,10 +1325,6 @@ class Cursor(Structure):
         Retrieve the width of a bitfield.
         """
         return conf.lib.clang_getFieldDeclBitWidth(self)
-
-    def get_access_specifier(self):
-        assert self.kind == CursorKind.CXX_ACCESS_SPEC_DECL
-        return conf.lib.clang_getCXXAccessSpecifier(self)
 
     @staticmethod
     def from_result(res, fn, args):
@@ -2862,7 +2757,7 @@ functionList = [
 
   ("clang_getCXXAccessSpecifier",
    [Cursor],
-   AccessSpecifierKind.from_id),
+   c_uint),
 
   ("clang_getDeclObjCTypeEncoding",
    [Cursor],

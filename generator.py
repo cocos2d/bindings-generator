@@ -238,7 +238,7 @@ class NativeFunction(object):
         self.func_name = cursor.spelling
         self.signature_name = self.func_name
         self.arguments = []
-        self.static = cursor.kind == cindex.CursorKind.CXX_METHOD and cursor.is_method_static()
+        self.static = cursor.kind == cindex.CursorKind.CXX_METHOD and cursor.is_static_method()
         self.implementations = []
         self.is_constructor = False
         self.not_supported = False

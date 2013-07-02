@@ -21,7 +21,7 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 							 "in_value": "argv[" + str(count) + "]",
 							 "out_value": "arg" + str(count),
 							 "class_name": $class_name,
-							 "level": 2,
+							 "level": 3,
 							 "ntype": str($arg)})};
 			#set $arg_array += ["arg"+str(count)]
 			#set $count = $count + 1

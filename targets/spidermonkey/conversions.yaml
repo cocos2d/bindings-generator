@@ -40,6 +40,7 @@ conversions:
     "ccFontDefinition":  "ok &= jsval_to_ccfontdefinition(cx, ${in_value}, &${out_value})"
     object: |
       do {
+      ${($level + 1) * '\t'}if (!${in_value}.isObject()) { ok = JS_FALSE; break; }
       ${($level + 1) * '\t'}js_proxy_t *proxy;
       ${($level + 1) * '\t'}JSObject *tmpObj = JSVAL_TO_OBJECT(${in_value});
       ${($level + 1) * '\t'}proxy = jsb_get_js_proxy(tmpObj);

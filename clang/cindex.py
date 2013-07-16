@@ -441,7 +441,7 @@ AccessSpecifierKind.PRIVATE = AccessSpecifierKind(3)
 
 class AvailabilityKind(object):
     """
-    An AvailabilityKind describes the kind of access specifier a cursor
+    An AvailabilityKind describes the kind of availability a cursor
     points to.
     """
 
@@ -462,7 +462,7 @@ class AvailabilityKind(object):
 
     @property
     def name(self):
-        """Get the enumeration name of this access availability kind"""
+        """Get the enumeration name of this availability kind"""
         if self._name_map is None:
             self._name_map = {}
             for key,value in AvailabilityKind.__dict__.items():
@@ -473,7 +473,7 @@ class AvailabilityKind(object):
     @staticmethod
     def from_id(id):
         if id >= len(AvailabilityKind._kinds) or AvailabilityKind._kinds[id] is None:
-            raise ValueError,'Unknown access availability kind'
+            raise ValueError,'Unknown availability kind'
         return AvailabilityKind._kinds[id]
 
     @staticmethod

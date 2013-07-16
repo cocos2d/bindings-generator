@@ -437,6 +437,62 @@ AccessSpecifierKind.PROTECTED = AccessSpecifierKind(2)
 AccessSpecifierKind.PRIVATE = AccessSpecifierKind(3)
 
 
+### Availability Kinds ###
+
+class AvailabilityKind(object):
+    """
+    An AvailabilityKind describes the kind of availability a cursor
+    points to.
+    """
+
+    _kinds = []
+    _name_map = None
+
+    def __init__(self, value):
+        if value >= len(AvailabilityKind._kinds):
+            AvailabilityKind._kinds += [None] * (value - len(AvailabilityKind._kinds) + 1)
+        if AvailabilityKind._kinds[value] is not None:
+            raise ValueError,'AvailabilityKind already loaded'
+        self.value = value
+        AvailabilityKind._kinds[value] = self
+        AvailabilityKind._name_map = None
+
+    def from_param(self):
+        return self.value
+
+    @property
+    def name(self):
+        """Get the enumeration name of this availability kind"""
+        if self._name_map is None:
+            self._name_map = {}
+            for key,value in AvailabilityKind.__dict__.items():
+                if isinstance(value,AvailabilityKind):
+                    self._name_map[value] = key
+        return self._name_map[self]
+
+    @staticmethod
+    def from_id(id):
+        if id >= len(AvailabilityKind._kinds) or AvailabilityKind._kinds[id] is None:
+            raise ValueError,'Unknown availability kind'
+        return AvailabilityKind._kinds[id]
+
+    @staticmethod
+    def get_all_kinds():
+        """Return all AvailabilityKind enumeration instances."""
+        return filter(None, AvailabilityKind._kinds)
+
+    def __repr__(self):
+        return 'AvailabilityKind.%s' % (self.name,)
+
+###
+# Declaration Kinds
+
+AvailabilityKind.AVAILABLE = AvailabilityKind(0)
+AvailabilityKind.DEPRECATED = AvailabilityKind(1)
+AvailabilityKind.NOTAVAILABLE = AvailabilityKind(2)
+AvailabilityKind.NOTACCESSIBLE = AvailabilityKind(3)
+
+
 class TokenGroup(object):
     """Helper class to facilitate token management.
 
@@ -1149,6 +1205,15 @@ class Cursor(Structure):
         definition of that entity.
         """
         return conf.lib.clang_isCursorDefinition(self)
+
+        """
+        Determine the availability of the entity that this cursor refers to,
+        taking the current target platform into account.
+        returns The availability of the cursor.
+        """
+    def get_availability(self):
+        res = conf.lib.clang_getCursorAvailability(self)
+        return res
 
     def is_static_method(self):
         """Returns True if the cursor refers to a C++ member function or member
@@ -2795,6 +2860,10 @@ functionList = [
   ("clang_getCompletionPriority",
    [c_void_p],
    c_int),
+
+  ("clang_getCursorAvailability",
+   [Cursor],
+   AvailabilityKind.from_id),
 
   ("clang_getCString",
    [_CXString],

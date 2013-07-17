@@ -81,8 +81,12 @@ def native_name_from_type(ntype, underlying=False):
         # might be an std::string
         decl = ntype.get_declaration()
         parent = decl.semantic_parent
+        cdecl = ntype.get_canonical().get_declaration()
+        cparent = cdecl.semantic_parent
         if decl.spelling == "string" and parent and parent.spelling == "std":
             return "std::string"
+        elif cdecl.spelling == "function" and cparent and cparent.spelling == "std":
+            return "std::function"
         else:
             # print >> sys.stderr, "probably a function pointer: " + str(decl.spelling)
             return const + decl.spelling
@@ -117,59 +121,79 @@ def namespaced_name(declaration_cursor):
 
 
 class NativeType(object):
-    def __init__(self, ntype):
-        self.type = ntype
-        self.is_pointer = False
+    def __init__(self):
         self.is_object = False
+        self.is_function = False
+        self.is_enum = False
         self.not_supported = False
+        self.param_types = []
+        self.ret_type = None
         self.namespaced_name = ""
         self.name = ""
-        if ntype.kind == cindex.TypeKind.POINTER:
-            pointee = ntype.get_pointee()
-            self.is_pointer = True
-            if pointee.kind == cindex.TypeKind.RECORD:
-                decl = pointee.get_declaration()
-                self.is_object = True
-                self.name = decl.displayname
-                self.namespaced_name = namespaced_name(decl)
-            else:
-                self.name = native_name_from_type(pointee)
-                self.namespaced_name = self.name
-            self.name += "*"
-            self.namespaced_name += "*"
-        elif ntype.kind == cindex.TypeKind.LVALUEREFERENCE:
-            pointee = ntype.get_pointee()
-            decl = pointee.get_declaration()
-            self.namespaced_name = namespaced_name(decl)
-            if pointee.kind == cindex.TypeKind.RECORD:
-                self.name = decl.displayname
-                self.is_object = True
-            else:
-                self.name = native_name_from_type(pointee)
 
+    @staticmethod
+    def from_type(ntype):
+        if ntype.kind == cindex.TypeKind.POINTER:
+            nt = NativeType.from_type(ntype.get_pointee())
+            nt.name += "*"
+            nt.namespaced_name += "*"
+            nt.is_enum = False
+        elif ntype.kind == cindex.TypeKind.LVALUEREFERENCE:
+            nt = NativeType.from_type(ntype.get_pointee())
+            nt.namespaced_name = namespaced_name(ntype.get_pointee().get_declaration())
         else:
+            nt = NativeType()
             if ntype.kind == cindex.TypeKind.RECORD:
                 decl = ntype.get_declaration()
-                self.is_object = True
-                self.name = decl.displayname
-                self.namespaced_name = namespaced_name(decl)
+                nt.is_object = True
+                nt.name = decl.displayname
+                nt.namespaced_name = namespaced_name(decl)
             else:
-                self.name = native_name_from_type(ntype)
-                self.namespaced_name = self.name
+                nt.name = native_name_from_type(ntype)
+                nt.namespaced_name = nt.name
+                nt.is_enum = ntype.get_canonical().kind == cindex.TypeKind.ENUM
+                if nt.name == "std::function":
+                    decl = ntype.get_canonical().get_declaration()
+                    nt.namespaced_name = namespaced_name(decl)
+
+                    r = re.compile('function<(\S+) \((.*)\)>').search(decl.displayname)
+                    (ret_type, params) = r.groups()
+                    params = filter(None, params.split(", "))
+
+                    nt.is_function = True
+                    nt.ret_type = NativeType.from_string(ret_type)
+                    nt.param_types = [NativeType.from_string(string) for string in params]
+
         # mark argument as not supported
-        if self.name == INVALID_NATIVE_TYPE:
-            self.not_supported = True
+        if nt.name == INVALID_NATIVE_TYPE:
+            nt.not_supported = True
+
+        return nt
+
+    @staticmethod
+    def from_string(displayname):
+        displayname = displayname.replace("cocos2d::", "")
+        displayname = displayname.replace(" *", "*")
+
+        nt = NativeType()
+        nt.name = displayname
+        nt.namespaced_name = displayname
+        nt.is_object = True
+        return nt
+
+    @property
+    def lambda_parameters(self):
+        params = ["%s larg%d" % (str(nt), i) for i, nt in enumerate(self.param_types)]
+        return ", ".join(params)
 
     def from_native(self, convert_opts):
         assert(convert_opts.has_key('generator'))
         generator = convert_opts['generator']
         name = self.name
         if self.is_object:
-            if self.is_pointer and not name in generator.config['conversions']['from_native']:
+            if not generator.config['conversions']['from_native'].has_key(name):
                 name = "object"
-            elif not generator.config['conversions']['from_native'].has_key(name):
-                name = "object"
-        elif self.type.get_canonical().kind == cindex.TypeKind.ENUM:
+        elif self.is_enum:
             name = "int"
 
         if generator.config['conversions']['from_native'].has_key(name):
@@ -184,12 +208,16 @@ class NativeType(object):
         generator = convert_opts['generator']
         name = self.name
         if self.is_object:
-            if self.is_pointer and not name in generator.config['conversions']['to_native']:
+            if not name in generator.config['conversions']['to_native']:
                 name = "object"
-            elif not name in generator.config['conversions']['to_native']:
-                name = "object"
-        elif self.type.get_canonical().kind == cindex.TypeKind.ENUM:
+        elif self.is_enum:
             name = "int"
+
+        if self.is_function:
+            tpl = Template(file=os.path.join(generator.target, "templates", "lambda.c"),
+                searchList=[convert_opts, self])
+            indent = convert_opts['level'] * "\t"
+            return str(tpl).replace("\n", "\n" + indent)
 
         if generator.config['conversions']['to_native'].has_key(name):
             tpl = generator.config['conversions']['to_native'][name]
@@ -246,12 +274,12 @@ class NativeFunction(object):
         # get the result
         if result.kind == cindex.TypeKind.LVALUEREFERENCE:
             result = result.get_pointee()
-        self.ret_type = NativeType(cursor.result_type)
+        self.ret_type = NativeType.from_type(cursor.result_type)
         # parse the arguments
         # if self.func_name == "spriteWithFile":
         #   pdb.set_trace()
         for arg in cursor.type.argument_types():
-            nt = NativeType(arg)
+            nt = NativeType.from_type(arg)
             self.arguments.append(nt)
             # mark the function as not supported if at least one argument is not supported
             if nt.not_supported:

@@ -62,7 +62,11 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 #end if
 		#else
 			#if $ret_type.name != "void"
+				#if $ret_type.is_enum
+		int ret = (int)cobj->${func_name}($arg_list);
+				#else
 		${ret_type} ret = cobj->${func_name}($arg_list);
+				#end if
 		jsval jsret;
 		${ret_type.from_native({"generator": $generator,
 									"in_value": "ret",

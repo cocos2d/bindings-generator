@@ -65,8 +65,11 @@ cindex.CursorKind.CHARACTER_LITERAL,
 cindex.CursorKind.CXX_BOOL_LITERAL_EXPR,
 
 # [C++0x 2.14.7] C++ Pointer Literal.
-cindex.CursorKind.CXX_NULL_PTR_LITERAL_EXPR
+cindex.CursorKind.CXX_NULL_PTR_LITERAL_EXPR,
 
+# An expression that refers to some value declaration, such as a function,
+# varible, or enumerator.
+cindex.CursorKind.DECL_REF_EXPR
 ]
 
 def native_name_from_type(ntype, underlying=False):
@@ -249,13 +252,13 @@ class NativeField(object):
             self.pretty_name = self.name
 
 # return True if found default argument.
-def iterate_param_node(param_node):
+def iterate_param_node(param_node, depth=1):
     for node in param_node.get_children():
+        # print(">"*depth+" "+str(node.kind))
         if (node.kind in default_arg_type_arr):
-            # print("------ "+str(node.kind))
             return True
 
-        if (iterate_param_node(node)):
+        if (iterate_param_node(node, depth+1)):
             return True
 
     return False

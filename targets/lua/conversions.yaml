@@ -1,0 +1,80 @@
+definitions:
+  # the names of the functions - we use this to generate the code and to register the functions in
+  # the javascript class
+  ifunction: "lua_${generator.prefix}_${class_name}_${func_name}"
+  sfunction: "lua_${generator.prefix}_${class_name}_${func_name}"
+  constructor: "lua_${generator.prefix}_${class_name}_constructor"
+conversions:
+  # some times you want to use a special native type when converting from spidermonkey to native
+  # the most common case would be from JS-boolean to bool. Using "bool" will fail here since we
+  # pass the address to the conversion method, and a JSBool is defined as an integer in spidermonkey
+  native_types:
+    bool: "JSBool"
+    float: "double"
+    short: "int32_t"
+    "unsigned char": "uint16_t"
+    "char": "int32_t"
+  to_native:
+    # lua to native
+    int: "ok &= luaval_to_int32(tolua_S, ${arg_idx},&${out_value})"
+    "unsigned int": "ok &= luaval_to_uint32(tolua_S, ${arg_idx},&${out_value})"
+    "unsigned char": "ok &= luaval_to_uint16(tolua_S, ${arg_idx},&${out_value})"
+    short: "ok &= luaval_to_int32(tolua_S, ${arg_idx},&${out_value})"
+    char: "ok &= luaval_to_int32(tolua_S, ${arg_idx},&${out_value})"
+    bool: "ok &= luaval_to_boolean(tolua_S, ${arg_idx},&${out_value})" 
+    float: "ok &= luaval_to_number(tolua_S, ${arg_idx},&${out_value})"
+    double: "ok &= luaval_to_number(tolua_S, ${arg_idx},&${out_value})"
+
+    "long long": "ok &= luaval_to_long_long(tolua_S, ${arg_idx},&${out_value})"
+    "std::string": "ok &= luaval_to_std_string(tolua_S, ${arg_idx},&${out_value})"
+    "const char*": "std::string ${out_value}_tmp; ok &= luaval_to_std_string(tolua_S, ${arg_idx}, &${out_value}_tmp); ${out_value} = ${out_value}_tmp.c_str()"
+    "Point": "ok &= luaval_to_point(tolua_S, ${arg_idx}, &${out_value})"
+    "Rect": "ok &= luaval_to_rect(tolua_S, ${arg_idx}, &${out_value})"
+    "Size": "ok &= luaval_to_size(tolua_S, ${arg_idx}, &${out_value})"
+    "const Color4B": "ok &= luaval_to_color4b(tolua_S, ${arg_idx}, &${out_value})"
+    "const Color4F": "ok &= luaval_to_color4f(tolua_S, ${arg_idx}, &${out_value})"
+    "const Color3B": "ok &= luaval_to_color3b(tolua_S, ${arg_idx}, &${out_value})"
+    "Color4B": "ok &=luaval_to_color4b(tolua_S, ${arg_idx}, &${out_value})"
+    "Color4F": "ok &=luaval_to_color4f(tolua_S, ${arg_idx}, &${out_value})"
+    "Color3B": "ok &= luaval_to_color3b(tolua_S, ${arg_idx}, &${out_value})"
+    "Array*": "ok &= jsval_to_ccarray(cx, ${in_value}, &${out_value})"
+    "Dictionary*": "ok &= jsval_to_ccdictionary(cx, ${in_value}, &${out_value})"
+    "AffineTransform": "ok &= jsval_to_ccaffinetransform(cx, ${in_value}, &${out_value})"
+    "FontDefinition":  "ok &= jsval_to_FontDefinition(cx, ${in_value}, &${out_value})"
+    object: |
+      \#if COCOS2D_DEBUG >= 1
+      ${($level) * '\t'}if (!tolua_isusertype(tolua_S,${arg_idx},"${ntype}",0,&tolua_err)){
+      ${($level + 1) * '\t'}tolua_error(tolua_S,"#ferror:",&tolua_err);
+      ${($level + 1) * '\t'}ok = false;
+      ${($level) * '\t'}}
+      ${($level) * '\t'}\#endif
+      ${($level) * '\t'}if(ok){
+      ${($level + 1) * '\t'}${out_value} = (${arg})tolua_tousertype(tolua_S,${arg_idx},0);
+      ${($level) * '\t'}}
+  from_native:
+    # int to lua
+    int: "tolua_pushnumber(tolua_S,(lua_Number)${in_value})"
+    "unsigned int": "tolua_pushnumber(tolua_S,(lua_Number)${in_value})"
+    "unsigned char": "tolua_pushnumber(tolua_S,(lua_Number)${in_value})"
+    short: "tolua_pushnumber(tolua_S,(lua_Number)${in_value})"
+    char: "tolua_pushnumber(tolua_S,(lua_Number)${in_value})"
+    "long long": "tolua_pushnumber(tolua_S,(lua_Number)${in_value})"
+    "std::string": "tolua_pushcppstring(tolua_S,${in_value})"
+    "const char*": "tolua_pushstring(tolua_S,(const char*)${in_value})"
+    bool: "tolua_pushboolean(tolua_S,(bool)${in_value})"
+    float: "tolua_pushnumber(tolua_S,(lua_Number)${in_value})"
+    double: "tolua_pushnumber(tolua_S,(lua_Number)${in_value})"
+    "Point": "point_to_luaval(tolua_S, ${in_value})"
+    "Rect": "rect_to_luaval(tolua_S, ${in_value})"
+    "Size": "size_to_luaval(tolua_S, ${in_value})"
+    "const Color4B": "${out_value} = cccolor4b_to_jsval(cx, ${in_value})"
+    "const Color4F": "${out_value} = cccolor4f_to_jsval(cx, ${in_value})"
+    "const Color3B": "${out_value} = cccolor3b_to_jsval(cx, ${in_value})"
+    "Color4B": "color4b_to_luaval(tolua_S, ${in_value})"
+    "Color4F": "color4f_to_luaval(tolua_S, ${in_value})"
+    "Color3B": "color3b_to_luaval(tolua_S, ${in_value})"
+    "Array*": "${out_value} = ccarray_to_jsval(cx, ${in_value})"
+    "Dictionary*": "${out_value} = ccdictionary_to_jsval(cx, ${in_value})"
+    "AffineTransform": "${out_value} = ccaffinetransform_to_jsval(cx, ${in_value})"
+    "FontDefinition": "${out_value} = FontDefinition_to_jsval(cx, ${in_value})"
+    object: "tolua_pushusertype(tolua_S,${in_value},\"${ntype}\")"

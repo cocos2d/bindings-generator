@@ -49,7 +49,7 @@ void js_register_${generator.prefix}_${current_class.class_name}(JSContext *cx, 
 	jsb_${current_class.class_name}_class = (JSClass *)calloc(1, sizeof(JSClass));
 	jsb_${current_class.class_name}_class->name = "${current_class.target_class_name}";
 	jsb_${current_class.class_name}_class->addProperty = JS_PropertyStub;
-	jsb_${current_class.class_name}_class->delProperty = JS_PropertyStub;
+	jsb_${current_class.class_name}_class->delProperty = JS_DeletePropertyStub;
 	jsb_${current_class.class_name}_class->getProperty = JS_PropertyStub;
 	jsb_${current_class.class_name}_class->setProperty = JS_StrictPropertyStub;
 	jsb_${current_class.class_name}_class->enumerate = JS_EnumerateStub;

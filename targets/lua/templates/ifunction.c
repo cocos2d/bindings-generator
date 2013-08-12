@@ -47,7 +47,7 @@ static int ${signature_name}(lua_State* tolua_S)
 			#set $arg_array += ["arg"+str(count)]
 			#set $count = $count + 1
 		#end while
-		#if $arg_idx > 0
+		#if $arg_idx >= 0
 		if(!ok)
 			return 0;
 		#end if
@@ -55,8 +55,8 @@ static int ${signature_name}(lua_State* tolua_S)
 		#if $is_constructor
 		cobj = new ${namespaced_class_name}($arg_list);
 #if not $generator.script_control_cpp
-		cocos2d::Object *cobj = dynamic_cast<cocos2d::Object *>(cobj);
-		if (cobj) {
+		cocos2d::Object *dynamicObj = dynamic_cast<cocos2d::Object *>(cobj);
+		if (NULL != dynamicObj) {
 			cobj->autorelease();
 		}
 #end if

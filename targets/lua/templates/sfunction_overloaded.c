@@ -36,7 +36,7 @@ static int ${signature_name}(lua_State* tolua_S)
 							 "ntype": $arg.name.replace("*", "")})};
 			#set $arg_array += ["arg"+str(count)]
 			#set $count = $count + 1
-			#if $arg_idx > 0
+			#if $arg_idx >= 0
 			if (!ok) { ok = true; break; }
 			#end if
 			#end while

@@ -54,17 +54,20 @@ static int ${signature_name}(lua_State* tolua_S)
 		#if $is_constructor
 			cobj = new ${namespaced_class_name}($arg_list);
 #if not $generator.script_control_cpp
-		cocos2d::Object *dynamicObj = dynamic_cast<cocos2d::Object *>(cobj);
-		if (NULL != dynamicObj) {
+		if (NULL != dynamic_cast<cocos2d::Object *>(cobj) ) {
 			cobj->autorelease();
+			int ID = (cobj) ? (int)cobj->_ID : -1;
+	    	int* luaID = (cobj) ? &cobj->_luaID : NULL;
+	        toluafix_pushusertype_ccobject(tolua_S, ID, luaID, (void*)cobj,"$class_name");
 		}
-#end if
-#if not $generator.script_control_cpp
-	    int ID = (cobj) ? (int)cobj->_ID : -1;
-	    int* luaID = (cobj) ? &cobj->_luaID : NULL;
-	    toluafix_pushusertype_ccobject(tolua_S, ID, luaID, (void*)cobj,"$class_name");
+		else
+		{
+			tolua_pushusertype(tolua_S,(void*)cobj,"$class_name");
+			tolua_register_gc(tolua_S,lua_gettop(tolua_S));
+		}
 #else
-	    tolua_pushusertype(tolua_S,(void*)cobj,"$class_name");
+		tolua_pushusertype(tolua_S,(void*)cobj,"$class_name");
+		tolua_register_gc(tolua_S,lua_gettop(tolua_S));
 #end if
 	    return 1;
 	    #else

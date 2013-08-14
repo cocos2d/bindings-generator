@@ -1,4 +1,5 @@
 do {
+	/*
 	std::shared_ptr<JSFunctionWrapper> func(new JSFunctionWrapper(cx, JS_THIS_OBJECT(cx, vp), ${in_value}));
 	auto lambda = [=](${lambda_parameters}) -> ${ret_type.name} {
 		#set arg_count = len($param_types)
@@ -30,4 +31,5 @@ do {
 		#end if
 	};
 	${out_value} = lambda;
+	*/
 } while(0)

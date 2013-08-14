@@ -9,14 +9,13 @@ conversions:
   # the most common case would be from JS-boolean to bool. Using "bool" will fail here since we
   # pass the address to the conversion method, and a JSBool is defined as an integer in spidermonkey
   native_types:
-    bool: "JSBool"
     float: "double"
     short: "int32_t"
     "unsigned char": "uint16_t"
     "char": "int32_t"
   to_native:
     # lua to native
-    int: "ok &= luaval_to_int32(tolua_S, ${arg_idx},&${out_value})"
+    int: "ok &= luaval_to_int32(tolua_S, ${arg_idx},(int *)&${out_value})"
     "unsigned int": "ok &= luaval_to_uint32(tolua_S, ${arg_idx},&${out_value})"
     "unsigned char": "ok &= luaval_to_uint16(tolua_S, ${arg_idx},&${out_value})"
     short: "ok &= luaval_to_int32(tolua_S, ${arg_idx},&${out_value})"
@@ -37,10 +36,10 @@ conversions:
     "Color4B": "ok &=luaval_to_color4b(tolua_S, ${arg_idx}, &${out_value})"
     "Color4F": "ok &=luaval_to_color4f(tolua_S, ${arg_idx}, &${out_value})"
     "Color3B": "ok &= luaval_to_color3b(tolua_S, ${arg_idx}, &${out_value})"
-    "Array*": "ok &= jsval_to_ccarray(cx, ${in_value}, &${out_value})"
-    "Dictionary*": "ok &= jsval_to_ccdictionary(cx, ${in_value}, &${out_value})"
-    "AffineTransform": "ok &= jsval_to_ccaffinetransform(cx, ${in_value}, &${out_value})"
-    "FontDefinition":  "ok &= jsval_to_FontDefinition(cx, ${in_value}, &${out_value})"
+    "Array*": "ok &= luaval_to_array(tolua_S, ${arg_idx}, &${out_value})"
+    "Dictionary*": "ok &= luaval_to_dictionary(tolua_S, ${arg_idx}, &${out_value})"
+    "AffineTransform": "ok &= luaval_to_affinetransform(tolua_S, ${arg_idx}, &${out_value})"
+    "FontDefinition":  "ok &= luaval_to_fontdefinition(tolua_S, ${arg_idx}, &${out_value})"
     object: |
       \#if COCOS2D_DEBUG >= 1
       ${($level) * '\t'}if (!tolua_isusertype(tolua_S,${arg_idx},"${ntype}",0,&tolua_err)){
@@ -73,8 +72,19 @@ conversions:
     "Color4B": "color4b_to_luaval(tolua_S, ${in_value})"
     "Color4F": "color4f_to_luaval(tolua_S, ${in_value})"
     "Color3B": "color3b_to_luaval(tolua_S, ${in_value})"
-    "Array*": "${out_value} = ccarray_to_jsval(cx, ${in_value})"
-    "Dictionary*": "${out_value} = ccdictionary_to_jsval(cx, ${in_value})"
-    "AffineTransform": "${out_value} = ccaffinetransform_to_jsval(cx, ${in_value})"
-    "FontDefinition": "${out_value} = FontDefinition_to_jsval(cx, ${in_value})"
-    object: "tolua_pushusertype(tolua_S,${in_value},\"${ntype}\")"
+    "Array*": "array_to_luaval(tolua_S,${in_value})"
+    "Dictionary*": "dictionary_to_luaval(tolua_S, ${in_value})"
+    "AffineTransform": "affinetransform_to_luaval(tolua_S, ${in_value})"
+    "FontDefinition": "fontdefinition_to_luaval(tolua_S, ${in_value})"
+    object:  |
+      do {
+      ${($level + 1) * '\t'}if (${in_value}) {
+      ${($level + 2) * '\t'}cocos2d::Object *cobj = dynamic_cast<cocos2d::Object *>(${in_value});
+      ${($level + 2) * '\t'}if (NULL != cobj) {
+      ${($level + 3) * '\t'}int ID = ${in_value} ? (int)(cobj->_ID) : -1;
+      ${($level + 3) * '\t'}int* luaID = ${in_value} ? &(cobj->_luaID) : NULL;
+      ${($level + 3) * '\t'}toluafix_pushusertype_ccobject(tolua_S,ID, luaID, (void*)${in_value},"${ntype}");
+      ${($level + 2) * '\t'}} else {
+      ${($level + 3) * '\t'} tolua_pushusertype(tolua_S,(void*)${in_value},"${ntype}");
+      ${($level + 2) * '\t'}}}
+      ${($level) * '\t'}} while (0)

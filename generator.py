@@ -90,6 +90,8 @@ def native_name_from_type(ntype, underlying=False):
             return "std::string"
         elif cdecl.spelling == "function" and cparent and cparent.spelling == "std":
             return "std::function"
+        elif cdecl.spelling == "shared_ptr" and cparent and cparent.spelling == "std":
+            return "std::shared_ptr"
         else:
             # print >> sys.stderr, "probably a function pointer: " + str(decl.spelling)
             return const + decl.spelling
@@ -133,6 +135,7 @@ class NativeType(object):
         self.ret_type = None
         self.namespaced_name = ""
         self.name = ""
+        self.is_template = False
 
     @staticmethod
     def from_type(ntype):
@@ -166,6 +169,10 @@ class NativeType(object):
                     nt.is_function = True
                     nt.ret_type = NativeType.from_string(ret_type)
                     nt.param_types = [NativeType.from_string(string) for string in params]
+                if nt.name == "std::shared_ptr":
+                    decl = ntype.get_canonical().get_declaration()
+                    nt.namespaced_name = namespaced_name(decl)
+                    nt.is_template = True
 
         # mark argument as not supported
         if nt.name == INVALID_NATIVE_TYPE:
@@ -236,6 +243,13 @@ class NativeType(object):
 
     def __str__(self):
         return self.namespaced_name
+
+    def get_object_type_name(self):
+        if self.is_template:
+            ret = re.split('<|>', self.namespaced_name)
+            return ret[-2].replace("*", "")
+        else:
+            return self.namespaced_name.replace("*", "")
 
 class NativeField(object):
     def __init__(self, cursor):

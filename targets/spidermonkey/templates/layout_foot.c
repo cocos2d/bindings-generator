@@ -1,4 +1,9 @@
-void register_all_${prefix}(JSContext* cx, JSObject* obj) {
+void register_all_${prefix}(JSContext* cx, JSObject* obj)
+{
+    Director::getInstance()->setCallbackAtLoopEnd([]()
+                                                  {
+                                                      _globalSharedPtrVector.clear();
+                                                  });
 	#if $target_ns
 	// first, try to get the ns
 	jsval nsval;

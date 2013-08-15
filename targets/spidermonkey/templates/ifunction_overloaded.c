@@ -31,7 +31,7 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 							 "out_value": "arg" + str(count),
 							 "class_name": $class_name,
 							 "level": 3,
-							 "ntype": str($arg)})};
+							 "ntype": $arg})};
 				#set $arg_array += ["arg"+str(count)]
 				#set $count = $count + 1
 			#if $arg_idx > 0
@@ -69,7 +69,7 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 			${func.ret_type.from_native({"generator": $generator,
 													  "in_value": "ret",
 													  "out_value": "jsret",
-													  "ntype": str($func.ret_type),
+													  "ntype": $func.ret_type,
 													  "level": 2})};
 			JS_SET_RVAL(cx, vp, jsret);
 			#else

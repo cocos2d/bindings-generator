@@ -47,7 +47,7 @@ conversions:
       ${($level + 1) * '\t'}ok = false;
       ${($level) * '\t'}}
       ${($level) * '\t'}\#endif
-      ${($level) * '\t'}if(ok){
+      ${($level) * '\t'}if (ok){
       ${($level + 1) * '\t'}${out_value} = (${arg})tolua_tousertype(tolua_S,${arg_idx},0);
       ${($level) * '\t'}}
   from_native:
@@ -78,7 +78,7 @@ conversions:
     "FontDefinition": "fontdefinition_to_luaval(tolua_S, ${in_value})"
     object:  |
       do {
-      ${($level + 1) * '\t'}if (${in_value}) {
+      ${($level + 1) * '\t'}if (NULL != ${in_value}){
       ${($level + 2) * '\t'}cocos2d::Object *cobj = dynamic_cast<cocos2d::Object *>(${in_value});
       ${($level + 2) * '\t'}if (NULL != cobj) {
       ${($level + 3) * '\t'}int ID = ${in_value} ? (int)(cobj->_ID) : -1;
@@ -86,5 +86,7 @@ conversions:
       ${($level + 3) * '\t'}toluafix_pushusertype_ccobject(tolua_S,ID, luaID, (void*)${in_value},"${ntype}");
       ${($level + 2) * '\t'}} else {
       ${($level + 3) * '\t'} tolua_pushusertype(tolua_S,(void*)${in_value},"${ntype}");
-      ${($level + 2) * '\t'}}}
+      ${($level + 1) * '\t'}}} else {
+      ${($level + 2) * '\t'}lua_pushnil(tolua_S);
+      ${($level + 1) * '\t'}}
       ${($level) * '\t'}} while (0)

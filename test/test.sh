@@ -82,4 +82,4 @@ echo "PYTHON_BIN: $PYTHON_BIN"
 # Generate bindings for simpletest using Android's system headers
 echo "Generating bindings for simpletest with Android headers..."
 set -x
-LD_LIBRARY_PATH=${CLANG_ROOT}/lib $PYTHON_BIN ${CXX_GENERATOR_ROOT}/generator.py ${CXX_GENERATOR_ROOT}/test/test.ini -s testandroid -o ./simple_test_bindings
+LD_LIBRARY_PATH=${CLANG_ROOT}/lib $PYTHON_BIN ${CXX_GENERATOR_ROOT}/generator.py ${CXX_GENERATOR_ROOT}/test/test.ini -t spidermonkey -s testandroid -o ./simple_test_bindings

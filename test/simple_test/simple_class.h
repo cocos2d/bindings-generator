@@ -118,6 +118,11 @@ namespace cocos2d_ptr_test {
 class Node_T : public cocos2d::Object
 {
 public:
+    Node_T()
+    {
+        printf("In the constructor of Node_T... \n");
+    }
+    
     virtual ~Node_T()
     {
         printf("In the destruction of Node_T...\n");

@@ -56,8 +56,8 @@ conversions:
       ${($level + 1) * '\t'}js_proxy_t *proxy;
       ${($level + 1) * '\t'}JSObject *tmpObj = JSVAL_TO_OBJECT(${in_value});
       ${($level + 1) * '\t'}proxy = jsb_get_js_proxy(tmpObj);
-      ${($level + 1) * '\t'}auto tmpSmartPtr = _globalWeakPtrMap.find(proxy->ptr)->second.lock();
-      ${($level + 1) * '\t'}${out_value} = std::static_pointer_cast<${ntype.get_object_type_name()}>(tmpSmartPtr);
+      ${($level + 1) * '\t'}${ntype.get_object_type_name()}* nativeObj = static_cast<${ntype.get_object_type_name()}*>(proxy->ptr);
+      ${($level + 1) * '\t'}${out_value} = std::static_pointer_cast<${ntype.get_object_type_name()}>(nativeObj->getSharedPtr());
       ${($level + 1) * '\t'}JSB_PRECONDITION2( ${out_value}, cx, JS_FALSE, "Invalid Native Object");
       ${($level + 0) * '\t'}} while (0)
 
@@ -99,7 +99,6 @@ conversions:
       do {
       ${($level + 1) * '\t'}if (${in_value}) {
       ${($level + 2) * '\t'}_globalSharedPtrVector.push_back(ret);
-      ${($level + 2) * '\t'}_globalWeakPtrMap.insert(std::make_pair(ret.get(), ret));
       ${($level + 2) * '\t'}js_proxy_t *proxy = js_get_or_create_proxy<${ntype.get_object_type_name()}>(cx, ${in_value}.get());
       ${($level + 2) * '\t'}${out_value} = OBJECT_TO_JSVAL(proxy->obj);
       ${($level + 1) * '\t'}} else {

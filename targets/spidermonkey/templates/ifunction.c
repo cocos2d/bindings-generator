@@ -32,7 +32,7 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 							 "out_value": "arg" + str(count),
 							 "class_name": $class_name,
 							 "level": 2,
-							 "ntype": str($arg)})};
+							 "ntype": $arg})};
 			#set $arg_array += ["arg"+str(count)]
 			#set $count = $count + 1
 		#end while
@@ -71,7 +71,7 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 		${ret_type.from_native({"generator": $generator,
 									"in_value": "ret",
 									"out_value": "jsret",
-									"ntype": str($ret_type),
+									"ntype": $ret_type,
 									"level": 2})};
 		JS_SET_RVAL(cx, vp, jsret);
 			#else

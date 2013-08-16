@@ -3,6 +3,16 @@
 
 #include <string>
 #include <stdint.h>
+#include <memory>
+#include <vector>
+
+//#define TEST_COCOS2D
+
+#ifdef TEST_COCOS2D
+#include "cocos2d.h"
+#endif
+
+using namespace std;
 
 enum someThingEnumerated {
 	kValue1 = 1,
@@ -90,5 +100,77 @@ public:
 	void doSomethingSimple();
 };
 };
+
+#ifndef TEST_COCOS2D
+namespace cocos2d {
+
+class Object
+{
+public:
+    virtual ~Object(){};
+};
+
+}
+#endif
+
+namespace cocos2d_ptr_test {
+
+class Node_T : public cocos2d::Object
+{
+public:
+    Node_T()
+    {
+        printf("In the constructor of Node_T... \n");
+    }
+    
+    virtual ~Node_T()
+    {
+        printf("In the destruction of Node_T...\n");
+    };
+    
+    static shared_ptr<Node_T> create()
+    {
+        return shared_ptr<Node_T>(new Node_T());
+    }
+    
+    void setPostion()
+    {
+        printf("In Node::setPosition...\n");
+    };
+
+    void addChild(std::shared_ptr<Node_T> child, int zOrder, int tag)
+    {
+        printf("begin Node::addChild ....\n");
+        _children.push_back(child);
+        printf("after Node::addChild ....\n");
+    };
+
+private:
+    std::vector<std::shared_ptr<Node_T>> _children;
+};
+
+class Sprite_T : public Node_T
+{
+public:
+    typedef std::shared_ptr<Sprite_T> Ptr;
+    static Ptr create(const char* filename)
+    {
+        Sprite_T* ret = new Sprite_T();
+        ret->init(filename);
+        return shared_ptr<Sprite_T>(ret);
+    }
+
+    virtual ~Sprite_T()
+    {
+        printf("destruction of Sprite_T....\n");
+    }
+
+    bool init(const char* filename)
+    {
+        return true;
+    }
+};
+
+} // namespace cocos2d {
 
 #endif

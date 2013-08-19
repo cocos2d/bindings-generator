@@ -64,7 +64,7 @@ static int ${signature_name}(lua_State* tolua_S)
 	#end while
 	#end if
 	#end for
-	printf("wrong number of arguments: %d, was expecting %d", argc, ${func.min_args});
+	CCLOG("%s has wrong number of arguments: %d, was expecting %d", "${func.func_name}",argc, ${func.min_args});
 	return 0;
 \#if COCOS2D_DEBUG >= 1
 	tolua_lerror:

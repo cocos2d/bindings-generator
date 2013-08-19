@@ -64,6 +64,8 @@ int lua_register_${generator.prefix}_${current_class.class_name}(lua_State* tolu
 		#end for
 	#end if
 	tolua_endmodule(tolua_S);
+    uint32_t typeId = cocos2d::getHashCodeByString(typeid(${current_class.namespaced_class_name}).name());
+    g_luaType[typeId] = "${current_class.class_name}";
 	return 1;
 }
 

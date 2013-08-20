@@ -41,15 +41,17 @@ conversions:
     "AffineTransform": "ok &= luaval_to_affinetransform(tolua_S, ${arg_idx}, &${out_value})"
     "FontDefinition":  "ok &= luaval_to_fontdefinition(tolua_S, ${arg_idx}, &${out_value})"
     object: |
+      do {
       \#if COCOS2D_DEBUG >= 1
-      ${($level) * '\t'}if (!tolua_isusertype(tolua_S,${arg_idx},"${ntype}",0,&tolua_err)){
-      ${($level + 1) * '\t'}tolua_error(tolua_S,"#ferror:",&tolua_err);
-      ${($level + 1) * '\t'}ok = false;
-      ${($level) * '\t'}}
-      ${($level) * '\t'}\#endif
-      ${($level) * '\t'}if (ok){
-      ${($level + 1) * '\t'}${out_value} = (${arg})tolua_tousertype(tolua_S,${arg_idx},0);
-      ${($level) * '\t'}}
+      ${($level + 2) * '\t'}if (!tolua_isusertype(tolua_S,${arg_idx},"${ntype}",0,&tolua_err)){
+      ${($level + 3) * '\t'}luaval_to_native_err(tolua_S,"#ferror:",&tolua_err);
+      ${($level + 3) * '\t'}ok = false;
+      ${($level + 3) * '\t'}break;
+      ${($level + 2) * '\t'}}
+      \#endif
+      ${($level + 2) * '\t'}if (ok){
+      ${($level + 3) * '\t'}${out_value} = (${arg})tolua_tousertype(tolua_S,${arg_idx},0);
+      ${($level + 2) * '\t'}}} while (0)
   from_native:
     # int to lua
     int: "tolua_pushnumber(tolua_S,(lua_Number)${in_value})"

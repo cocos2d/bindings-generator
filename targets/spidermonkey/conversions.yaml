@@ -41,6 +41,7 @@ conversions:
     "Dictionary*": "ok &= jsval_to_ccdictionary(cx, ${in_value}, &${out_value})"
     "AffineTransform": "ok &= jsval_to_ccaffinetransform(cx, ${in_value}, &${out_value})"
     "FontDefinition":  "ok &= jsval_to_FontDefinition(cx, ${in_value}, &${out_value})"
+    "String*": "std::string ${out_value}_tmp; ok &= jsval_to_std_string(cx, ${in_value}, &${out_value}_tmp); ${out_value} = cocos2d::String::create(${out_value}_tmp)"
     object: |
       do {
       ${($level + 1) * '\t'}if (!${in_value}.isObject()) { ok = JS_FALSE; break; }
@@ -75,6 +76,7 @@ conversions:
     "Dictionary*": "${out_value} = ccdictionary_to_jsval(cx, ${in_value})"
     "AffineTransform": "${out_value} = ccaffinetransform_to_jsval(cx, ${in_value})"
     "FontDefinition": "${out_value} = FontDefinition_to_jsval(cx, ${in_value})"
+    "String*": "${out_value} = std_string_to_jsval(cx, ${in_value}->getCString())"
     object: |
       do {
       ${($level + 1) * '\t'}if (${in_value}) {

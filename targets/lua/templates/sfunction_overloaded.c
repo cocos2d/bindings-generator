@@ -1,5 +1,5 @@
 ## ===== static function implementation template - for overloaded functions
-static int ${signature_name}(lua_State* tolua_S)
+int ${signature_name}(lua_State* tolua_S)
 {
     int argc = 0;
     bool ok  = true;

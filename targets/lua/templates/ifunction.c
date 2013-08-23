@@ -1,5 +1,5 @@
 ## ===== instance function implementation template
-static int ${signature_name}(lua_State* tolua_S)
+int ${signature_name}(lua_State* tolua_S)
 {
     int argc = 0;
     ${namespaced_class_name}* cobj = nullptr;

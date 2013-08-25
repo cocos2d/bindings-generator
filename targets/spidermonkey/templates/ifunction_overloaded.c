@@ -10,7 +10,7 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 	obj = JS_THIS_OBJECT(cx, vp);
 	js_proxy_t *proxy = jsb_get_js_proxy(obj);
 	cobj = (${namespaced_class_name} *)(proxy ? proxy->ptr : NULL);
-	JSB_PRECONDITION2( cobj, cx, JS_FALSE, "Invalid Native Object");
+	JSB_PRECONDITION2( cobj, cx, JS_FALSE, "${signature_name} : Invalid Native Object");
 #end if
 #for func in $implementations
 #if len($func.arguments) >= $func.min_args
@@ -91,6 +91,6 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 		return JS_TRUE;
 	}
 #end if
-	JS_ReportError(cx, "wrong number of arguments");
+	JS_ReportError(cx, "${signature_name} : wrong number of arguments");
 	return JS_FALSE;
 }

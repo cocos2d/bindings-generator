@@ -9,7 +9,7 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 	JSObject *obj = JS_THIS_OBJECT(cx, vp);
 	js_proxy_t *proxy = jsb_get_js_proxy(obj);
 	${namespaced_class_name}* cobj = (${namespaced_class_name} *)(proxy ? proxy->ptr : NULL);
-	JSB_PRECONDITION2( cobj, cx, JS_FALSE, "Invalid Native Object");
+	JSB_PRECONDITION2( cobj, cx, JS_FALSE, "${signature_name} : Invalid Native Object");
 #end if
 #if len($arguments) >= $min_args
 	#set arg_count = len($arguments)
@@ -37,7 +37,7 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 			#set $count = $count + 1
 		#end while
 		#if $arg_idx > 0
-		JSB_PRECONDITION2(ok, cx, JS_FALSE, "Error processing arguments");
+		JSB_PRECONDITION2(ok, cx, JS_FALSE, "${signature_name} : Error processing arguments");
 		#end if
 		#set $arg_list = ", ".join($arg_array)
 		#if $is_constructor
@@ -85,6 +85,6 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 	#end while
 #end if
 
-	JS_ReportError(cx, "wrong number of arguments: %d, was expecting %d", argc, ${min_args});
+	JS_ReportError(cx, "${signature_name} : wrong number of arguments: %d, was expecting %d", argc, ${min_args});
 	return JS_FALSE;
 }

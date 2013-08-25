@@ -31,7 +31,7 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 	        #set $count = $count + 1
 		#end while
 		#if $arg_idx > 0
-		JSB_PRECONDITION2(ok, cx, JS_FALSE, "Error processing arguments");
+		JSB_PRECONDITION2(ok, cx, JS_FALSE, "${signature_name} : Error processing arguments");
 		#end if
 		#set $arg_list = ", ".join($arg_array)
 	#if str($ret_type) != "void"
@@ -56,7 +56,7 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 		#set $arg_idx = $arg_idx + 1
 	#end while
 #end if
-	JS_ReportError(cx, "wrong number of arguments");
+	JS_ReportError(cx, "${signature_name} : wrong number of arguments");
 	return JS_FALSE;
 }
 

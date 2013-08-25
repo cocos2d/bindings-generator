@@ -53,6 +53,6 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 	#end while
 	#end if
 	#end for
-	JS_ReportError(cx, "wrong number of arguments");
+	JS_ReportError(cx, "${signature_name} : wrong number of arguments");
 	return JS_FALSE;
 }

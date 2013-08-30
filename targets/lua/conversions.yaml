@@ -42,16 +42,15 @@ conversions:
     "FontDefinition":  "ok &= luaval_to_fontdefinition(tolua_S, ${arg_idx}, &${out_value})"
     object: |
       do {
-      \#if COCOS2D_DEBUG >= 1
-      ${($level + 2) * '\t'}if (!tolua_isusertype(tolua_S,${arg_idx},"${ntype}",0,&tolua_err)){
-      ${($level + 3) * '\t'}luaval_to_native_err(tolua_S,"#ferror:",&tolua_err);
+      ${($level + 2) * '\t'}if (!luaval_is_usertype(tolua_S,${arg_idx},"${ntype}",0)){
       ${($level + 3) * '\t'}ok = false;
       ${($level + 3) * '\t'}break;
       ${($level + 2) * '\t'}}
-      \#endif
       ${($level + 2) * '\t'}if (ok){
       ${($level + 3) * '\t'}${out_value} = (${arg})tolua_tousertype(tolua_S,${arg_idx},0);
-      ${($level + 2) * '\t'}}} while (0)
+      ${($level + 3) * '\t'}if (nullptr == ${out_value}){
+      ${($level + 4) * '\t'}LUA_PRECONDITION( ${out_value}, "Invalid Native Object");
+      ${($level + 1) * '\t'}}}} while (0)
   from_native:
     # int to lua
     int: "tolua_pushnumber(tolua_S,(lua_Number)${in_value})"

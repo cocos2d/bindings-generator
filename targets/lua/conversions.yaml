@@ -77,6 +77,7 @@ conversions:
     "Dictionary*": "dictionary_to_luaval(tolua_S, ${in_value})"
     "AffineTransform": "affinetransform_to_luaval(tolua_S, ${in_value})"
     "FontDefinition": "fontdefinition_to_luaval(tolua_S, ${in_value})"
+    "const vector": "std_vector_to_luaval(tolua_S,${in_value})"
     object:  |
       do {
       ${($level + 1) * '\t'}if (NULL != ${in_value}){

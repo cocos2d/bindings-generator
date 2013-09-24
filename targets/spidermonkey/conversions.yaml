@@ -34,6 +34,7 @@ conversions:
     "const ccColor4B": "ok &= jsval_to_cccolor4b(cx, ${in_value}, &${out_value})"
     "const ccColor4F": "ok &= jsval_to_cccolor4f(cx, ${in_value}, &${out_value})"
     "const ccColor3B": "ok &= jsval_to_cccolor3b(cx, ${in_value}, &${out_value})"
+    "ccColor3B": "ok &= jsval_to_cccolor3b(cx, ${in_value}, &${out_value})"
     "CCArray*": "ok &= jsval_to_ccarray(cx, ${in_value}, &${out_value})"
     "CCDictionary*": "ok &= jsval_to_ccdictionary(cx, ${in_value}, &${out_value})"
     "CCAffineTransform": "ok &= jsval_to_ccaffinetransform(cx, ${in_value}, &${out_value})"

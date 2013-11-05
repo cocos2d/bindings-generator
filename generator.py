@@ -146,13 +146,18 @@ class NativeType(object):
             nt.namespaced_name = namespaced_name(ntype.get_pointee().get_declaration())
         else:
             nt = NativeType()
+
             if ntype.kind == cindex.TypeKind.RECORD:
                 decl = ntype.get_declaration()
-                nt.is_object = True
+                if decl.kind == cindex.CursorKind.CLASS_DECL:
+                    nt.is_object = True
                 nt.name = decl.displayname
                 nt.namespaced_name = namespaced_name(decl)
             else:
                 nt.name = native_name_from_type(ntype)
+                if nt.name != INVALID_NATIVE_TYPE and nt.name != "std::string" and nt.name != "std::function" and ntype.kind == cindex.TypeKind.UNEXPOSED:
+                    return NativeType.from_type(ntype.get_canonical())
+
                 nt.namespaced_name = nt.name
                 nt.is_enum = ntype.get_canonical().kind == cindex.TypeKind.ENUM
                 if nt.name == "std::function":

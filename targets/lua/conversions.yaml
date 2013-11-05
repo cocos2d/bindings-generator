@@ -52,7 +52,7 @@ conversions:
       ${($level + 4) * '\t'}LUA_PRECONDITION( ${out_value}, "Invalid Native Object");
       ${($level + 1) * '\t'}}}} while (0)
   from_native:
-    # int to lua
+    # native to lua
     int: "tolua_pushnumber(tolua_S,(lua_Number)${in_value})"
     "unsigned int": "tolua_pushnumber(tolua_S,(lua_Number)${in_value})"
     "unsigned char": "tolua_pushnumber(tolua_S,(lua_Number)${in_value})"
@@ -67,9 +67,9 @@ conversions:
     "Point": "point_to_luaval(tolua_S, ${in_value})"
     "Rect": "rect_to_luaval(tolua_S, ${in_value})"
     "Size": "size_to_luaval(tolua_S, ${in_value})"
-    "const Color4B": "${out_value} = cccolor4b_to_jsval(cx, ${in_value})"
-    "const Color4F": "${out_value} = cccolor4f_to_jsval(cx, ${in_value})"
-    "const Color3B": "${out_value} = cccolor3b_to_jsval(cx, ${in_value})"
+    "const Color4B": "color4b_to_luaval(tolua_S, ${in_value})"
+    "const Color4F": "color4f_to_luaval(tolua_S, ${in_value})"
+    "const Color3B": "color3b_to_luaval(tolua_S, ${in_value})"
     "Color4B": "color4b_to_luaval(tolua_S, ${in_value})"
     "Color4F": "color4f_to_luaval(tolua_S, ${in_value})"
     "Color3B": "color3b_to_luaval(tolua_S, ${in_value})"

@@ -57,9 +57,10 @@ int ${signature_name}(lua_State* tolua_S)
 #if not $generator.script_control_cpp
             if (NULL != dynamic_cast<cocos2d::Object *>(cobj) ) 
             {
-                cobj->autorelease();
-                int ID = (cobj) ? (int)cobj->_ID : -1;
-                int* luaID = (cobj) ? &cobj->_luaID : NULL;
+                cocos2d::Object* dynObject = dynamic_cast<cocos2d::Object *>(cobj);
+                dynObject->autorelease();
+                int ID =  (int)dynObject->_ID ;
+                int* luaID =  &dynObject->_luaID ;
                 toluafix_pushusertype_ccobject(tolua_S, ID, luaID, (void*)cobj,"$class_name");
             }
             else

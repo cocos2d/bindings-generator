@@ -55,9 +55,9 @@ int ${signature_name}(lua_State* tolua_S)
         #if $is_constructor
             cobj = new ${namespaced_class_name}($arg_list);
 #if not $generator.script_control_cpp
-            if (NULL != dynamic_cast<cocos2d::Object *>(cobj) ) 
+            cocos2d::Object* dynObject = dynamic_cast<cocos2d::Object *>(cobj);
+            if (NULL != dynObject) 
             {
-                cocos2d::Object* dynObject = dynamic_cast<cocos2d::Object *>(cobj);
                 dynObject->autorelease();
                 int ID =  (int)dynObject->_ID ;
                 int* luaID =  &dynObject->_luaID ;

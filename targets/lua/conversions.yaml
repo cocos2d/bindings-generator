@@ -23,6 +23,7 @@ conversions:
     bool: "ok &= luaval_to_boolean(tolua_S, ${arg_idx},&${out_value})" 
     float: "ok &= luaval_to_number(tolua_S, ${arg_idx},&${out_value})"
     double: "ok &= luaval_to_number(tolua_S, ${arg_idx},&${out_value})"
+    long: "ok &= luaval_to_long(tolua_S, ${arg_idx}, &${out_value})"
 
     "long long": "ok &= luaval_to_long_long(tolua_S, ${arg_idx},&${out_value})"
     "std::string": "ok &= luaval_to_std_string(tolua_S, ${arg_idx},&${out_value})"

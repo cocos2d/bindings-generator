@@ -65,7 +65,7 @@ cindex.CursorKind.CHARACTER_LITERAL,
 cindex.CursorKind.CXX_BOOL_LITERAL_EXPR,
 
 # [C++0x 2.14.7] C++ Pointer Literal.
-cindex.CursorKind.CXX_NULL_PTR_LITERAL_EXPR，
+cindex.CursorKind.CXX_NULL_PTR_LITERAL_EXPR,
 
 # An expression that refers to some value declaration, such as a function,
 # varible, or enumerator.
@@ -694,7 +694,7 @@ class Generator(object):
     def _deep_iterate(self, cursor, depth=0):
         # get the canonical type
         if cursor.kind == cindex.CursorKind.CLASS_DECL:
-            if cursor == cursor.type.get_declaration() and self.in_listed_classes(cursor.displayname):
+            if cursor == cursor.type.get_declaration() and len(cursor.get_children_array()) > 0 and self.in_listed_classes(cursor.displayname):
                 if not self.generated_classes.has_key(cursor.displayname):
                     nclass = NativeClass(cursor, self)
                     nclass.generate_code()

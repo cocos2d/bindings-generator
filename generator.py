@@ -65,7 +65,7 @@ cindex.CursorKind.CHARACTER_LITERAL,
 cindex.CursorKind.CXX_BOOL_LITERAL_EXPR,
 
 # [C++0x 2.14.7] C++ Pointer Literal.
-cindex.CursorKind.CXX_NULL_PTR_LITERAL_EXPR，
+cindex.CursorKind.CXX_NULL_PTR_LITERAL_EXPR,
 
 # An expression that refers to some value declaration, such as a function,
 # varible, or enumerator.

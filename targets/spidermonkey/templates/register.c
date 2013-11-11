@@ -119,11 +119,10 @@ void js_register_${generator.prefix}_${current_class.class_name}(JSContext *cx, 
 	// add the proto and JSClass to the type->js info hash table
 	TypeTest<${current_class.namespaced_class_name}> t;
 	js_type_class_t *p;
-	uint32_t typeId = t.s_id();
-	HASH_FIND_INT(_js_global_type_ht, &typeId, p);
-	if (!p) {
+	long typeId = t.s_id();
+	if (_js_global_type_map.find(typeId) == _js_global_type_map.end())
+	{
 		p = (js_type_class_t *)malloc(sizeof(js_type_class_t));
-		p->type = typeId;
 		p->jsclass = jsb_${current_class.class_name}_class;
 		p->proto = jsb_${current_class.class_name}_prototype;
 #if len($current_class.parents) > 0
@@ -131,7 +130,7 @@ void js_register_${generator.prefix}_${current_class.class_name}(JSContext *cx, 
 #else
 		p->parentProto = NULL;
 #end if
-		HASH_ADD_INT(_js_global_type_ht, type, p);
+		_js_global_type_map.insert(std::make_pair(typeId, p));
 	}
 }
 

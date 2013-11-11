@@ -49,10 +49,13 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 			}
 #end if
 			TypeTest<${namespaced_class_name}> t;
-			js_type_class_t *typeClass;
-			uint32_t typeId = t.s_id();
-			HASH_FIND_INT(_js_global_type_ht, &typeId, typeClass);
-			assert(typeClass);
+			js_type_class_t *typeClass = nullptr;
+			long typeId = t.s_id();
+			auto typeMapIter = _js_global_type_map.find(typeId);
+
+			CCASSERT(typeMapIter != _js_global_type_map.end(), "Can't find the class type!");
+			typeClass = typeMapIter->second;
+			CCASSERT(typeClass, "The value is null.");
 			obj = JS_NewObject(cx, typeClass->jsclass, typeClass->proto, typeClass->parentProto);
 			js_proxy_t* proxy = jsb_new_proxy(cobj, obj);
 #if not $generator.script_control_cpp

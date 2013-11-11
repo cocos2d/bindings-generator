@@ -14,11 +14,14 @@ static JSBool dummy_constructor(JSContext *cx, uint32_t argc, jsval *vp) {
 		_ccobj->autorelease();
 	}
 #end if
-	js_type_class_t *p;
-	uint32_t typeId = t.s_id();
-	HASH_FIND_INT(_js_global_type_ht, &typeId, p);
-	assert(p);
-	JSObject *_tmp = JS_NewObject(cx, p->jsclass, p->proto, p->parentProto);
+	js_type_class_t *typeClass = nullptr;
+	long typeId = t.s_id();
+	auto typeMapIter = _js_global_type_map.find(typeId);
+	CCASSERT(typeMapIter != _js_global_type_map.end(), "Can't find the class type!");
+	typeClass = typeMapIter->second;
+	CCASSERT(typeClass, "The value is null.");
+
+	JSObject *_tmp = JS_NewObject(cx, typeClass->jsclass, typeClass->proto, typeClass->parentProto);
 	js_proxy_t *pp = jsb_new_proxy(cobj, _tmp);
 #if not $script_control_cpp
 	JS_AddObjectRoot(cx, &pp->obj);

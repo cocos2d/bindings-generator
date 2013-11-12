@@ -64,7 +64,7 @@ int lua_register_${generator.prefix}_${current_class.class_name}(lua_State* tolu
         #end for
     #end if
     tolua_endmodule(tolua_S);
-    uint32_t typeId = typeid(${current_class.namespaced_class_name}).hash_code();
+    long typeId = typeid(${current_class.namespaced_class_name}).hash_code();
     g_luaType[typeId] = "${current_class.class_name}";
     return 1;
 }

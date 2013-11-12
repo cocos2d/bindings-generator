@@ -61,7 +61,8 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 		#else
 			#if str($func.ret_type) != "void"
 			${func.ret_type} ret = cobj->${func.func_name}($arg_list);
-			jsval jsret; ${func.ret_type.from_native({"generator": $generator,
+			jsval jsret;
+			${func.ret_type.from_native({"generator": $generator,
 													  "in_value": "ret",
 													  "out_value": "jsret",
 													  "ntype": str($func.ret_type),

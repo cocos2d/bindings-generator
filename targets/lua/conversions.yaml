@@ -65,6 +65,7 @@ conversions:
     bool: "tolua_pushboolean(tolua_S,(bool)${in_value})"
     float: "tolua_pushnumber(tolua_S,(lua_Number)${in_value})"
     double: "tolua_pushnumber(tolua_S,(lua_Number)${in_value})"
+    long: "tolua_pushnumber(tolua_S,(lua_Number)${in_value})"
     "Point": "point_to_luaval(tolua_S, ${in_value})"
     "Rect": "rect_to_luaval(tolua_S, ${in_value})"
     "Size": "size_to_luaval(tolua_S, ${in_value})"
@@ -81,10 +82,10 @@ conversions:
     object:  |
       do {
       ${($level + 1) * '\t'}if (NULL != ${in_value}){
-      ${($level + 2) * '\t'}cocos2d::Object *cobj = dynamic_cast<cocos2d::Object *>(${in_value});
-      ${($level + 2) * '\t'}if (NULL != cobj) {
-      ${($level + 3) * '\t'}int ID = ${in_value} ? (int)(cobj->_ID) : -1;
-      ${($level + 3) * '\t'}int* luaID = ${in_value} ? &(cobj->_luaID) : NULL;
+      ${($level + 2) * '\t'}cocos2d::Object *dynObject = dynamic_cast<cocos2d::Object *>(${in_value});
+      ${($level + 2) * '\t'}if (NULL != dynObject) {
+      ${($level + 3) * '\t'}int ID = ${in_value} ? (int)(dynObject->_ID) : -1;
+      ${($level + 3) * '\t'}int* luaID = ${in_value} ? &(dynObject->_luaID) : NULL;
       ${($level + 3) * '\t'}toluafix_pushusertype_ccobject(tolua_S,ID, luaID, (void*)${in_value},"${ntype}");
       ${($level + 2) * '\t'}} else {
       ${($level + 3) * '\t'} tolua_pushusertype(tolua_S,(void*)${in_value},"${ntype}");

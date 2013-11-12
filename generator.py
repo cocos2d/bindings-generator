@@ -84,12 +84,8 @@ def native_name_from_type(ntype, underlying=False):
         # might be an std::string
         decl = ntype.get_declaration()
         parent = decl.semantic_parent
-        cdecl = ntype.get_canonical().get_declaration()
-        cparent = cdecl.semantic_parent
         if decl.spelling == "string" and parent and parent.spelling == "std":
             return "std::string"
-        elif cdecl.spelling == "function" and cparent and cparent.spelling == "std":
-            return "std::function"
         else:
             # print >> sys.stderr, "probably a function pointer: " + str(decl.spelling)
             return const + decl.spelling

@@ -7,7 +7,6 @@ ${current_class.methods.constructor.generate_code($current_class)}
 #set generator = $current_class.generator
 #set methods = $current_class.methods_clean()
 #set st_methods = $current_class.static_methods_clean()
-
 #if len($current_class.parents) > 0
 extern JSObject *jsb_${current_class.parents[0].class_name}_prototype;
 #end if
@@ -30,20 +29,18 @@ void js_${generator.prefix}_${current_class.class_name}_finalize(JSFreeOp *fop, 
 #end if
 }
 
-#if not $current_class.is_abstract
+#if $generator.in_listed_extend_classed($current_class.class_name) and not $current_class.is_abstract
 static JSBool js_${generator.prefix}_${current_class.class_name}_ctor(JSContext *cx, uint32_t argc, jsval *vp)
 {
 	JSObject *obj = JS_THIS_OBJECT(cx, vp);
-    ${current_class.namespaced_class_name} *nobj = new ${current_class.namespaced_class_name}();
+    ${current_class.namespaced_class_name} *nobj = ${current_class.namespaced_class_name}::create();
     js_proxy_t* p = jsb_new_proxy(nobj, obj);
 #if not $generator.script_control_cpp
-    nobj->autorelease();
     JS_AddNamedObjectRoot(cx, &p->obj, "${current_class.namespaced_class_name}");
 #end if 
     JS_SET_RVAL(cx, vp, JSVAL_VOID);
     return JS_TRUE;
 }
-
 #end if
 void js_register_${generator.prefix}_${current_class.class_name}(JSContext *cx, JSObject *global) {
 	jsb_${current_class.class_name}_class = (JSClass *)calloc(1, sizeof(JSClass));
@@ -72,7 +69,7 @@ void js_register_${generator.prefix}_${current_class.class_name}(JSContext *cx, 
 		#set fn = m['impl']
 		JS_FN("${m['name']}", ${fn.signature_name}, ${fn.min_args}, JSPROP_PERMANENT | JSPROP_ENUMERATE),
 		#end for
-#if not $current_class.is_abstract
+#if $generator.in_listed_extend_classed($current_class.class_name) and not $current_class.is_abstract
         JS_FN("ctor", js_${generator.prefix}_${current_class.class_name}_ctor, 0, JSPROP_PERMANENT | JSPROP_ENUMERATE),
 #end if
         JS_FS_END

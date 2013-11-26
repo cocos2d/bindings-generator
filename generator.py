@@ -554,6 +554,7 @@ class Generator(object):
         self.prefix = opts['prefix']
         self.headers = opts['headers'].split(' ')
         self.classes = opts['classes']
+        self.classes_need_extend = opts['classes_need_extend']
         self.classes_have_no_parents = opts['classes_have_no_parents'].split(' ')
         self.base_classes_to_skip = opts['base_classes_to_skip'].split(' ')
         self.abstract_classes = opts['abstract_classes'].split(' ')
@@ -644,6 +645,16 @@ class Generator(object):
         for key in self.classes:
             md = re.match("^" + key + "$", class_name)
             if md and not self.should_skip(class_name, None):
+                return True
+        return False
+
+    def in_listed_extend_classed(self, class_name):
+        """
+        returns True if the class is in the list of required classes that need to extend
+        """
+        for key in self.classes_need_extend:
+            md = re.match("^" + key + "$", class_name)
+            if md:
                 return True
         return False
 
@@ -819,6 +830,7 @@ def main():
                 'prefix': config.get(s, 'prefix'),
                 'headers':    (config.get(s, 'headers'        , 0, dict(userconfig.items('DEFAULT')))),
                 'classes': config.get(s, 'classes').split(' '),
+                'classes_need_extend': config.get(s, 'classes_need_extend').split(' ') if config.has_option(s, 'classes_need_extend') else [],
                 'clang_args': (config.get(s, 'extra_arguments', 0, dict(userconfig.items('DEFAULT'))) or "").split(" "),
                 'target': os.path.join(workingdir, "targets", t),
                 'outdir': outdir,

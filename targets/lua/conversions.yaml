@@ -24,7 +24,7 @@ conversions:
     float: "ok &= luaval_to_number(tolua_S, ${arg_idx},&${out_value})"
     double: "ok &= luaval_to_number(tolua_S, ${arg_idx},&${out_value})"
     long: "ok &= luaval_to_long(tolua_S, ${arg_idx}, &${out_value})"
-
+    "unsigned long": "ok &= luaval_to_ulong(tolua_S, ${arg_idx}, &${out_value})"
     "long long": "ok &= luaval_to_long_long(tolua_S, ${arg_idx},&${out_value})"
     "std::string": "ok &= luaval_to_std_string(tolua_S, ${arg_idx},&${out_value})"
     "const char*": "std::string ${out_value}_tmp; ok &= luaval_to_std_string(tolua_S, ${arg_idx}, &${out_value}_tmp); ${out_value} = ${out_value}_tmp.c_str()"
@@ -66,6 +66,7 @@ conversions:
     float: "tolua_pushnumber(tolua_S,(lua_Number)${in_value})"
     double: "tolua_pushnumber(tolua_S,(lua_Number)${in_value})"
     long: "tolua_pushnumber(tolua_S,(lua_Number)${in_value})"
+    "unsigned long": "tolua_pushnumber(tolua_S,(lua_Number)${in_value})"
     "Point": "point_to_luaval(tolua_S, ${in_value})"
     "Rect": "rect_to_luaval(tolua_S, ${in_value})"
     "Size": "size_to_luaval(tolua_S, ${in_value})"

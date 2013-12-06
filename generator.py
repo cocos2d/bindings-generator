@@ -74,7 +74,7 @@ cindex.CursorKind.DECL_REF_EXPR
 
 def native_name_from_type(ntype, underlying=False):
     kind = ntype.get_canonical().kind
-    const = "const " if ntype.is_const_qualified() else ""
+    const = "" #"const " if ntype.is_const_qualified() else ""
     if not underlying and kind == cindex.TypeKind.ENUM:
         decl = ntype.get_declaration()
         return namespaced_name(decl)
@@ -133,6 +133,9 @@ class NativeType(object):
         self.ret_type = None
         self.namespaced_name = ""
         self.name = ""
+        self.whole_name = None
+        self.is_const = False
+        self.is_pointer = False
 
     @staticmethod
     def from_type(ntype):
@@ -141,9 +144,18 @@ class NativeType(object):
             nt.name += "*"
             nt.namespaced_name += "*"
             nt.is_enum = False
+            nt.whole_name = nt.namespaced_name
+            nt.is_const = ntype.get_pointee().is_const_qualified()
+            nt.is_pointer = True
+            if nt.is_const:
+                nt.whole_name = "const " + nt.whole_name
         elif ntype.kind == cindex.TypeKind.LVALUEREFERENCE:
             nt = NativeType.from_type(ntype.get_pointee())
             nt.namespaced_name = namespaced_name(ntype.get_pointee().get_declaration())
+            nt.is_const = ntype.get_pointee().is_const_qualified()
+            nt.whole_name = nt.namespaced_name + "&"
+            if nt.is_const:
+                nt.whole_name = "const " + nt.whole_name
         else:
             nt = NativeType()
 
@@ -153,8 +165,13 @@ class NativeType(object):
                     nt.is_object = True
                 nt.name = decl.displayname
                 nt.namespaced_name = namespaced_name(decl)
+                nt.whole_name = nt.namespaced_name
             else:
                 nt.name = native_name_from_type(ntype)
+                nt.whole_name = nt.name
+                nt.is_const = ntype.is_const_qualified()
+                if nt.is_const:
+                    nt.whole_name = "const " + nt.whole_name
                 if nt.name != INVALID_NATIVE_TYPE and nt.name != "std::string" and nt.name != "std::function" and ntype.kind == cindex.TypeKind.UNEXPOSED:
                     return NativeType.from_type(ntype.get_canonical())
 
@@ -186,6 +203,7 @@ class NativeType(object):
         nt = NativeType()
         nt.name = displayname
         nt.namespaced_name = displayname
+        nt.whole_name = nt.namespaced_name
         nt.is_object = True
         return nt
 
@@ -194,18 +212,43 @@ class NativeType(object):
         params = ["%s larg%d" % (str(nt), i) for i, nt in enumerate(self.param_types)]
         return ", ".join(params)
 
+    def dict_has_key_re(self, dict, real_key):
+        for (k, v) in dict.items():
+            if k.startswith('@'):
+                k = k[1:]
+                match = re.match("^" + k + "$", real_key)
+                if match:
+                    return True
+            else:
+                if k == real_key:
+                    return True
+        return False
+
+    def dict_get_value_re(self, dict, real_key):
+        for (k, v) in dict.items():
+            if k.startswith('@'):
+                k = k[1:]
+                match = re.match("^" + k + "$", real_key)
+                if match:
+                    return v
+            else:
+                if k == real_key:
+                    return v
+        return None
+
     def from_native(self, convert_opts):
         assert(convert_opts.has_key('generator'))
         generator = convert_opts['generator']
         name = self.name
+
         if self.is_object:
-            if not generator.config['conversions']['from_native'].has_key(name):
+            if not self.dict_has_key_re(generator.config['conversions']['from_native'], name):
                 name = "object"
         elif self.is_enum:
             name = "int"
 
-        if generator.config['conversions']['from_native'].has_key(name):
-            tpl = generator.config['conversions']['from_native'][name]
+        if self.dict_has_key_re(generator.config['conversions']['from_native'], name):
+            tpl = self.dict_get_value_re(generator.config['conversions']['from_native'], name)
             tpl = Template(tpl, searchList=[convert_opts])
             return str(tpl).rstrip()
 
@@ -215,8 +258,9 @@ class NativeType(object):
         assert('generator' in convert_opts)
         generator = convert_opts['generator']
         name = self.name
+
         if self.is_object:
-            if not name in generator.config['conversions']['to_native']:
+            if not self.dict_has_key_re(generator.config['conversions']['to_native'], name):
                 name = "object"
         elif self.is_enum:
             name = "int"
@@ -227,8 +271,9 @@ class NativeType(object):
             indent = convert_opts['level'] * "\t"
             return str(tpl).replace("\n", "\n" + indent)
 
-        if generator.config['conversions']['to_native'].has_key(name):
-            tpl = generator.config['conversions']['to_native'][name]
+
+        if self.dict_has_key_re(generator.config['conversions']['to_native'], name):
+            tpl = self.dict_get_value_re(generator.config['conversions']['to_native'], name)
             tpl = Template(tpl, searchList=[convert_opts])
             return str(tpl).rstrip()
         return "#pragma warning NO CONVERSION TO NATIVE FOR " + name
@@ -237,10 +282,10 @@ class NativeType(object):
         conversions = generator.config['conversions']
         if conversions.has_key('native_types') and conversions['native_types'].has_key(self.namespaced_name):
             return conversions['native_types'][self.namespaced_name]
-        return self.namespaced_name
+        return "const " + self.namespaced_name if (self.is_pointer and self.is_const) else self.namespaced_name
 
     def __str__(self):
-        return self.namespaced_name
+        return self.whole_name
 
 class NativeField(object):
     def __init__(self, cursor):
@@ -278,11 +323,9 @@ class NativeFunction(object):
         self.implementations = []
         self.is_constructor = False
         self.not_supported = False
-        result = cursor.result_type
-        # get the result
-        if result.kind == cindex.TypeKind.LVALUEREFERENCE:
-            result = result.get_pointee()
+
         self.ret_type = NativeType.from_type(cursor.result_type)
+
         # parse the arguments
         # if self.func_name == "spriteWithFile":
         #   pdb.set_trace()

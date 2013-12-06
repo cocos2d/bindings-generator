@@ -29,13 +29,10 @@ conversions:
     # jsval has to be a TypedArray, a UInt32Array with 2 elements
     "long long": "ok &= jsval_to_long_long(cx, ${in_value}, &${out_value})"
     "std::string": "ok &= jsval_to_std_string(cx, ${in_value}, &${out_value})"
-    "const char*": "std::string ${out_value}_tmp; ok &= jsval_to_std_string(cx, ${in_value}, &${out_value}_tmp); ${out_value} = ${out_value}_tmp.c_str()"
+    "char*": "std::string ${out_value}_tmp; ok &= jsval_to_std_string(cx, ${in_value}, &${out_value}_tmp); ${out_value} = ${out_value}_tmp.c_str()"
     "Point": "ok &= jsval_to_ccpoint(cx, ${in_value}, &${out_value})"
     "Rect": "ok &= jsval_to_ccrect(cx, ${in_value}, &${out_value})"
     "Size": "ok &= jsval_to_ccsize(cx, ${in_value}, &${out_value})"
-    "const Color4B": "ok &= jsval_to_cccolor4b(cx, ${in_value}, &${out_value})"
-    "const Color4F": "ok &= jsval_to_cccolor4f(cx, ${in_value}, &${out_value})"
-    "const Color3B": "ok &= jsval_to_cccolor3b(cx, ${in_value}, &${out_value})"
     "Color4B": "ok &= jsval_to_cccolor4b(cx, ${in_value}, &${out_value})"
     "Color4F": "ok &= jsval_to_cccolor4f(cx, ${in_value}, &${out_value})"
     "Color3B": "ok &= jsval_to_cccolor3b(cx, ${in_value}, &${out_value})"
@@ -44,6 +41,11 @@ conversions:
     "AffineTransform": "ok &= jsval_to_ccaffinetransform(cx, ${in_value}, &${out_value})"
     "FontDefinition":  "ok &= jsval_to_FontDefinition(cx, ${in_value}, &${out_value})"
     "String*": "std::string ${out_value}_tmp; ok &= jsval_to_std_string(cx, ${in_value}, &${out_value}_tmp); ${out_value} = cocos2d::String::create(${out_value}_tmp)"
+    "@Vector<.*>": "ok &= jsval_to_ccvector(cx, ${in_value}, &${out_value})"
+    "Value": "ok &= jsval_to_ccvalue(cx, ${in_value}, &${out_value})"
+    "ValueMap": "ok &= jsval_to_ccvaluemap(cx, ${in_value}, &${out_value})"
+    "IntValueMap": "ok &= jsval_to_ccintvaluemap(cx, ${in_value}, &${out_value})"
+    "ValueVector": "ok &= jsval_to_ccvaluevector(cx, ${in_value}, &${out_value})"
     object: |
       do {
       ${($level + 1) * '\t'}if (!${in_value}.isObject()) { ok = JS_FALSE; break; }
@@ -61,7 +63,7 @@ conversions:
     "unsigned char": "${out_value} = uint32_to_jsval(cx, ${in_value})"
     "long long": "${out_value} = long_long_to_jsval(cx, ${in_value})"
     "std::string": "${out_value} = std_string_to_jsval(cx, ${in_value})"
-    "const char*": "${out_value} = c_string_to_jsval(cx, ${in_value})"
+    "char*": "${out_value} = c_string_to_jsval(cx, ${in_value})"
     bool: "${out_value} = BOOLEAN_TO_JSVAL(${in_value})"
     float: "${out_value} = DOUBLE_TO_JSVAL(${in_value})"
     double: "${out_value} = DOUBLE_TO_JSVAL(${in_value})"
@@ -70,9 +72,6 @@ conversions:
     "Point": "${out_value} = ccpoint_to_jsval(cx, ${in_value})"
     "Rect": "${out_value} = ccrect_to_jsval(cx, ${in_value})"
     "Size": "${out_value} = ccsize_to_jsval(cx, ${in_value})"
-    "const Color4B": "${out_value} = cccolor4b_to_jsval(cx, ${in_value})"
-    "const Color4F": "${out_value} = cccolor4f_to_jsval(cx, ${in_value})"
-    "const Color3B": "${out_value} = cccolor3b_to_jsval(cx, ${in_value})"
     "Color4B": "${out_value} = cccolor4b_to_jsval(cx, ${in_value})"
     "Color4F": "${out_value} = cccolor4f_to_jsval(cx, ${in_value})"
     "Color3B": "${out_value} = cccolor3b_to_jsval(cx, ${in_value})"
@@ -81,10 +80,15 @@ conversions:
     "AffineTransform": "${out_value} = ccaffinetransform_to_jsval(cx, ${in_value})"
     "FontDefinition": "${out_value} = FontDefinition_to_jsval(cx, ${in_value})"
     "String*": "${out_value} = std_string_to_jsval(cx, ${in_value}->getCString())"
+    "@Vector<.*>": "${out_value} = ccvector_to_jsval(cx, ${in_value})"
+    "Value": "${out_value} = ccvalue_to_jsval(cx, ${in_value})"
+    "ValueMap": "${out_value} = ccvaluemap_to_jsval(cx, ${in_value})"
+    "IntValueMap": "${out_value} = ccintvaluemap_to_jsval(cx, ${in_value})"
+    "ValueVector": "${out_value} = ccvaluevector_to_jsval(cx, ${in_value})"
     object: |
       do {
       ${($level + 1) * '\t'}if (${in_value}) {
-      ${($level + 2) * '\t'}js_proxy_t *proxy = js_get_or_create_proxy<${ntype.replace("*", "")}>(cx, ${in_value});
+      ${($level + 2) * '\t'}js_proxy_t *proxy = js_get_or_create_proxy<${ntype.replace("*", "").replace("const ", "")}>(cx, (${ntype.replace("const ", "")})${in_value});
       ${($level + 2) * '\t'}${out_value} = OBJECT_TO_JSVAL(proxy->obj);
       ${($level + 1) * '\t'}} else {
       ${($level + 2) * '\t'}${out_value} = JSVAL_NULL;

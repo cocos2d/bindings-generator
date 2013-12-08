@@ -136,15 +136,22 @@ class NativeType(object):
         self.whole_name = None
         self.is_const = False
         self.is_pointer = False
+        self.typedef_type = None
 
     @staticmethod
     def from_type(ntype):
         if ntype.kind == cindex.TypeKind.POINTER:
             nt = NativeType.from_type(ntype.get_pointee())
+
+            if nt.typedef_type != None:
+                nt.typedef_type.name += "*"
+                nt.typedef_type.namespaced_name += "*"
+                nt.typedef_type.whole_name += "*"
+
             nt.name += "*"
             nt.namespaced_name += "*"
-            nt.is_enum = False
             nt.whole_name = nt.namespaced_name
+            nt.is_enum = False
             nt.is_const = ntype.get_pointee().is_const_qualified()
             nt.is_pointer = True
             if nt.is_const:
@@ -154,13 +161,17 @@ class NativeType(object):
             nt.namespaced_name = namespaced_name(ntype.get_pointee().get_declaration())
             nt.is_const = ntype.get_pointee().is_const_qualified()
             nt.whole_name = nt.namespaced_name + "&"
+
             if nt.is_const:
                 nt.whole_name = "const " + nt.whole_name
+
+            if nt.typedef_type != None:
+                nt.typedef_type.whole_name += "&"
         else:
             nt = NativeType()
+            decl = ntype.get_declaration()
 
             if ntype.kind == cindex.TypeKind.RECORD:
-                decl = ntype.get_declaration()
                 if decl.kind == cindex.CursorKind.CLASS_DECL:
                     nt.is_object = True
                 nt.name = decl.displayname
@@ -168,14 +179,21 @@ class NativeType(object):
                 nt.whole_name = nt.namespaced_name
             else:
                 nt.name = native_name_from_type(ntype)
-                nt.whole_name = nt.name
+                nt.namespaced_name = namespaced_name(decl)
+                if len(nt.namespaced_name) == 0 or nt.namespaced_name.find("::") == -1:
+                    nt.namespaced_name = nt.name
+
+                nt.whole_name = nt.namespaced_name
                 nt.is_const = ntype.is_const_qualified()
                 if nt.is_const:
                     nt.whole_name = "const " + nt.whole_name
-                if nt.name != INVALID_NATIVE_TYPE and nt.name != "std::string" and nt.name != "std::function" and ntype.kind == cindex.TypeKind.UNEXPOSED:
-                    return NativeType.from_type(ntype.get_canonical())
+                if nt.name != INVALID_NATIVE_TYPE and nt.name != "std::string" and nt.name != "std::function" \
+                    and ntype.kind == cindex.TypeKind.UNEXPOSED:
+                    ret = NativeType.from_type(ntype.get_canonical())
+                    if decl.kind == cindex.CursorKind.TYPEDEF_DECL:
+                        ret.typedef_type = nt
+                    return ret
 
-                nt.namespaced_name = nt.name
                 nt.is_enum = ntype.get_canonical().kind == cindex.TypeKind.ENUM
                 if nt.name == "std::function":
                     decl = ntype.get_canonical().get_declaration()
@@ -212,58 +230,73 @@ class NativeType(object):
         params = ["%s larg%d" % (str(nt), i) for i, nt in enumerate(self.param_types)]
         return ", ".join(params)
 
-    def dict_has_key_re(self, dict, real_key):
-        for (k, v) in dict.items():
-            if k.startswith('@'):
-                k = k[1:]
-                match = re.match("^" + k + "$", real_key)
-                if match:
-                    return True
-            else:
-                if k == real_key:
-                    return True
+    @staticmethod
+    def dict_has_key_re(dict, real_key_list):
+        for real_key in real_key_list:
+            for (k, v) in dict.items():
+                if k.startswith('@'):
+                    k = k[1:]
+                    match = re.match("^" + k + "$", real_key)
+                    if match:
+                        return True
+                else:
+                    if k == real_key:
+                        return True
         return False
 
-    def dict_get_value_re(self, dict, real_key):
-        for (k, v) in dict.items():
-            if k.startswith('@'):
-                k = k[1:]
-                match = re.match("^" + k + "$", real_key)
-                if match:
-                    return v
-            else:
-                if k == real_key:
-                    return v
+    @staticmethod
+    def dict_get_value_re(dict, real_key_list):
+        for real_key in real_key_list:
+            for (k, v) in dict.items():
+                if k.startswith('@'):
+                    k = k[1:]
+                    match = re.match("^" + k + "$", real_key)
+                    if match:
+                        return v
+                else:
+                    if k == real_key:
+                        return v
         return None
 
     def from_native(self, convert_opts):
         assert(convert_opts.has_key('generator'))
         generator = convert_opts['generator']
-        name = self.name
+        keys = []
+
+        if self.typedef_type:
+            keys.append(self.typedef_type.name)
+        keys.append(self.name)
+
+        from_native_dict = generator.config['conversions']['from_native']
 
         if self.is_object:
-            if not self.dict_has_key_re(generator.config['conversions']['from_native'], name):
-                name = "object"
+            if not NativeType.dict_has_key_re(from_native_dict, keys):
+                keys.append("object")
         elif self.is_enum:
-            name = "int"
+            keys.append("int")
 
-        if self.dict_has_key_re(generator.config['conversions']['from_native'], name):
-            tpl = self.dict_get_value_re(generator.config['conversions']['from_native'], name)
+        if NativeType.dict_has_key_re(from_native_dict, keys):
+            tpl = NativeType.dict_get_value_re(from_native_dict, keys)
             tpl = Template(tpl, searchList=[convert_opts])
             return str(tpl).rstrip()
 
-        return "#pragma warning NO CONVERSION FROM NATIVE FOR " + name
+        return "#pragma warning NO CONVERSION FROM NATIVE FOR " + self.name
 
     def to_native(self, convert_opts):
         assert('generator' in convert_opts)
         generator = convert_opts['generator']
-        name = self.name
+        keys = []
 
+        if self.typedef_type:
+            keys.append(self.typedef_type.name)
+        keys.append(self.name)
+
+        to_native_dict = generator.config['conversions']['to_native']
         if self.is_object:
-            if not self.dict_has_key_re(generator.config['conversions']['to_native'], name):
-                name = "object"
+            if not NativeType.dict_has_key_re(to_native_dict, keys):
+                keys.append("object")
         elif self.is_enum:
-            name = "int"
+            keys.append("int")
 
         if self.is_function:
             tpl = Template(file=os.path.join(generator.target, "templates", "lambda.c"),
@@ -272,20 +305,23 @@ class NativeType(object):
             return str(tpl).replace("\n", "\n" + indent)
 
 
-        if self.dict_has_key_re(generator.config['conversions']['to_native'], name):
-            tpl = self.dict_get_value_re(generator.config['conversions']['to_native'], name)
+        if NativeType.dict_has_key_re(to_native_dict, keys):
+            tpl = NativeType.dict_get_value_re(to_native_dict, keys)
             tpl = Template(tpl, searchList=[convert_opts])
             return str(tpl).rstrip()
-        return "#pragma warning NO CONVERSION TO NATIVE FOR " + name
+        return "#pragma warning NO CONVERSION TO NATIVE FOR " + self.name
 
     def to_string(self, generator):
         conversions = generator.config['conversions']
         if conversions.has_key('native_types') and conversions['native_types'].has_key(self.namespaced_name):
             return conversions['native_types'][self.namespaced_name]
-        return "const " + self.namespaced_name if (self.is_pointer and self.is_const) else self.namespaced_name
+        name = self.namespaced_name
+        if self.typedef_type != None:
+            name = self.typedef_type.namespaced_name
+        return "const " + name if (self.is_pointer and self.is_const) else name
 
     def __str__(self):
-        return self.whole_name
+        return  self.typedef_type.whole_name if self.typedef_type != None else self.whole_name
 
 class NativeField(object):
     def __init__(self, cursor):

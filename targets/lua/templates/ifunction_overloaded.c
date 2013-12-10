@@ -47,7 +47,7 @@ int ${signature_name}(lua_State* tolua_S)
                 #set $count = $count + 1
 
             #if $arg_idx >= 0 
-            if (!ok) { ok = true; break; }
+            if (!ok) { break; }
             #end if
             #end while
             #set $arg_list = ", ".join($arg_array)
@@ -96,6 +96,7 @@ int ${signature_name}(lua_State* tolua_S)
         }
     }while(0);
     #set $arg_idx = $arg_idx + 1
+    ok  = true;
     #end while
 #end if
 #end for

@@ -27,13 +27,10 @@ conversions:
     "unsigned long": "ok &= luaval_to_ulong(tolua_S, ${arg_idx}, &${out_value})"
     "long long": "ok &= luaval_to_long_long(tolua_S, ${arg_idx},&${out_value})"
     "std::string": "ok &= luaval_to_std_string(tolua_S, ${arg_idx},&${out_value})"
-    "const char*": "std::string ${out_value}_tmp; ok &= luaval_to_std_string(tolua_S, ${arg_idx}, &${out_value}_tmp); ${out_value} = ${out_value}_tmp.c_str()"
+    "char*": "std::string ${out_value}_tmp; ok &= luaval_to_std_string(tolua_S, ${arg_idx}, &${out_value}_tmp); ${out_value} = ${out_value}_tmp.c_str()"
     "Point": "ok &= luaval_to_point(tolua_S, ${arg_idx}, &${out_value})"
     "Rect": "ok &= luaval_to_rect(tolua_S, ${arg_idx}, &${out_value})"
     "Size": "ok &= luaval_to_size(tolua_S, ${arg_idx}, &${out_value})"
-    "const Color4B": "ok &= luaval_to_color4b(tolua_S, ${arg_idx}, &${out_value})"
-    "const Color4F": "ok &= luaval_to_color4f(tolua_S, ${arg_idx}, &${out_value})"
-    "const Color3B": "ok &= luaval_to_color3b(tolua_S, ${arg_idx}, &${out_value})"
     "Color4B": "ok &=luaval_to_color4b(tolua_S, ${arg_idx}, &${out_value})"
     "Color4F": "ok &=luaval_to_color4f(tolua_S, ${arg_idx}, &${out_value})"
     "Color3B": "ok &= luaval_to_color3b(tolua_S, ${arg_idx}, &${out_value})"
@@ -41,6 +38,11 @@ conversions:
     "Dictionary*": "ok &= luaval_to_dictionary(tolua_S, ${arg_idx}, &${out_value})"
     "AffineTransform": "ok &= luaval_to_affinetransform(tolua_S, ${arg_idx}, &${out_value})"
     "FontDefinition":  "ok &= luaval_to_fontdefinition(tolua_S, ${arg_idx}, &${out_value})"
+    "@Vector<.*>": "ok &= luaval_to_ccvector(tolua_S, ${arg_idx}, &${out_value})"
+    "Value": "ok &= luaval_to_ccvalue(tolua_S, ${arg_idx}, &${out_value})"
+    "ValueMap": "ok &= luaval_to_ccvaluemap(tolua_S, ${arg_idx}, &${out_value})"
+    "IntValueMap": "ok &= luaval_to_ccintvaluemap(tolua_S, ${arg_idx}, &${out_value})"
+    "ValueVector": "ok &= luaval_to_ccvaluevector(tolua_S, ${arg_idx}, &${out_value})"
     object: |
       do {
       ${($level + 2) * '\t'}if (!luaval_is_usertype(tolua_S,${arg_idx},"${ntype}",0)){
@@ -70,9 +72,6 @@ conversions:
     "Point": "point_to_luaval(tolua_S, ${in_value})"
     "Rect": "rect_to_luaval(tolua_S, ${in_value})"
     "Size": "size_to_luaval(tolua_S, ${in_value})"
-    "const Color4B": "color4b_to_luaval(tolua_S, ${in_value})"
-    "const Color4F": "color4f_to_luaval(tolua_S, ${in_value})"
-    "const Color3B": "color3b_to_luaval(tolua_S, ${in_value})"
     "Color4B": "color4b_to_luaval(tolua_S, ${in_value})"
     "Color4F": "color4f_to_luaval(tolua_S, ${in_value})"
     "Color3B": "color3b_to_luaval(tolua_S, ${in_value})"
@@ -80,16 +79,21 @@ conversions:
     "Dictionary*": "dictionary_to_luaval(tolua_S, ${in_value})"
     "AffineTransform": "affinetransform_to_luaval(tolua_S, ${in_value})"
     "FontDefinition": "fontdefinition_to_luaval(tolua_S, ${in_value})"
+    "@Vector<.*>": "ccvector_to_luaval(tolua_S, ${in_value})"
+    "Value": "ccvalue_to_luaval(tolua_S, ${in_value})"
+    "ValueMap": "ccvaluemap_to_luaval(tolua_S, ${in_value})"
+    "IntValueMap": "ccintvaluemap_to_luaval(tolua_S, ${in_value})"
+    "ValueVector": "ccvaluevector_to_luaval(tolua_S, ${in_value})"
     object:  |
       do {
       ${($level + 1) * '\t'}if (NULL != ${in_value}){
-      ${($level + 2) * '\t'}cocos2d::Object *dynObject = dynamic_cast<cocos2d::Object *>(${in_value});
+      ${($level + 2) * '\t'}cocos2d::Object *dynObject = dynamic_cast<cocos2d::Object *>((${ntype.replace("const ", "")})${in_value});
       ${($level + 2) * '\t'}if (NULL != dynObject) {
       ${($level + 3) * '\t'}int ID = ${in_value} ? (int)(dynObject->_ID) : -1;
       ${($level + 3) * '\t'}int* luaID = ${in_value} ? &(dynObject->_luaID) : NULL;
-      ${($level + 3) * '\t'}toluafix_pushusertype_ccobject(tolua_S,ID, luaID, (void*)${in_value},"${ntype}");
+      ${($level + 3) * '\t'}toluafix_pushusertype_ccobject(tolua_S,ID, luaID, (void*)${in_value},"${type_name}");
       ${($level + 2) * '\t'}} else {
-      ${($level + 3) * '\t'} tolua_pushusertype(tolua_S,(void*)${in_value},"${ntype}");
+      ${($level + 3) * '\t'} tolua_pushusertype(tolua_S,(void*)${in_value},"${type_name}");
       ${($level + 1) * '\t'}}} else {
       ${($level + 2) * '\t'}lua_pushnil(tolua_S);
       ${($level + 1) * '\t'}}

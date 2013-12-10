@@ -56,7 +56,8 @@ int ${signature_name}(lua_State* tolua_S)
         ${ret_type.from_native({"generator": $generator,
                                 "in_value": "ret",
                                 "out_value": "ret",
-                                "ntype": $ret_type.name.replace("*", ""),
+                                "type_name": $ret_type.name.replace("*", ""),
+                                "ntype": str($ret_type),
                                 "class_name": $class_name,
                                 "level": 2})};
         return 1;

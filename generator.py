@@ -12,6 +12,7 @@ import yaml
 import re
 import os
 import inspect
+import traceback
 from Cheetah.Template import Template
 
 type_map = {
@@ -974,5 +975,5 @@ if __name__ == '__main__':
     try:
         main()
     except Exception as e:
-        print e
+        traceback.print_exc()
         sys.exit(1)

@@ -12,6 +12,7 @@ import yaml
 import re
 import os
 import inspect
+import traceback
 from Cheetah.Template import Template
 
 type_map = {
@@ -73,11 +74,11 @@ cindex.CursorKind.DECL_REF_EXPR
 ]
 
 def native_name_from_type(ntype, underlying=False):
-    kind = ntype.get_canonical().kind
+    kind = ntype.kind #get_canonical().kind
     const = "" #"const " if ntype.is_const_qualified() else ""
     if not underlying and kind == cindex.TypeKind.ENUM:
         decl = ntype.get_declaration()
-        return namespaced_name(decl)
+        return get_namespaced_name(decl)
     elif kind in type_map:
         return const + type_map[kind]
     elif kind == cindex.TypeKind.RECORD:
@@ -114,7 +115,7 @@ def build_namespace(cursor, namespaces=[]):
     return namespaces
 
 
-def namespaced_name(declaration_cursor):
+def get_namespaced_name(declaration_cursor):
     ns_list = build_namespace(declaration_cursor, [])
     ns_list.reverse()
     ns = "::".join(ns_list)
@@ -136,17 +137,17 @@ class NativeType(object):
         self.whole_name = None
         self.is_const = False
         self.is_pointer = False
-        self.typedef_type = None
+        self.canonical_type = None
 
     @staticmethod
     def from_type(ntype):
         if ntype.kind == cindex.TypeKind.POINTER:
             nt = NativeType.from_type(ntype.get_pointee())
 
-            if nt.typedef_type != None:
-                nt.typedef_type.name += "*"
-                nt.typedef_type.namespaced_name += "*"
-                nt.typedef_type.whole_name += "*"
+            if None != nt.canonical_type:
+                nt.canonical_type.name += "*"
+                nt.canonical_type.namespaced_name += "*"
+                nt.canonical_type.whole_name += "*"
 
             nt.name += "*"
             nt.namespaced_name += "*"
@@ -158,15 +159,14 @@ class NativeType(object):
                 nt.whole_name = "const " + nt.whole_name
         elif ntype.kind == cindex.TypeKind.LVALUEREFERENCE:
             nt = NativeType.from_type(ntype.get_pointee())
-            nt.namespaced_name = namespaced_name(ntype.get_pointee().get_declaration())
             nt.is_const = ntype.get_pointee().is_const_qualified()
             nt.whole_name = nt.namespaced_name + "&"
 
             if nt.is_const:
                 nt.whole_name = "const " + nt.whole_name
 
-            if nt.typedef_type != None:
-                nt.typedef_type.whole_name += "&"
+            if None != nt.canonical_type:
+                nt.canonical_type.whole_name += "&"
         else:
             nt = NativeType()
             decl = ntype.get_declaration()
@@ -175,11 +175,21 @@ class NativeType(object):
                 if decl.kind == cindex.CursorKind.CLASS_DECL:
                     nt.is_object = True
                 nt.name = decl.displayname
-                nt.namespaced_name = namespaced_name(decl)
+                nt.namespaced_name = get_namespaced_name(decl)
                 nt.whole_name = nt.namespaced_name
             else:
-                nt.name = native_name_from_type(ntype)
-                nt.namespaced_name = namespaced_name(decl)
+                if decl.kind == cindex.CursorKind.NO_DECL_FOUND:
+                    nt.name = native_name_from_type(ntype)
+                else:
+                    nt.name = decl.spelling
+                nt.namespaced_name = get_namespaced_name(decl)
+
+                if nt.namespaced_name == "std::string":
+                    nt.name = nt.namespaced_name
+
+                if nt.namespaced_name.startswith("std::function"):
+                    nt.name = "std::function"
+
                 if len(nt.namespaced_name) == 0 or nt.namespaced_name.find("::") == -1:
                     nt.namespaced_name = nt.name
 
@@ -187,19 +197,26 @@ class NativeType(object):
                 nt.is_const = ntype.is_const_qualified()
                 if nt.is_const:
                     nt.whole_name = "const " + nt.whole_name
-                if nt.name != INVALID_NATIVE_TYPE and nt.name != "std::string" and nt.name != "std::function" \
-                    and ntype.kind == cindex.TypeKind.UNEXPOSED:
-                    ret = NativeType.from_type(ntype.get_canonical())
-                    if decl.kind == cindex.CursorKind.TYPEDEF_DECL:
-                        ret.typedef_type = nt
-                    return ret
+
+                # Check whether it's a std::function typedef
+                cdecl = ntype.get_canonical().get_declaration()
+                if None != cdecl.spelling and 0 == cmp(cdecl.spelling, "function"):
+                    nt.name = "std::function"
+
+                if nt.name != INVALID_NATIVE_TYPE and nt.name != "std::string" and nt.name != "std::function":
+                    if ntype.kind == cindex.TypeKind.UNEXPOSED or ntype.kind == cindex.TypeKind.TYPEDEF:
+                        ret = NativeType.from_type(ntype.get_canonical())
+                        if ret.name != "":
+                            if decl.kind == cindex.CursorKind.TYPEDEF_DECL:
+                                ret.canonical_type = nt
+                            return ret
 
                 nt.is_enum = ntype.get_canonical().kind == cindex.TypeKind.ENUM
-                if nt.name == "std::function":
-                    decl = ntype.get_canonical().get_declaration()
-                    nt.namespaced_name = namespaced_name(decl)
 
-                    r = re.compile('function<(\S+) \((.*)\)>').search(decl.displayname)
+                if nt.name == "std::function":
+                    nt.namespaced_name = get_namespaced_name(cdecl)
+
+                    r = re.compile('function<(\S+) \((.*)\)>').search(cdecl.displayname)
                     (ret_type, params) = r.groups()
                     params = filter(None, params.split(", "))
 
@@ -263,8 +280,8 @@ class NativeType(object):
         generator = convert_opts['generator']
         keys = []
 
-        if self.typedef_type:
-            keys.append(self.typedef_type.name)
+        if self.canonical_type != None:
+            keys.append(self.canonical_type.name)
         keys.append(self.name)
 
         from_native_dict = generator.config['conversions']['from_native']
@@ -287,8 +304,8 @@ class NativeType(object):
         generator = convert_opts['generator']
         keys = []
 
-        if self.typedef_type:
-            keys.append(self.typedef_type.name)
+        if self.canonical_type != None:
+            keys.append(self.canonical_type.name)
         keys.append(self.name)
 
         to_native_dict = generator.config['conversions']['to_native']
@@ -316,12 +333,39 @@ class NativeType(object):
         if conversions.has_key('native_types') and conversions['native_types'].has_key(self.namespaced_name):
             return conversions['native_types'][self.namespaced_name]
         name = self.namespaced_name
-        if self.typedef_type != None:
-            name = self.typedef_type.namespaced_name
+
+        to_native_dict = generator.config['conversions']['to_native']
+        from_native_dict = generator.config['conversions']['from_native']
+        use_typedef = False
+
+        typedef_name = self.canonical_type.name if None != self.canonical_type else None
+
+        if None != typedef_name:
+            if NativeType.dict_has_key_re(to_native_dict, [typedef_name]) or NativeType.dict_has_key_re(from_native_dict, [typedef_name]):
+                use_typedef = True
+
+        if use_typedef and self.canonical_type:
+            name = self.canonical_type.namespaced_name
         return "const " + name if (self.is_pointer and self.is_const) else name
 
+    def get_whole_name(self, generator):
+        to_native_dict = generator.config['conversions']['to_native']
+        from_native_dict = generator.config['conversions']['from_native']
+        use_typedef = False
+
+        typedef_name = self.canonical_type.name if None != self.canonical_type else None
+
+        if None != typedef_name:
+            if NativeType.dict_has_key_re(to_native_dict, [typedef_name]) or NativeType.dict_has_key_re(from_native_dict, [typedef_name]):
+                use_typedef = True
+
+        if use_typedef and self.canonical_type:
+            return self.canonical_type.whole_name
+
+        return self.whole_name
+
     def __str__(self):
-        return  self.typedef_type.whole_name if self.typedef_type != None else self.whole_name
+        return  self.canonical_type.whole_name if None != self.canonical_type else self.whole_name
 
 class NativeField(object):
     def __init__(self, cursor):
@@ -411,6 +455,7 @@ class NativeFunction(object):
                     self.signature_name = str(tpl)
             tpl = Template(file=os.path.join(gen.target, "templates", "ifunction.c"),
                             searchList=[current_class, self])
+
         gen.impl_file.write(str(tpl))
         apidoc_function_js = Template(file=os.path.join(gen.target,
                                                         "templates",
@@ -481,7 +526,7 @@ class NativeClass(object):
             self.target_class_name = re.sub('^'+generator.remove_prefix, '', registration_name)
         else:
             self.target_class_name = registration_name
-        self.namespaced_class_name = namespaced_name(cursor)
+        self.namespaced_class_name = get_namespaced_name(cursor)
         self.parse()
 
     def parse(self):
@@ -833,7 +878,6 @@ class Generator(object):
             # print("%s %s - %s" % (">" * depth, node.displayname, node.kind))
             self._deep_iterate(node, depth + 1)
 
-
 def main():
     from optparse import OptionParser
 
@@ -931,5 +975,5 @@ if __name__ == '__main__':
     try:
         main()
     except Exception as e:
-        print e
+        traceback.print_exc()
         sys.exit(1)

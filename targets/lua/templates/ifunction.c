@@ -85,13 +85,13 @@ int ${signature_name}(lua_State* tolua_S)
                 #if $ret_type.is_enum
         int ret = (int)cobj->${func_name}($arg_list);
                 #else
-        ${ret_type} ret = cobj->${func_name}($arg_list);
+        ${ret_type.get_whole_name($generator)} ret = cobj->${func_name}($arg_list);
                 #end if
         ${ret_type.from_native({"generator": $generator,
                                 "in_value": "ret",
                                 "out_value": "ret",
                                 "type_name": $ret_type.name.replace("*", ""),
-                                "ntype": str($ret_type),
+                                "ntype": $ret_type.get_whole_name($generator),
                                 "class_name": $class_name,
                                 "level": 2})};
         return 1;

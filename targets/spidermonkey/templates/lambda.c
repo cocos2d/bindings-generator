@@ -26,7 +26,7 @@ do {
 			JS_ReportPendingException(cx);
 		}
 		#if $ret_type.name != "void"
-		${ret_type} ret;
+		${ret_type.get_whole_name($generator)} ret;
 		${ret_type.to_native({"generator": $generator,
 							 "in_value": "rval",
 							 "out_value": "ret",

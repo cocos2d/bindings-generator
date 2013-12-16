@@ -65,7 +65,7 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 				#if $func.ret_type.is_enum
 			int ret = (int)cobj->${func.func_name}($arg_list);
 				#else
-			${func.ret_type} ret = cobj->${func.func_name}($arg_list);
+			${func.ret_type.get_whole_name($generator)} ret = cobj->${func.func_name}($arg_list);
 				#end if
 			jsval jsret;
 			${func.ret_type.from_native({"generator": $generator,

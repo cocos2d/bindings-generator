@@ -26,6 +26,7 @@ conversions:
     double: "ok &= JS_ValueToNumber(cx, ${in_value}, &${out_value})"
     long: "ok &= jsval_to_long(cx, ${in_value}, &${out_value})"
     "unsigned long": "ok &= jsval_to_ulong(cx, ${in_value}, &${out_value})"
+    "ssize_t": "ok &= jsval_to_ssize(cx, ${in_value}, &${out_value})"
     # jsval has to be a TypedArray, a UInt32Array with 2 elements
     "long long": "ok &= jsval_to_long_long(cx, ${in_value}, &${out_value})"
     "std::string": "ok &= jsval_to_std_string(cx, ${in_value}, &${out_value})"
@@ -69,6 +70,7 @@ conversions:
     double: "${out_value} = DOUBLE_TO_JSVAL(${in_value})"
     long: "${out_value} = long_to_jsval(cx, ${in_value})"
     "unsigned long": "${out_value} = ulong_to_jsval(cx, ${in_value})"
+    "ssize_t": "${out_value} = ssize_to_jsval(cx, ${in_value})"
     "Point": "${out_value} = ccpoint_to_jsval(cx, ${in_value})"
     "Rect": "${out_value} = ccrect_to_jsval(cx, ${in_value})"
     "Size": "${out_value} = ccsize_to_jsval(cx, ${in_value})"

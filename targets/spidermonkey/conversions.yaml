@@ -20,6 +20,7 @@ conversions:
     "unsigned int": "ok &= jsval_to_uint32(cx, ${in_value}, &${out_value})"
     "unsigned char": "ok &= jsval_to_uint16(cx, ${in_value}, &${out_value})"
     short: "ok &= jsval_to_int32(cx, ${in_value}, &${out_value})"
+    "unsigned short": "ok &= jsval_to_ushort(cx, ${in_value}, &${out_value})"
     char: "ok &= jsval_to_int32(cx, ${in_value}, &${out_value})"
     bool: "ok &= JS_ValueToBoolean(cx, ${in_value}, &${out_value})"
     float: "ok &= JS_ValueToNumber(cx, ${in_value}, &${out_value})"
@@ -61,6 +62,7 @@ conversions:
     # int to jsval
     int: "${out_value} = int32_to_jsval(cx, ${in_value})"
     "unsigned int": "${out_value} = uint32_to_jsval(cx, ${in_value})"
+    "unsigned short": "${out_value} = ushort_to_jsval(cx, ${in_value})"
     "unsigned char": "${out_value} = uint32_to_jsval(cx, ${in_value})"
     "long long": "${out_value} = long_long_to_jsval(cx, ${in_value})"
     "std::string": "${out_value} = std_string_to_jsval(cx, ${in_value})"

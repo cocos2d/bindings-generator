@@ -19,6 +19,7 @@ conversions:
     "unsigned int": "ok &= luaval_to_uint32(tolua_S, ${arg_idx},&${out_value})"
     "unsigned char": "ok &= luaval_to_uint16(tolua_S, ${arg_idx},&${out_value})"
     short: "ok &= luaval_to_int32(tolua_S, ${arg_idx},&${out_value})"
+    "unsigned short": "ok &= luaval_to_ushort(tolua_S, ${arg_idx}, &${out_value})"
     char: "ok &= luaval_to_int32(tolua_S, ${arg_idx},&${out_value})"
     bool: "ok &= luaval_to_boolean(tolua_S, ${arg_idx},&${out_value})" 
     float: "ok &= luaval_to_number(tolua_S, ${arg_idx},&${out_value})"
@@ -60,6 +61,7 @@ conversions:
     # native to lua
     int: "tolua_pushnumber(tolua_S,(lua_Number)${in_value})"
     "unsigned int": "tolua_pushnumber(tolua_S,(lua_Number)${in_value})"
+    "unsigned short": "tolua_pushnumber(tolua_S,(lua_Number)${in_value})"
     "unsigned char": "tolua_pushnumber(tolua_S,(lua_Number)${in_value})"
     short: "tolua_pushnumber(tolua_S,(lua_Number)${in_value})"
     char: "tolua_pushnumber(tolua_S,(lua_Number)${in_value})"

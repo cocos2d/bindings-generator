@@ -100,7 +100,7 @@ conversions:
     "IntValueMap": "ccintvaluemap_to_luaval(tolua_S, ${in_value})"
     "ValueVector": "ccvaluevector_to_luaval(tolua_S, ${in_value})"
     "@vector<std::basic_string.*>": "ccvector_std_string_to_luaval(tolua_S, ${in_value})"
-    "@vector<int.*>": "$ccvector_int_to_luaval(tolua_S, ${in_value})"
+    "@vector<int.*>": "ccvector_int_to_luaval(tolua_S, ${in_value})"
     object:  |
       do {
       ${($level + 1) * '\t'}if (NULL != ${in_value}){

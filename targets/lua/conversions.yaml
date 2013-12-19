@@ -13,6 +13,10 @@ conversions:
     short: "int32_t"
     "unsigned char": "uint16_t"
     "char": "int32_t"
+    "@std::vector<std::basic_string.*>.>.>": "std::vector<std::string>"
+    "@std::vector<int.*>.>": "std::vector<int>"
+    "@cocos2d::Map<std::basic_string.*,": "cocos2d::Map<std::string,"
+
   to_native:
     # lua to native
     int: "ok &= luaval_to_int32(tolua_S, ${arg_idx},(int *)&${out_value})"
@@ -42,10 +46,14 @@ conversions:
     "AffineTransform": "ok &= luaval_to_affinetransform(tolua_S, ${arg_idx}, &${out_value})"
     "FontDefinition":  "ok &= luaval_to_fontdefinition(tolua_S, ${arg_idx}, &${out_value})"
     "@Vector<.*>": "ok &= luaval_to_ccvector(tolua_S, ${arg_idx}, &${out_value})"
+    "@Map<std::basic_string.*>": "ok &= luaval_to_ccmap_string_key(tolua_S, ${arg_idx}, &${out_value})"
     "Value": "ok &= luaval_to_ccvalue(tolua_S, ${arg_idx}, &${out_value})"
     "ValueMap": "ok &= luaval_to_ccvaluemap(tolua_S, ${arg_idx}, &${out_value})"
     "IntValueMap": "ok &= luaval_to_ccintvaluemap(tolua_S, ${arg_idx}, &${out_value})"
     "ValueVector": "ok &= luaval_to_ccvaluevector(tolua_S, ${arg_idx}, &${out_value})"
+    "@vector<std::basic_string.*>": "ok &= luaval_to_std_vector_string(tolua_S, ${arg_idx}, &${out_value})"
+    "@vector<int.*>": "ok &= luaval_to_std_vector_int(tolua_S, ${arg_idx}, &${out_value})"
+
     object: |
       do {
       ${($level + 2) * '\t'}if (!luaval_is_usertype(tolua_S,${arg_idx},"${ntype}",0)){
@@ -86,10 +94,13 @@ conversions:
     "AffineTransform": "affinetransform_to_luaval(tolua_S, ${in_value})"
     "FontDefinition": "fontdefinition_to_luaval(tolua_S, ${in_value})"
     "@Vector<.*>": "ccvector_to_luaval(tolua_S, ${in_value})"
+    "@Map<std::basic_string.*>": "ccmap_string_key_to_luaval(tolua_S, ${in_value})"
     "Value": "ccvalue_to_luaval(tolua_S, ${in_value})"
     "ValueMap": "ccvaluemap_to_luaval(tolua_S, ${in_value})"
     "IntValueMap": "ccintvaluemap_to_luaval(tolua_S, ${in_value})"
     "ValueVector": "ccvaluevector_to_luaval(tolua_S, ${in_value})"
+    "@vector<std::basic_string.*>": "ccvector_std_string_to_luaval(tolua_S, ${in_value})"
+    "@vector<int.*>": "ccvector_int_to_luaval(tolua_S, ${in_value})"
     object:  |
       do {
       ${($level + 1) * '\t'}if (NULL != ${in_value}){

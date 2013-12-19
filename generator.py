@@ -275,6 +275,20 @@ class NativeType(object):
                         return v
         return None
 
+    @staticmethod
+    def dict_replace_value_re(dict, real_key_list):
+        for real_key in real_key_list:
+            for (k, v) in dict.items():
+                if k.startswith('@'):
+                    k = k[1:]
+                    match = re.match('.*' + k, real_key)
+                    if match:
+                        return re.sub(k, v, real_key)
+                else:
+                    if k == real_key:
+                        return v
+        return None
+
     def from_native(self, convert_opts):
         assert(convert_opts.has_key('generator'))
         generator = convert_opts['generator']
@@ -330,8 +344,11 @@ class NativeType(object):
 
     def to_string(self, generator):
         conversions = generator.config['conversions']
-        if conversions.has_key('native_types') and conversions['native_types'].has_key(self.namespaced_name):
-            return conversions['native_types'][self.namespaced_name]
+        if conversions.has_key('native_types'):
+            native_types_dict = conversions['native_types']
+            if NativeType.dict_has_key_re(native_types_dict, [self.namespaced_name]):
+                return NativeType.dict_get_value_re(native_types_dict, [self.namespaced_name])
+
         name = self.namespaced_name
 
         to_native_dict = generator.config['conversions']['to_native']
@@ -349,10 +366,11 @@ class NativeType(object):
         return "const " + name if (self.is_pointer and self.is_const) else name
 
     def get_whole_name(self, generator):
-        to_native_dict = generator.config['conversions']['to_native']
-        from_native_dict = generator.config['conversions']['from_native']
+        conversions = generator.config['conversions']
+        to_native_dict = conversions['to_native']
+        from_native_dict = conversions['from_native']
         use_typedef = False
-
+        name = self.whole_name
         typedef_name = self.canonical_type.name if None != self.canonical_type else None
 
         if None != typedef_name:
@@ -360,9 +378,17 @@ class NativeType(object):
                 use_typedef = True
 
         if use_typedef and self.canonical_type:
-            return self.canonical_type.whole_name
+            name = self.canonical_type.whole_name
 
-        return self.whole_name
+        to_replace = None
+        if conversions.has_key('native_types'):
+            native_types_dict = conversions['native_types']
+            to_replace = NativeType.dict_replace_value_re(native_types_dict, [name])
+
+        if to_replace:
+            name = to_replace
+
+        return name
 
     def __str__(self):
         return  self.canonical_type.whole_name if None != self.canonical_type else self.whole_name
@@ -385,10 +411,10 @@ class NativeField(object):
 def iterate_param_node(param_node, depth=1):
     for node in param_node.get_children():
         # print(">"*depth+" "+str(node.kind))
-        if (node.kind in default_arg_type_arr):
+        if node.kind in default_arg_type_arr:
             return True
 
-        if (iterate_param_node(node, depth+1)):
+        if iterate_param_node(node, depth + 1):
             return True
 
     return False
@@ -416,14 +442,13 @@ class NativeFunction(object):
             if nt.not_supported:
                 self.not_supported = True
 
-
         found_default_arg = False
         index = -1
 
         for arg_node in self.cursor.get_children():
             if arg_node.kind == cindex.CursorKind.PARM_DECL:
-                index+=1
-                if (iterate_param_node(arg_node)):
+                index += 1
+                if iterate_param_node(arg_node):
                     found_default_arg = True
                     break
 
@@ -523,7 +548,7 @@ class NativeClass(object):
 
         registration_name = generator.get_class_or_rename_class(self.class_name)
         if generator.remove_prefix:
-            self.target_class_name = re.sub('^'+generator.remove_prefix, '', registration_name)
+            self.target_class_name = re.sub('^' + generator.remove_prefix, '', registration_name)
         else:
             self.target_class_name = registration_name
         self.namespaced_class_name = get_namespaced_name(cursor)

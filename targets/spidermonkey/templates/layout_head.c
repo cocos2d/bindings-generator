@@ -16,8 +16,8 @@ static JSBool dummy_constructor(JSContext *cx, uint32_t argc, jsval *vp) {
 	{
 		TypeTest<T> t;
 		js_type_class_t *typeClass = nullptr;
-		long typeId = t.s_id();
-		auto typeMapIter = _js_global_type_map.find(typeId);
+		std::string typeName = t.s_name();
+		auto typeMapIter = _js_global_type_map.find(typeName);
 		CCASSERT(typeMapIter != _js_global_type_map.end(), "Can't find the class type!");
 		typeClass = typeMapIter->second;
 		CCASSERT(typeClass, "The value is null.");

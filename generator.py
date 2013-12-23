@@ -627,6 +627,14 @@ class NativeClass(object):
             if self._process_node(node):
                 self._deep_iterate(node, depth + 1)
 
+    @staticmethod
+    def _is_method_in_parents(current_class, method_name):
+        if len(current_class.parents) > 0:
+            if method_name in current_class.parents[0].methods:
+                return True
+            return NativeClass._is_method_in_parents(current_class.parents[0], method_name)
+        return False
+
     def _process_node(self, cursor):
         '''
         process the node, depending on the type. If returns true, then it will perform a deep
@@ -657,7 +665,7 @@ class NativeClass(object):
                 if m.not_supported:
                     return False
                 if m.is_override:
-                    if len(self.parents) > 0 and registration_name in self.parents[0].methods:
+                    if NativeClass._is_method_in_parents(self, registration_name):
                         return False
 
                 if m.static:

@@ -429,6 +429,7 @@ class NativeFunction(object):
         self.implementations = []
         self.is_constructor = False
         self.not_supported = False
+        self.is_override = False
 
         self.ret_type = NativeType.from_type(cursor.result_type)
 
@@ -446,6 +447,8 @@ class NativeFunction(object):
         index = -1
 
         for arg_node in self.cursor.get_children():
+            if arg_node.kind == cindex.CursorKind.CXX_OVERRIDE_ATTR:
+                self.is_override = True
             if arg_node.kind == cindex.CursorKind.PARM_DECL:
                 index += 1
                 if iterate_param_node(arg_node):
@@ -652,7 +655,11 @@ class NativeClass(object):
                 registration_name = self.generator.should_rename_function(self.class_name, m.func_name) or m.func_name
                 # bail if the function is not supported (at least one arg not supported)
                 if m.not_supported:
-                    return
+                    return False
+                if m.is_override:
+                    if len(self.parents) > 0 and registration_name in self.parents[0].methods:
+                        return False
+
                 if m.static:
                     if not self.static_methods.has_key(registration_name):
                         self.static_methods[registration_name] = m

@@ -557,6 +557,10 @@ class NativeClass(object):
         self.namespaced_class_name = get_namespaced_name(cursor)
         self.parse()
 
+    @property
+    def underlined_class_name(self):
+        return self.namespaced_class_name.replace("::", "_")
+
     def parse(self):
         '''
         parse the current cursor, getting all the necesary information
@@ -726,6 +730,7 @@ class Generator(object):
         self.target = opts['target']
         self.remove_prefix = opts['remove_prefix']
         self.target_ns = opts['target_ns']
+        self.cpp_ns = opts['cpp_ns']
         self.impl_file = None
         self.head_file = None
         self.skip_classes = {}
@@ -907,12 +912,22 @@ class Generator(object):
     def _deep_iterate(self, cursor, depth=0):
         # get the canonical type
         if cursor.kind == cindex.CursorKind.CLASS_DECL:
-            if cursor == cursor.type.get_declaration() and len(cursor.get_children_array()) > 0 and self.in_listed_classes(cursor.displayname):
-                if not self.generated_classes.has_key(cursor.displayname):
-                    nclass = NativeClass(cursor, self)
-                    nclass.generate_code()
-                    self.generated_classes[cursor.displayname] = nclass
-                return
+            if cursor == cursor.type.get_declaration() and len(cursor.get_children_array()) > 0:
+                is_targeted_class = True
+                if self.cpp_ns:
+                    is_targeted_class = False
+                    namespaced_name = get_namespaced_name(cursor)
+                    for ns in self.cpp_ns:
+                        if namespaced_name.find(ns) != -1:
+                            is_targeted_class = True
+                            break
+
+                if is_targeted_class and self.in_listed_classes(cursor.displayname):
+                    if not self.generated_classes.has_key(cursor.displayname):
+                        nclass = NativeClass(cursor, self)
+                        nclass.generate_code()
+                        self.generated_classes[cursor.displayname] = nclass
+                    return
 
         for node in cursor.get_children():
             # print("%s %s - %s" % (">" * depth, node.displayname, node.kind))
@@ -999,6 +1014,7 @@ def main():
                 'outdir': outdir,
                 'remove_prefix': config.get(s, 'remove_prefix'),
                 'target_ns': config.get(s, 'target_namespace'),
+                'cpp_ns': config.get(s, 'cpp_namespace').split(' ') if config.has_option(s, 'cpp_namespace') else None,
                 'classes_have_no_parents': config.get(s, 'classes_have_no_parents'),
                 'base_classes_to_skip': config.get(s, 'base_classes_to_skip'),
                 'abstract_classes': config.get(s, 'abstract_classes'),

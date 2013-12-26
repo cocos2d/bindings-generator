@@ -918,7 +918,7 @@ class Generator(object):
                     is_targeted_class = False
                     namespaced_name = get_namespaced_name(cursor)
                     for ns in self.cpp_ns:
-                        if namespaced_name.find(ns) != -1:
+                        if namespaced_name.startswith(ns):
                             is_targeted_class = True
                             break
 

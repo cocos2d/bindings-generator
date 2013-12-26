@@ -8,10 +8,10 @@ ${current_class.methods.constructor.generate_code($current_class)}
 #set methods = $current_class.methods_clean()
 #set st_methods = $current_class.static_methods_clean()
 #if len($current_class.parents) > 0
-extern JSObject *jsb_${current_class.parents[0].class_name}_prototype;
+extern JSObject *jsb_${current_class.parents[0].underlined_class_name}_prototype;
 #end if
 
-void js_${generator.prefix}_${current_class.class_name}_finalize(JSFreeOp *fop, JSObject *obj) {
+void js_${current_class.underlined_class_name}_finalize(JSFreeOp *fop, JSObject *obj) {
     CCLOGINFO("jsbindings: finalizing JS object %p (${current_class.class_name})", obj);
 #if $generator.script_control_cpp
     js_proxy_t* nproxy;
@@ -30,7 +30,7 @@ void js_${generator.prefix}_${current_class.class_name}_finalize(JSFreeOp *fop, 
 }
 
 #if $generator.in_listed_extend_classed($current_class.class_name) and not $current_class.is_abstract
-static JSBool js_${generator.prefix}_${current_class.class_name}_ctor(JSContext *cx, uint32_t argc, jsval *vp)
+static JSBool js_${current_class.underlined_class_name}_ctor(JSContext *cx, uint32_t argc, jsval *vp)
 {
 	JSObject *obj = JS_THIS_OBJECT(cx, vp);
     ${current_class.namespaced_class_name} *nobj = ${current_class.namespaced_class_name}::create();
@@ -43,17 +43,17 @@ static JSBool js_${generator.prefix}_${current_class.class_name}_ctor(JSContext 
 }
 #end if
 void js_register_${generator.prefix}_${current_class.class_name}(JSContext *cx, JSObject *global) {
-	jsb_${current_class.class_name}_class = (JSClass *)calloc(1, sizeof(JSClass));
-	jsb_${current_class.class_name}_class->name = "${current_class.target_class_name}";
-	jsb_${current_class.class_name}_class->addProperty = JS_PropertyStub;
-	jsb_${current_class.class_name}_class->delProperty = JS_DeletePropertyStub;
-	jsb_${current_class.class_name}_class->getProperty = JS_PropertyStub;
-	jsb_${current_class.class_name}_class->setProperty = JS_StrictPropertyStub;
-	jsb_${current_class.class_name}_class->enumerate = JS_EnumerateStub;
-	jsb_${current_class.class_name}_class->resolve = JS_ResolveStub;
-	jsb_${current_class.class_name}_class->convert = JS_ConvertStub;
-	jsb_${current_class.class_name}_class->finalize = js_${generator.prefix}_${current_class.class_name}_finalize;
-	jsb_${current_class.class_name}_class->flags = JSCLASS_HAS_RESERVED_SLOTS(2);
+	jsb_${current_class.underlined_class_name}_class = (JSClass *)calloc(1, sizeof(JSClass));
+	jsb_${current_class.underlined_class_name}_class->name = "${current_class.target_class_name}";
+	jsb_${current_class.underlined_class_name}_class->addProperty = JS_PropertyStub;
+	jsb_${current_class.underlined_class_name}_class->delProperty = JS_DeletePropertyStub;
+	jsb_${current_class.underlined_class_name}_class->getProperty = JS_PropertyStub;
+	jsb_${current_class.underlined_class_name}_class->setProperty = JS_StrictPropertyStub;
+	jsb_${current_class.underlined_class_name}_class->enumerate = JS_EnumerateStub;
+	jsb_${current_class.underlined_class_name}_class->resolve = JS_ResolveStub;
+	jsb_${current_class.underlined_class_name}_class->convert = JS_ConvertStub;
+	jsb_${current_class.underlined_class_name}_class->finalize = js_${current_class.underlined_class_name}_finalize;
+	jsb_${current_class.underlined_class_name}_class->flags = JSCLASS_HAS_RESERVED_SLOTS(2);
 
 	#if len($current_class.fields) > 0
 	static JSPropertySpec properties[] = {
@@ -70,7 +70,7 @@ void js_register_${generator.prefix}_${current_class.class_name}(JSContext *cx, 
 		JS_FN("${m['name']}", ${fn.signature_name}, ${fn.min_args}, JSPROP_PERMANENT | JSPROP_ENUMERATE),
 		#end for
 #if $generator.in_listed_extend_classed($current_class.class_name) and not $current_class.is_abstract
-        JS_FN("ctor", js_${generator.prefix}_${current_class.class_name}_ctor, 0, JSPROP_PERMANENT | JSPROP_ENUMERATE),
+        JS_FN("ctor", js_${current_class.underlined_class_name}_ctor, 0, JSPROP_PERMANENT | JSPROP_ENUMERATE),
 #end if
         JS_FS_END
 	};
@@ -90,14 +90,14 @@ void js_register_${generator.prefix}_${current_class.class_name}(JSContext *cx, 
 	JSFunctionSpec *st_funcs = NULL;
 	#end if
 
-	jsb_${current_class.class_name}_prototype = JS_InitClass(
+	jsb_${current_class.underlined_class_name}_prototype = JS_InitClass(
 		cx, global,
 #if len($current_class.parents) > 0
-		jsb_${current_class.parents[0].class_name}_prototype,
+		jsb_${current_class.parents[0].underlined_class_name}_prototype,
 #else
 		NULL, // parent proto
 #end if
-		jsb_${current_class.class_name}_class,
+		jsb_${current_class.underlined_class_name}_class,
 #if has_constructor
 		js_${generator.prefix}_${current_class.class_name}_constructor, 0, // constructor
 #else if $current_class.is_abstract
@@ -120,10 +120,10 @@ void js_register_${generator.prefix}_${current_class.class_name}(JSContext *cx, 
 	if (_js_global_type_map.find(typeName) == _js_global_type_map.end())
 	{
 		p = (js_type_class_t *)malloc(sizeof(js_type_class_t));
-		p->jsclass = jsb_${current_class.class_name}_class;
-		p->proto = jsb_${current_class.class_name}_prototype;
+		p->jsclass = jsb_${current_class.underlined_class_name}_class;
+		p->proto = jsb_${current_class.underlined_class_name}_prototype;
 #if len($current_class.parents) > 0
-		p->parentProto = jsb_${current_class.parents[0].class_name}_prototype;
+		p->parentProto = jsb_${current_class.parents[0].underlined_class_name}_prototype;
 #else
 		p->parentProto = NULL;
 #end if

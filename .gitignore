@@ -3,3 +3,4 @@ gen/
 *.pyc
 test/user.cfg
 test/userconf.ini
+.idea

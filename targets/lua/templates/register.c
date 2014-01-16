@@ -40,11 +40,11 @@ static int lua_${generator.prefix}_${current_class.class_name}_finalize(lua_Stat
 
 int lua_register_${generator.prefix}_${current_class.class_name}(lua_State* tolua_S)
 {
-    tolua_usertype(tolua_S,"${current_class.class_name}");
+    tolua_usertype(tolua_S,"${generator.scriptname_from_native($current_class.namespaced_class_name)}");
     #if len($current_class.parents) > 0
-    tolua_cclass(tolua_S,"${current_class.class_name}","${current_class.class_name}","${current_class.parents[0].class_name}",NULL);
+    tolua_cclass(tolua_S,"${current_class.class_name}","${generator.scriptname_from_native($current_class.namespaced_class_name)}","${generator.scriptname_from_native($current_class.parents[0].namespaced_class_name)}",NULL);
     #else
-    tolua_cclass(tolua_S,"${current_class.class_name}","${current_class.class_name}","",NULL);
+    tolua_cclass(tolua_S,"${current_class.class_name}","${generator.scriptname_from_native($current_class.namespaced_class_name)}","",NULL);
     #end if
 
     tolua_beginmodule(tolua_S,"${current_class.class_name}");
@@ -65,6 +65,7 @@ int lua_register_${generator.prefix}_${current_class.class_name}(lua_State* tolu
     #end if
     tolua_endmodule(tolua_S);
     std::string typeName = typeid(${current_class.namespaced_class_name}).name();
-    g_luaType[typeName] = "${current_class.class_name}";
+    g_luaType[typeName] = "${generator.scriptname_from_native($current_class.namespaced_class_name)}";
+    g_typeCast["${current_class.class_name}"] = "${generator.scriptname_from_native($current_class.namespaced_class_name)}";
     return 1;
 }

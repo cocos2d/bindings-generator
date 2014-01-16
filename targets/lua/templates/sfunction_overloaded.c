@@ -8,7 +8,7 @@ int ${signature_name}(lua_State* tolua_S)
 \#endif
 
 \#if COCOS2D_DEBUG >= 1
-    if (!tolua_isusertable(tolua_S,1,"$class_name",0,&tolua_err)) goto tolua_lerror;
+    if (!tolua_isusertable(tolua_S,1,"${generator.scriptname_from_native($namespaced_class_name)}",0,&tolua_err)) goto tolua_lerror;
 \#endif
 
     argc = lua_gettop(tolua_S)-1;
@@ -35,7 +35,8 @@ int ${signature_name}(lua_State* tolua_S)
                              "class_name": $class_name,
                              "level": 2,
                              "arg":$arg,
-                             "ntype": $arg.name.replace("*", "")})};
+                             "ntype": $arg.namespaced_name.replace("*", ""),
+                             "scriptname": $generator.scriptname_from_native($arg.namespaced_name)})};
             #set $arg_array += ["arg"+str(count)]
             #set $count = $count + 1
             #if $arg_idx >= 0
@@ -52,10 +53,11 @@ int ${signature_name}(lua_State* tolua_S)
             ${func.ret_type.from_native({"generator": $generator,
                                          "in_value": "ret",
                                          "out_value": "jsret",
-                                         "type_name": $func.ret_type.name.replace("*", ""),
+                                         "type_name": $func.ret_type.namespaced_name.replace("*", ""),
                                          "ntype": $func.ret_type.get_whole_name($generator),
                                          "class_name": $class_name,
-                                         "level": 2})};
+                                         "level": 2,
+                                         "scriptname": $generator.scriptname_from_native($func.ret_type.namespaced_name)})};
             return 1;
             #else
             ${namespaced_class_name}::${func.func_name}($arg_list);

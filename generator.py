@@ -932,7 +932,18 @@ class Generator(object):
         for node in cursor.get_children():
             # print("%s %s - %s" % (">" * depth, node.displayname, node.kind))
             self._deep_iterate(node, depth + 1)
-
+    def scriptname_from_native(self, namespace_class_name):
+        script_ns_dict = self.config['conversions']['ns_map']
+        for (k, v) in script_ns_dict.items():
+            if namespace_class_name.find(k) >= 0:
+                return namespace_class_name.replace("*","").replace("const ", "").replace(k,v)
+        if namespace_class_name.find("::") >= 0:
+            if namespace_class_name.find("std::") == 0:
+                return namespace_class_name
+            else:
+                raise Exception("The namespace (%s) conversion wasn't set in 'ns_map' section of the conversions.yaml" % namespace_class_name)
+        else:
+           return namespace_class_name
 def main():
     from optparse import OptionParser
 

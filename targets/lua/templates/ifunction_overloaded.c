@@ -7,9 +7,10 @@ int ${signature_name}(lua_State* tolua_S)
 \#if COCOS2D_DEBUG >= 1
     tolua_Error tolua_err;
 \#endif
+
 #if not $is_constructor
 \#if COCOS2D_DEBUG >= 1
-    if (!tolua_isusertype(tolua_S,1,"$class_name",0,&tolua_err)) goto tolua_lerror;
+    if (!tolua_isusertype(tolua_S,1,"${generator.scriptname_from_native($namespaced_class_name)}",0,&tolua_err)) goto tolua_lerror;
 \#endif
     cobj = (${namespaced_class_name}*)tolua_tousertype(tolua_S,1,0);
 \#if COCOS2D_DEBUG >= 1
@@ -42,7 +43,8 @@ int ${signature_name}(lua_State* tolua_S)
                              "class_name": $class_name,
                              "level": 2,
                              "arg":$arg,
-                             "ntype": $arg.name.replace("*", "")})};
+                             "ntype": $arg.namespaced_name.replace("*", ""),
+                             "scriptname": $generator.scriptname_from_native($arg.namespaced_name)})};
                 #set $arg_array += ["arg"+str(count)]
                 #set $count = $count + 1
 
@@ -61,15 +63,15 @@ int ${signature_name}(lua_State* tolua_S)
                 dynObject->autorelease();
                 int ID =  (int)dynObject->_ID ;
                 int* luaID =  &dynObject->_luaID ;
-                toluafix_pushusertype_ccobject(tolua_S, ID, luaID, (void*)cobj,"$class_name");
+                toluafix_pushusertype_ccobject(tolua_S, ID, luaID, (void*)cobj,"${generator.scriptname_from_native($namespaced_class_name)}");
             }
             else
             {
-                tolua_pushusertype(tolua_S,(void*)cobj,"$class_name");
+                tolua_pushusertype(tolua_S,(void*)cobj,"${generator.scriptname_from_native($namespaced_class_name)}");
                 tolua_register_gc(tolua_S,lua_gettop(tolua_S));
             }
 #else
-            tolua_pushusertype(tolua_S,(void*)cobj,"$class_name");
+            tolua_pushusertype(tolua_S,(void*)cobj,"${generator.scriptname_from_native($namespaced_class_name)}");
             tolua_register_gc(tolua_S,lua_gettop(tolua_S));
 #end if
             return 1;
@@ -83,10 +85,11 @@ int ${signature_name}(lua_State* tolua_S)
             ${func.ret_type.from_native({"generator": $generator,
                                                       "in_value": "ret",
                                                       "out_value": "ret",
-                                                      "type_name": $func.ret_type.name.replace("*", ""),
+                                                      "type_name": $func.ret_type.namespaced_name.replace("*", ""),
                                                       "ntype": $func.ret_type.get_whole_name($generator),
                                                       "class_name": $class_name,
-                                                      "level": 2})};
+                                                      "level": 2,
+                                                      "scriptname": $generator.scriptname_from_native($func.ret_type.namespaced_name)})};
             return 1;
             #else
             cobj->${func.func_name}($arg_list);

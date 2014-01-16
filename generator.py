@@ -934,12 +934,18 @@ class Generator(object):
             self._deep_iterate(node, depth + 1)
     def scriptname_from_native(self, namespace_class_name):
         script_ns_dict = self.config['conversions']['ns_map']
-
         for (k, v) in script_ns_dict.items():
             if namespace_class_name.find(k) >= 0:
                 return namespace_class_name.replace("*","").replace("const ", "").replace(k,v)
-        return None
-
+        if namespace_class_name.find("::") >= 0:
+            if namespace_class_name.find("std::") == 0:
+                return namespace_class_name
+            else:
+                raise Exception("%s includes namespace's name "
+                      "but the ns_map field of the conversions field in the conversions.yaml "
+                      "has not corresponding modular name." % namespace_class_name) 
+        else:
+           return namespace_class_name
 def main():
     from optparse import OptionParser
 

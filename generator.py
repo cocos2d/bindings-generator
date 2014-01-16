@@ -932,8 +932,8 @@ class Generator(object):
         for node in cursor.get_children():
             # print("%s %s - %s" % (">" * depth, node.displayname, node.kind))
             self._deep_iterate(node, depth + 1)
-    def get_script_namespace_name(self, namespace_class_name):
-        script_ns_dict = self.config['conversions']['script_ns_name']
+    def scriptname_from_native(self, namespace_class_name):
+        script_ns_dict = self.config['conversions']['ns_map']
 
         for (k, v) in script_ns_dict.items():
             if namespace_class_name.find(k) >= 0:

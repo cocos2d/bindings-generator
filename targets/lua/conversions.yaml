@@ -16,7 +16,7 @@ conversions:
     "@std::vector<std::basic_string.*>.>.>": "std::vector<std::string>"
     "@std::vector<int.*>.>": "std::vector<int>"
     "@cocos2d::Map<std::basic_string.*,": "cocos2d::Map<std::string,"
-  script_ns_name:
+  ns_map:
     "cocos2d::extension::": "cc."
     "cocos2d::gui::": "ccui."
     "cocos2d::": "cc."
@@ -64,7 +64,7 @@ conversions:
 
     object: |
       do {
-      ${($level + 2) * '\t'}if (!luaval_is_usertype(tolua_S,${arg_idx},"${script_type_name}",0)){
+      ${($level + 2) * '\t'}if (!luaval_is_usertype(tolua_S,${arg_idx},"${scriptname}",0)){
       ${($level + 3) * '\t'}ok = false;
       ${($level + 3) * '\t'}break;
       ${($level + 2) * '\t'}}
@@ -118,7 +118,7 @@ conversions:
       ${($level + 2) * '\t'}if(iter != g_luaType.end()){
       ${($level + 3) * '\t'}className = iter->second.c_str();
       ${($level + 2) * '\t'}} else {
-      ${($level + 3) * '\t'}className = "${script_type_name}";
+      ${($level + 3) * '\t'}className = "${scriptname}";
       ${($level + 2) * '\t'}}
       ${($level + 2) * '\t'}cocos2d::Object *dynObject = dynamic_cast<cocos2d::Object *>((${ntype.replace("const ", "")})${in_value});
       ${($level + 2) * '\t'}if (NULL != dynObject) {

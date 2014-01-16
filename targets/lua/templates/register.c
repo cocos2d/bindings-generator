@@ -66,5 +66,6 @@ int lua_register_${generator.prefix}_${current_class.class_name}(lua_State* tolu
     tolua_endmodule(tolua_S);
     std::string typeName = typeid(${current_class.namespaced_class_name}).name();
     g_luaType[typeName] = "${generator.get_script_namespace_name($current_class.namespaced_class_name)}";
+    g_typeCast["${current_class.class_name}"] = "${generator.get_script_namespace_name($current_class.namespaced_class_name)}";
     return 1;
 }

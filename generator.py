@@ -941,9 +941,7 @@ class Generator(object):
             if namespace_class_name.find("std::") == 0:
                 return namespace_class_name
             else:
-                raise Exception("%s includes namespace's name "
-                      "but the ns_map field of the conversions field in the conversions.yaml "
-                      "has not corresponding modular name." % namespace_class_name) 
+                raise Exception("The namespace (%s) conversion wasn't set in 'ns_map' section of the conversions.yaml" % namespace_class_name)
         else:
            return namespace_class_name
 def main():

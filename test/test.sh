@@ -58,9 +58,12 @@ if [ -z "${NDK_ROOT+aaa}" ]; then
     NDK_ROOT="$HOME/bin/android-ndk"
 fi
 
+LIBCLANG_PATH=
 if [ -z "${CLANG_ROOT+aaa}" ]; then
-# ... if CLANG_ROOT is not set, use "$HOME/bin/clang+llvm-3.3"
-    CLANG_ROOT="$HOME/bin/clang+llvm-3.3"
+# ... if CLANG_ROOT is not set, use build-in libclang
+    LIBCLANG_PATH="$CXX_GENERATOR_ROOT/libclang"
+else
+    LIBCLANG_PATH="$CLANG_ROOT/lib"
 fi
 
 if [ -z "${PYTHON_BIN+aaa}" ]; then
@@ -82,4 +85,4 @@ echo "PYTHON_BIN: $PYTHON_BIN"
 # Generate bindings for simpletest using Android's system headers
 echo "Generating bindings for simpletest with Android headers..."
 set -x
-LD_LIBRARY_PATH=${CLANG_ROOT}/lib $PYTHON_BIN ${CXX_GENERATOR_ROOT}/generator.py ${CXX_GENERATOR_ROOT}/test/test.ini -t spidermonkey -s testandroid -o ./simple_test_bindings
+LD_LIBRARY_PATH=${LIBCLANG_PATH} $PYTHON_BIN ${CXX_GENERATOR_ROOT}/generator.py ${CXX_GENERATOR_ROOT}/test/test.ini -t spidermonkey -s testandroid -o ./simple_test_bindings

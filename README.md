@@ -1,9 +1,13 @@
+# What's new
+* Add a prebuilt libclang3.4 in `libclang/`for mac, linux and windows.
+* If you want use the prebuilt licbclang3.4 work with Android NDK, then `only the NDK r9b is can work corrently` with it.
+
 # Requirements
 
 * python2.7
 * py-yaml
 * cheetah (for target language templates)
-* libclang, from clang 3.3
+* libclang, from clang 3.3 or later
 
 # Usage
 
@@ -17,36 +21,67 @@
 Basically, you specify a target vm (spidermonkey is the only current target vm) and the section from
 the `.ini` file you want to generate code for.
 
-## Test
+## Run the simple test with prebuilt libclang3.4
 
 Included in this repository is a simple test. Use this to confirm the generator is working and that your environment is set up correctly.
 
 #### NOTE
 
+* The test uses the prebuilt 3.4 libclang, so you should use `Android NDK r9b`.
 * The test uses &lt;string&gt; and &lt;stdint.h&gt; so you need a C++ implementation that provides these
 * Currently, the test script is setup to use the Android NDK's GNU libstdc++
 
 ### Mac OS X
 
-* Use MacPorts to install the python dependencies
-
+* The OSX 10.9 has a built-in python2.7 and if your os don't have python2.7 then use [Homebrew](http://brew.sh/) to install the python and use pip install the python dependencies.
 <pre>
-    sudo port install python27 py27-yaml py27-cheetah
+	brew install python
 </pre>
 
-* Download and extract [clang+llvm-3.3](http://llvm.org/releases/3.3/clang+llvm-3.3-x86_64-apple-darwin12.tar.gz) from http://llvm.org/releases/download.html#3.3
-* Download and extract the [Android NDK](http://dl.google.com/android/ndk/android-ndk-r8e-darwin-x86_64.tar.bz2) from http://d.android.com
-* Customize `test/userconf.ini` and `test/user.cfg` for your environment
-  * Copy the userconf.ini.sample and user.cfg.sample
-  * Since we are using MacPorts, set the absolute path to MacPorts' python `PYTHON_BIN` in `user.cfg`
-  * Set the absolute path to where you extracted the Android NDK `androidndkdir`  in `userconf.ini`
-  * Set the absolute path to where you extracted Clang+LLVM `clangllvmdir`  in `userconf.ini`
-  * Set the absolute path to your clone of this repository `cxxgeneratordir` in `userconf.ini`
-* Run the test using MacPorts' python and the downloaded clang
-
+* Install python dependices by pip.
 <pre>
+    sudo easy_install pip
+    sudo pip install PyYAML
+	sudo pip install Cheetah
+</pre>
+    
+* Download [64bit ndk-r9b-x86_64](http://dl.google.com/android/ndk/android-ndk-r9b-darwin-x86_64.tar.bz2) from [google](http://developer.android.com/tools/sdk/ndk/index.html)
+* If you are using python installed from other way, copy user.cfg.sample and rename it as `user.cfg` then set the absolute path to  python `PYTHON_BIN` in `user.cfg`
+* Run follow command, it will generate a `userconf.ini`, and check the values in it if it occorus any error.
+<pre>
+	export NDK_ROOT=/path/to/android-ndk-r9b
     ./test.sh
 </pre>
+
+### Ubuntu Linux 12.04 64bit
+* Install python
+<pre>
+	sudo apt-get install python2.7
+</pre>
+* Install python dependices by pip.
+<pre>
+	sudo apt-get install python-pip
+	sudo pip install PyYAML
+	sudo pip install Cheetah
+</pre>
+* Download [64bit ndk-r9b-x86_64]( https://dl.google.com/android/ndk/android-ndk-r9b-linux-x86_64.tar.bz2) from [google](http://developer.android.com/tools/sdk/ndk/index.html)
+* If you are using python installed from other way, copy user.cfg.sample and rename it as `user.cfg` then set the absolute path to  python `PYTHON_BIN` in `user.cfg`
+* Run follow command, it will generate a `userconf.ini`, and check the values in it if it occorus any error.
+<pre>
+	export NDK_ROOT=/path/to/android-ndk-r9b
+    ./test.sh
+</pre>
+
+### Windows 7 64bit
+* Download python2.7.3 from (http://www.python.org/ftp/python/2.7.3/python-2.7.3.msi).
+* Add the installed path of python (e.g. C:\Python27) to windows environment variable named 'PATH'.
+* Download pyyaml from http://pyyaml.org/download/pyyaml/PyYAML-3.10.win32-py2.7.exe and install it.
+* Download pyCheetah from https://raw.github.com/dumganhar/cocos2d-x/download/downloads/Cheetah.zip, unzip it to "C:\Python27\Lib\site-packages"
+* Download [64bit NDK-r9b](http://dl.google.com/android/ndk/android-ndk-r9b-windows-x86_64.zip) from [google](http://developer.android.com/tools/sdk/ndk/index.html)
+* Modify environment variables (`PYTHON_ROOT` and `NDK_ROOT`) in `test.bat`.
+* Run "test.bat". The generated codes will be under "simple_test_bindings".
+
+
 
 ### Expected output
 

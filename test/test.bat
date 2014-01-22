@@ -1,11 +1,12 @@
 @echo off
 
 :: This script is used to generate jsbinding glue codes.
+:: Android ndk version must be ndk-r9b.
 :: You should modify PYTHON_ROOT and NDK_ROOT to work under your environment.
-:: Android ndk version must be at least ndk-r9b.
+:: or just uncomment the follow 2 lines and set them.
 
-set PYTHON_ROOT=C:/Python27
-set NDK_ROOT=G:/android/android-ndk-r9b
+:: set PYTHON_ROOT=C:/Python27
+:: set NDK_ROOT=G:/android/android-ndk-r9b
 set CLANG_ROOT=%NDK_ROOT%/toolchains/llvm-3.3/prebuilt/windows-x86_64
 
 set CXX_GENERATOR_ROOT=%cd%/..

@@ -13,18 +13,27 @@ setlocal
 setlocal ENABLEEXTENSIONS
 if %errorlevel% neq 0 (
     echo Unable to enable extensions
-    goto QUIT
+    exit /b 1
     )
 
 if defined PYTHON_ROOT (echo PYTHON_ROOT is defined.) else (
     echo PYTHON_ROOT is NOT defined!
-    goto QUIT)
+    exit /b 1
+    )
 
 if defined NDK_ROOT (echo NDK_ROOT is defined.) else (
     echo NDK_ROOT is NOT defined!
-    goto QUIT)
+    exit /b 1
+    )
 
-set CLANG_ROOT=%NDK_ROOT%/toolchains/llvm-3.3/prebuilt/windows-x86_64
+:: Check use 32-bit or 64-bit
+:: Assume 64-bit
+set TEMP=windows-x86_64
+if not exist "%NDK_ROOT%/toolchains/llvm-3.3/prebuilt/%TEMP%" set TEMP=
+:: Otherwise fall back to 32-bit make
+if "%TEMP%"=="" set TEMP=windows
+
+set NDK_LLVM_ROOT=%NDK_ROOT%/toolchains/llvm-3.3/prebuilt/%TEMP%
 
 set CXX_GENERATOR_ROOT=%cd%/..
 set "CXX_GENERATOR_ROOT=%CXX_GENERATOR_ROOT:\=/%"
@@ -44,7 +53,7 @@ echo generating userconf.ini...
 echo ---
 echo [DEFAULT] > %_CONF_INI_FILE%
 echo androidndkdir=%NDK_ROOT% >> %_CONF_INI_FILE%
-echo clangllvmdir=%CLANG_ROOT% >> %_CONF_INI_FILE%
+echo clangllvmdir=%NDK_LLVM_ROOT% >> %_CONF_INI_FILE%
 echo cxxgeneratordir=%CXX_GENERATOR_ROOT% >> %_CONF_INI_FILE%
 :: fixme: to fix parse error, we must difine __WCHAR_MAX__ here.
 echo extra_flags=-D__WCHAR_MAX__=0x7fffffff >> %_CONF_INI_FILE%
@@ -62,20 +71,19 @@ pushd "%OUTPUT_DIR%"
 dos2unix *
 popd
 
+goto PASS
+
+:PASS
 echo ---------------------------------
 echo Generating bindings succeeds.
 echo ---------------------------------
-
-goto QUIT
+endlocal
+exit /b 0
 
 :ERROR
 echo ---------------------------------
 echo Generating bindings fails.
 echo ---------------------------------
 endlocal
-
-:QUIT
-pause
-endlocal
-
+exit /b 1
 

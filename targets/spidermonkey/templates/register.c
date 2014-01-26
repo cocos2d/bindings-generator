@@ -55,13 +55,13 @@ void js_register_${generator.prefix}_${current_class.class_name}(JSContext *cx, 
 	jsb_${current_class.underlined_class_name}_class->finalize = js_${current_class.underlined_class_name}_finalize;
 	jsb_${current_class.underlined_class_name}_class->flags = JSCLASS_HAS_RESERVED_SLOTS(2);
 
-	JSPropertySpec properties[] = {
+	static JSPropertySpec properties[] = {
 		{"__nativeObj", 0, JSPROP_ENUMERATE | JSPROP_PERMANENT, JSOP_WRAPPER(js_is_native_obj), JSOP_NULLWRAPPER},
 		{0, 0, 0, JSOP_NULLWRAPPER, JSOP_NULLWRAPPER}
 	};
 
 	#if len(methods) > 0
-	JSFunctionSpec funcs[] = {
+	static JSFunctionSpec funcs[] = {
 		#for m in methods
 		#set fn = m['impl']
 		JS_FN("${m['name']}", ${fn.signature_name}, ${fn.min_args}, JSPROP_PERMANENT | JSPROP_ENUMERATE),
@@ -76,7 +76,7 @@ void js_register_${generator.prefix}_${current_class.class_name}(JSContext *cx, 
 	#end if
 
 	#if len(st_methods) > 0
-	JSFunctionSpec st_funcs[] = {
+	static JSFunctionSpec st_funcs[] = {
 		#for m in st_methods
 		#set fn = m['impl']
 		JS_FN("${m['name']}", ${fn.signature_name}, ${fn.min_args}, JSPROP_PERMANENT | JSPROP_ENUMERATE),

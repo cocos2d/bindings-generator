@@ -60,7 +60,6 @@ void js_register_${generator.prefix}_${current_class.class_name}(JSContext *cx, 
 		{0, 0, 0, JSOP_NULLWRAPPER, JSOP_NULLWRAPPER}
 	};
 
-	#if len(methods) > 0
 	static JSFunctionSpec funcs[] = {
 		#for m in methods
 		#set fn = m['impl']
@@ -71,9 +70,6 @@ void js_register_${generator.prefix}_${current_class.class_name}(JSContext *cx, 
 #end if
         JS_FS_END
 	};
-	#else
-	JSFunctionSpec *funcs = NULL;
-	#end if
 
 	#if len(st_methods) > 0
 	static JSFunctionSpec st_funcs[] = {

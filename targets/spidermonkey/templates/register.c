@@ -55,13 +55,10 @@ void js_register_${generator.prefix}_${current_class.class_name}(JSContext *cx, 
 	jsb_${current_class.underlined_class_name}_class->finalize = js_${current_class.underlined_class_name}_finalize;
 	jsb_${current_class.underlined_class_name}_class->flags = JSCLASS_HAS_RESERVED_SLOTS(2);
 
-	#if len($current_class.fields) > 0
 	static JSPropertySpec properties[] = {
+		{"__nativeObj", 0, JSPROP_ENUMERATE | JSPROP_PERMANENT, JSOP_WRAPPER(js_is_native_obj), JSOP_NULLWRAPPER},
 		{0, 0, 0, JSOP_NULLWRAPPER, JSOP_NULLWRAPPER}
 	};
-	#else
-	JSPropertySpec *properties = NULL;
-	#end if
 
 	#if len(methods) > 0
 	static JSFunctionSpec funcs[] = {

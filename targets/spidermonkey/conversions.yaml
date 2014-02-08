@@ -9,7 +9,8 @@ conversions:
   # the most common case would be from JS-boolean to bool. Using "bool" will fail here since we
   # pass the address to the conversion method, and a JSBool is defined as an integer in spidermonkey
   native_types:
-    bool: "JSBool"
+  # JSBool was removed from Firefox v27
+#    bool: "JSBool"
     float: "double"
     short: "int32_t"
     "unsigned char": "uint16_t"
@@ -26,8 +27,8 @@ conversions:
     "unsigned short": "ok &= jsval_to_ushort(cx, ${in_value}, &${out_value})"
     char: "ok &= jsval_to_int32(cx, ${in_value}, &${out_value})"
     bool: "ok &= JS_ValueToBoolean(cx, ${in_value}, &${out_value})"
-    float: "ok &= JS_ValueToNumber(cx, ${in_value}, &${out_value})"
-    double: "ok &= JS_ValueToNumber(cx, ${in_value}, &${out_value})"
+    float: "ok &= JS::ToNumber( cx, JS::RootedValue(cx, ${in_value}), &${out_value})"
+    double: "ok &= JS::ToNumber( cx, JS::RootedValue(cx, ${in_value}), &${out_value})"
     long: "ok &= jsval_to_long(cx, ${in_value}, &${out_value})"
     "unsigned long": "ok &= jsval_to_ulong(cx, ${in_value}, &${out_value})"
     "ssize_t": "ok &= jsval_to_ssize(cx, ${in_value}, &${out_value})"
@@ -56,12 +57,12 @@ conversions:
     "@vector<int.*>": "ok &= jsval_to_std_vector_int(cx, ${in_value}, &${out_value})"
     object: |
       do {
-      ${($level + 1) * '\t'}if (!${in_value}.isObject()) { ok = JS_FALSE; break; }
+      ${($level + 1) * '\t'}if (!${in_value}.isObject()) { ok = false; break; }
       ${($level + 1) * '\t'}js_proxy_t *proxy;
       ${($level + 1) * '\t'}JSObject *tmpObj = JSVAL_TO_OBJECT(${in_value});
       ${($level + 1) * '\t'}proxy = jsb_get_js_proxy(tmpObj);
       ${($level + 1) * '\t'}${out_value} = (${ntype})(proxy ? proxy->ptr : NULL);
-      ${($level + 1) * '\t'}JSB_PRECONDITION2( ${out_value}, cx, JS_FALSE, "Invalid Native Object");
+      ${($level + 1) * '\t'}JSB_PRECONDITION2( ${out_value}, cx, false, "Invalid Native Object");
       ${($level + 0) * '\t'}} while (0)
 
   from_native:

@@ -1,8 +1,8 @@
 ## ===== instance function implementation template - for overloaded functions
-JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
+bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 {
 	jsval *argv = JS_ARGV(cx, vp);
-	JSBool ok = JS_TRUE;
+	bool ok = true;
 
 	JSObject *obj = NULL;
 	${namespaced_class_name}* cobj = NULL;
@@ -10,7 +10,7 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 	obj = JS_THIS_OBJECT(cx, vp);
 	js_proxy_t *proxy = jsb_get_js_proxy(obj);
 	cobj = (${namespaced_class_name} *)(proxy ? proxy->ptr : NULL);
-	JSB_PRECONDITION2( cobj, cx, JS_FALSE, "${signature_name} : Invalid Native Object");
+	JSB_PRECONDITION2( cobj, cx, false, "${signature_name} : Invalid Native Object");
 #end if
 #for func in $implementations
 #if len($func.arguments) >= $func.min_args
@@ -35,7 +35,7 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 				#set $arg_array += ["arg"+str(count)]
 				#set $count = $count + 1
 			#if $arg_idx > 0
-			if (!ok) { ok = JS_TRUE; break; }
+			if (!ok) { ok = true; break; }
 			#end if
 			#end while
 			#set $arg_list = ", ".join($arg_array)
@@ -78,7 +78,7 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 			cobj->${func.func_name}($arg_list);
 			JS_SET_RVAL(cx, vp, JSVAL_VOID);
 			#end if
-			return JS_TRUE;
+			return true;
 		#end if
 		}
 	} while(0);
@@ -90,9 +90,9 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 #if $is_constructor
 	if (cobj) {
 		JS_SET_RVAL(cx, vp, OBJECT_TO_JSVAL(obj));
-		return JS_TRUE;
+		return true;
 	}
 #end if
 	JS_ReportError(cx, "${signature_name} : wrong number of arguments");
-	return JS_FALSE;
+	return false;
 }

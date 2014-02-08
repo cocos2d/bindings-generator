@@ -2,7 +2,7 @@ void register_all_${prefix}(JSContext* cx, JSObject* obj) {
 	#if $target_ns
 	// first, try to get the ns
 	JS::RootedValue nsval(cx);
-	JSObject *ns;
+	JS::RootedObject ns(cx);
 	JS_GetProperty(cx, obj, "${target_ns}", &nsval);
 	if (nsval == JSVAL_VOID) {
 		ns = JS_NewObject(cx, NULL, NULL, NULL);

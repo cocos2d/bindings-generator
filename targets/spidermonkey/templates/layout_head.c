@@ -5,9 +5,9 @@
 #end for
 
 template<class T>
-static JSBool dummy_constructor(JSContext *cx, uint32_t argc, jsval *vp) {
+static bool dummy_constructor(JSContext *cx, uint32_t argc, jsval *vp) {
     JS::RootedValue initializing(cx);
-    JSBool isNewValid = JS_TRUE;
+    bool isNewValid = true;
 #if not $script_control_cpp
     JSObject* global = ScriptingCore::getInstance()->getGlobalObject();
 	isNewValid = JS_GetProperty(cx, global, "initializing", &initializing) && JSVAL_TO_BOOLEAN(initializing);
@@ -29,21 +29,21 @@ static JSBool dummy_constructor(JSContext *cx, uint32_t argc, jsval *vp) {
 		JS_AddObjectRoot(cx, &pp->obj);
 	#end if
 		JS_SET_RVAL(cx, vp, OBJECT_TO_JSVAL(_tmp));
-		return JS_TRUE;
+		return true;
 	}
 
 #if not $script_control_cpp
     JS_ReportError(cx, "Don't use `new cc.XXX`, please use `cc.XXX.create` instead! ");
 #end if
-    return JS_FALSE;
+    return false;
 }
 
-static JSBool empty_constructor(JSContext *cx, uint32_t argc, jsval *vp) {
-	return JS_FALSE;
+static bool empty_constructor(JSContext *cx, uint32_t argc, jsval *vp) {
+	return false;
 }
 
-static JSBool js_is_native_obj(JSContext *cx, JS::HandleObject obj, JS::HandleId id, JS::MutableHandleValue vp)
+static bool js_is_native_obj(JSContext *cx, JS::HandleObject obj, JS::HandleId id, JS::MutableHandleValue vp)
 {
-	vp.set(BOOLEAN_TO_JSVAL(JS_TRUE));
-	return JS_TRUE;	
+	vp.set(BOOLEAN_TO_JSVAL(true));
+	return true;	
 }

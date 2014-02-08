@@ -1,9 +1,9 @@
 ## ===== static function implementation template
-JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
+bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 {
 #if len($arguments) > 0
 	jsval *argv = JS_ARGV(cx, vp);
-	JSBool ok = JS_TRUE;
+	bool ok = true;
 #end if
 #if len($arguments) >= $min_args
 	#set arg_count = len($arguments)
@@ -31,7 +31,7 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 	        #set $count = $count + 1
 		#end while
 		#if $arg_idx > 0
-		JSB_PRECONDITION2(ok, cx, JS_FALSE, "${signature_name} : Error processing arguments");
+		JSB_PRECONDITION2(ok, cx, false, "${signature_name} : Error processing arguments");
 		#end if
 		#set $arg_list = ", ".join($arg_array)
 	#if str($ret_type) != "void"
@@ -51,12 +51,12 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 		${namespaced_class_name}::${func_name}($arg_list);
 		JS_SET_RVAL(cx, vp, JSVAL_VOID);
 	#end if
-		return JS_TRUE;
+		return true;
 	}
 		#set $arg_idx = $arg_idx + 1
 	#end while
 #end if
 	JS_ReportError(cx, "${signature_name} : wrong number of arguments");
-	return JS_FALSE;
+	return false;
 }
 

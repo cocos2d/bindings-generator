@@ -1,8 +1,8 @@
 ## ===== static function implementation template - for overloaded functions
-JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
+bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 {
 	jsval *argv = JS_ARGV(cx, vp);
-	JSBool ok = JS_TRUE;
+	bool ok = true;
 	#for func in $implementations
 	
 	#if len($func.arguments) >= $func.min_args
@@ -26,7 +26,7 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 			#set $arg_array += ["arg"+str(count)]
 			#set $count = $count + 1
 			#if $arg_idx > 0
-			if (!ok) { ok = JS_TRUE; break; }
+			if (!ok) { ok = true; break; }
 			#end if
 			#end while
 			#set $arg_list = ", ".join($arg_array)
@@ -46,7 +46,7 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 			#else
 			${namespaced_class_name}::${func.func_name}($arg_list);
 			#end if
-			return JS_TRUE;
+			return true;
 		}
 		#set $arg_idx = $arg_idx + 1
 	} while (0);
@@ -54,5 +54,5 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 	#end if
 	#end for
 	JS_ReportError(cx, "${signature_name} : wrong number of arguments");
-	return JS_FALSE;
+	return false;
 }

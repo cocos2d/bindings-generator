@@ -944,6 +944,12 @@ class Generator(object):
                 raise Exception("The namespace (%s) conversion wasn't set in 'ns_map' section of the conversions.yaml" % namespace_class_name)
         else:
            return namespace_class_name
+    def is_object(self,namespace_class_name):
+        object_name_array = self.config['conversions']['object_name']
+        for m in object_name_array:
+            if m == namespace_class_name:
+                return 1
+        return 0
 def main():
     from optparse import OptionParser
 

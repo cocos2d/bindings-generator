@@ -30,7 +30,7 @@ void js_${current_class.underlined_class_name}_finalize(JSFreeOp *fop, JSObject 
 }
 
 #if $generator.in_listed_extend_classed($current_class.class_name) and not $current_class.is_abstract
-static JSBool js_${current_class.underlined_class_name}_ctor(JSContext *cx, uint32_t argc, jsval *vp)
+static bool js_${current_class.underlined_class_name}_ctor(JSContext *cx, uint32_t argc, jsval *vp)
 {
 	JSObject *obj = JS_THIS_OBJECT(cx, vp);
     ${current_class.namespaced_class_name} *nobj = ${current_class.namespaced_class_name}::create();
@@ -39,7 +39,7 @@ static JSBool js_${current_class.underlined_class_name}_ctor(JSContext *cx, uint
     JS_AddNamedObjectRoot(cx, &p->obj, "${current_class.namespaced_class_name}");
 #end if 
     JS_SET_RVAL(cx, vp, JSVAL_VOID);
-    return JS_TRUE;
+    return true;
 }
 #end if
 void js_register_${generator.prefix}_${current_class.class_name}(JSContext *cx, JSObject *global) {
@@ -103,8 +103,9 @@ void js_register_${generator.prefix}_${current_class.class_name}(JSContext *cx, 
 		NULL, // no static properties
 		st_funcs);
 	// make the class enumerable in the registered namespace
-	JSBool found;
-	JS_SetPropertyAttributes(cx, global, "${current_class.target_class_name}", JSPROP_ENUMERATE | JSPROP_READONLY, &found);
+//	bool found;
+//FIXME: Removed in Firefox v27	
+//	JS_SetPropertyAttributes(cx, global, "${current_class.target_class_name}", JSPROP_ENUMERATE | JSPROP_READONLY, &found);
 
 	// add the proto and JSClass to the type->js info hash table
 	TypeTest<${current_class.namespaced_class_name}> t;

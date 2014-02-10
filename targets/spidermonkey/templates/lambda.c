@@ -18,9 +18,9 @@ do {
 		#end while
 		jsval rval;
 		#if $arg_count > 0
-		JSBool ok = func->invoke(${arg_count}, &largv[0], rval);
+		bool ok = func->invoke(${arg_count}, &largv[0], rval);
 		#else
-		JSBool ok = func->invoke(${arg_count}, nullptr, rval);
+		bool ok = func->invoke(${arg_count}, nullptr, rval);
 		#end if
 		if (!ok && JS_IsExceptionPending(cx)) {
 			JS_ReportPendingException(cx);

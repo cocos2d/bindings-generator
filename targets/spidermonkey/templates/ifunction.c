@@ -1,15 +1,15 @@
 ## ===== instance function implementation template
-JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
+bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 {
 #if len($arguments) > 0
 	jsval *argv = JS_ARGV(cx, vp);
-	JSBool ok = JS_TRUE;
+	bool ok = true;
 #end if
 #if not $is_constructor
 	JSObject *obj = JS_THIS_OBJECT(cx, vp);
 	js_proxy_t *proxy = jsb_get_js_proxy(obj);
 	${namespaced_class_name}* cobj = (${namespaced_class_name} *)(proxy ? proxy->ptr : NULL);
-	JSB_PRECONDITION2( cobj, cx, JS_FALSE, "${signature_name} : Invalid Native Object");
+	JSB_PRECONDITION2( cobj, cx, false, "${signature_name} : Invalid Native Object");
 #end if
 #if len($arguments) >= $min_args
 	#set arg_count = len($arguments)
@@ -37,7 +37,7 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 			#set $count = $count + 1
 		#end while
 		#if $arg_idx > 0
-		JSB_PRECONDITION2(ok, cx, JS_FALSE, "${signature_name} : Error processing arguments");
+		JSB_PRECONDITION2(ok, cx, false, "${signature_name} : Error processing arguments");
 		#end if
 		#set $arg_list = ", ".join($arg_array)
 		#if $is_constructor
@@ -81,12 +81,12 @@ JSBool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 		JS_SET_RVAL(cx, vp, JSVAL_VOID);
 			#end if
 		#end if
-		return JS_TRUE;
+		return true;
 	}
 		#set $arg_idx = $arg_idx + 1
 	#end while
 #end if
 
 	JS_ReportError(cx, "${signature_name} : wrong number of arguments: %d, was expecting %d", argc, ${min_args});
-	return JS_FALSE;
+	return false;
 }

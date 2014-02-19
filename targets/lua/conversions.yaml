@@ -105,7 +105,7 @@ conversions:
     "@vector<int.*>": "ccvector_int_to_luaval(tolua_S, ${in_value})"
     object: "object_to_luaval<${ntype.replace(\"*\", \"\").replace(\"const \", \"\")}>(tolua_S, \"${scriptname}\",(${ntype.replace(\"const \", \"\")})${in_value})"
   object_name:
-    - cocos2d::Object
+    - cocos2d::Ref
     - cocos2d::Action
     - cocos2d::FiniteTimeAction
     - cocos2d::ActionInstant

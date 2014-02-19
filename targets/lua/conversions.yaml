@@ -63,17 +63,7 @@ conversions:
     "@vector<std::basic_string.*>": "ok &= luaval_to_std_vector_string(tolua_S, ${arg_idx}, &${out_value})"
     "@vector<int.*>": "ok &= luaval_to_std_vector_int(tolua_S, ${arg_idx}, &${out_value})"
 
-    object: |
-      do {
-      ${($level + 2) * '\t'}if (!luaval_is_usertype(tolua_S,${arg_idx},"${scriptname}",0)){
-      ${($level + 3) * '\t'}ok = false;
-      ${($level + 3) * '\t'}break;
-      ${($level + 2) * '\t'}}
-      ${($level + 2) * '\t'}if (ok){
-      ${($level + 3) * '\t'}${out_value} = (${arg})tolua_tousertype(tolua_S,${arg_idx},0);
-      ${($level + 3) * '\t'}if (nullptr == ${out_value}){
-      ${($level + 4) * '\t'}LUA_PRECONDITION( ${out_value}, "Invalid Native Object");
-      ${($level + 1) * '\t'}}}} while (0)
+    object: "ok &= luaval_to_object<${arg.to_string($generator).replace(\"*\", \"\")}>(tolua_S, ${arg_idx}, \"${scriptname}\",&${out_value})"
   from_native:
     # native to lua
     int: "tolua_pushnumber(tolua_S,(lua_Number)${in_value})"
@@ -113,25 +103,301 @@ conversions:
     "ValueVector": "ccvaluevector_to_luaval(tolua_S, ${in_value})"
     "@vector<std::basic_string.*>": "ccvector_std_string_to_luaval(tolua_S, ${in_value})"
     "@vector<int.*>": "ccvector_int_to_luaval(tolua_S, ${in_value})"
-    object:  |
-      do {
-      ${($level + 1) * '\t'}if (NULL != ${in_value}){
-      ${($level + 2) * '\t'}std::string hashName = typeid(*${in_value}).name();
-      ${($level + 2) * '\t'}auto iter = g_luaType.find(hashName);
-      ${($level + 2) * '\t'}std::string className = "";
-      ${($level + 2) * '\t'}if(iter != g_luaType.end()){
-      ${($level + 3) * '\t'}className = iter->second.c_str();
-      ${($level + 2) * '\t'}} else {
-      ${($level + 3) * '\t'}className = "${scriptname}";
-      ${($level + 2) * '\t'}}
-      ${($level + 2) * '\t'}cocos2d::Object *dynObject = dynamic_cast<cocos2d::Object *>((${ntype.replace("const ", "")})${in_value});
-      ${($level + 2) * '\t'}if (NULL != dynObject) {
-      ${($level + 3) * '\t'}int ID = ${in_value} ? (int)(dynObject->_ID) : -1;
-      ${($level + 3) * '\t'}int* luaID = ${in_value} ? &(dynObject->_luaID) : NULL;
-      ${($level + 3) * '\t'}toluafix_pushusertype_ccobject(tolua_S,ID, luaID, (void*)${in_value},className.c_str());
-      ${($level + 2) * '\t'}} else {
-      ${($level + 3) * '\t'} tolua_pushusertype(tolua_S,(void*)${in_value},className.c_str());
-      ${($level + 1) * '\t'}}} else {
-      ${($level + 2) * '\t'}lua_pushnil(tolua_S);
-      ${($level + 1) * '\t'}}
-      ${($level) * '\t'}} while (0)
+    object: "object_to_luaval<${ntype.replace(\"*\", \"\").replace(\"const \", \"\")}>(tolua_S, \"${scriptname}\",(${ntype.replace(\"const \", \"\")})${in_value})"
+  object_name:
+    - cocos2d::Object
+    - cocos2d::Action
+    - cocos2d::FiniteTimeAction
+    - cocos2d::ActionInstant
+    - cocos2d::Hide
+    - cocos2d::Node
+    - cocos2d::Scene
+    - cocos2d::TransitionScene
+    - cocos2d::TransitionEaseScene
+    - cocos2d::TransitionMoveInL
+    - cocos2d::TransitionMoveInB
+    - cocos2d::AtlasNode
+    - cocos2d::TileMapAtlas
+    - cocos2d::TransitionMoveInT
+    - cocos2d::TMXTilesetInfo
+    - cocos2d::TransitionMoveInR
+    - cocos2d::ParticleSystem
+    - cocos2d::ParticleSystemQuad
+    - cocos2d::ParticleSnow
+    - cocos2d::AnimationCache
+    - cocos2d::ActionInterval
+    - cocos2d::ActionCamera
+    - cocos2d::ProgressFromTo
+    - cocos2d::EventListener
+    - cocos2d::EventListenerMouse
+    - cocos2d::MoveBy
+    - cocos2d::MoveTo
+    - cocos2d::JumpBy
+    - cocos2d::EventListenerKeyboard
+    - cocos2d::TransitionRotoZoom
+    - cocos2d::Director
+    - cocos2d::Texture2D
+    - cocos2d::ActionEase
+    - cocos2d::EaseElastic
+    - cocos2d::EaseElasticOut
+    - cocos2d::EaseBackOut
+    - cocos2d::TransitionSceneOriented
+    - cocos2d::TransitionFlipX
+    - cocos2d::Event
+    - cocos2d::EventAcceleration
+    - cocos2d::Spawn
+    - cocos2d::ParticleBatchNode
+    - cocos2d::SkewTo
+    - cocos2d::SkewBy
+    - cocos2d::TransitionProgress
+    - cocos2d::TransitionProgressVertical
+    - cocos2d::Layer
+    - cocos2d::TMXTiledMap
+    - cocos2d::GridAction
+    - cocos2d::Grid3DAction
+    - cocos2d::FadeIn
+    - cocos2d::EventListenerCustom
+    - cocos2d::FlipX3D
+    - cocos2d::FlipY3D
+    - cocos2d::EaseSineInOut
+    - cocos2d::TransitionFlipAngular
+    - cocos2d::EaseElasticInOut
+    - cocos2d::EaseBounce
+    - cocos2d::Show
+    - cocos2d::FadeOut
+    - cocos2d::CallFunc
+    - cocos2d::EventMouse
+    - cocos2d::Waves3D
+    - cocos2d::ParticleFireworks
+    - cocos2d::MenuItem
+    - cocos2d::MenuItemSprite
+    - cocos2d::MenuItemImage
+    - cocos2d::ParticleFire
+    - cocos2d::TransitionZoomFlipAngular
+    - cocos2d::EaseRateAction
+    - cocos2d::EaseIn
+    - cocos2d::EaseExponentialInOut
+    - cocos2d::EaseBackInOut
+    - cocos2d::EaseExponentialOut
+    - cocos2d::SpriteBatchNode
+    - cocos2d::Label
+    - cocos2d::DelayTime
+    - cocos2d::LabelAtlas
+    - cocos2d::LabelBMFont
+    - cocos2d::TransitionFadeTR
+    - cocos2d::TransitionFadeBL
+    - cocos2d::EaseElasticIn
+    - cocos2d::ParticleSpiral
+    - cocos2d::TiledGrid3DAction
+    - cocos2d::FadeOutTRTiles
+    - cocos2d::FadeOutUpTiles
+    - cocos2d::FadeOutDownTiles
+    - cocos2d::TextureCache
+    - cocos2d::ActionTween
+    - cocos2d::TransitionFadeDown
+    - cocos2d::ParticleSun
+    - cocos2d::TransitionProgressHorizontal
+    - cocos2d::TMXObjectGroup
+    - cocos2d::TMXLayer
+    - cocos2d::FlipX
+    - cocos2d::FlipY
+    - cocos2d::EventKeyboard
+    - cocos2d::TransitionSplitCols
+    - cocos2d::Timer
+    - cocos2d::FadeTo
+    - cocos2d::Repeat
+    - cocos2d::Place
+    - cocos2d::EventListenerAcceleration
+    - cocos2d::GLProgram
+    - cocos2d::EaseBounceOut
+    - cocos2d::RenderTexture
+    - cocos2d::TintBy
+    - cocos2d::TransitionShrinkGrow
+    - cocos2d::Sprite
+    - cocos2d::LabelTTF
+    - cocos2d::ClippingNode
+    - cocos2d::ParticleFlower
+    - cocos2d::ParticleSmoke
+    - cocos2d::Image
+    - cocos2d::LayerMultiplex
+    - cocos2d::Blink
+    - cocos2d::ShaderCache
+    - cocos2d::JumpTo
+    - cocos2d::ParticleExplosion
+    - cocos2d::TransitionJumpZoom
+    - cocos2d::Touch
+    - cocos2d::AnimationFrame
+    - cocos2d::NodeGrid
+    - cocos2d::TMXLayerInfo
+    - cocos2d::EaseBounceIn
+    - cocos2d::GridBase
+    - cocos2d::TiledGrid3D
+    - cocos2d::ParticleGalaxy
+    - cocos2d::Twirl
+    - cocos2d::MenuItemLabel
+    - cocos2d::LayerColor
+    - cocos2d::FadeOutBLTiles
+    - cocos2d::LayerGradient
+    - cocos2d::TargetedAction
+    - cocos2d::RepeatForever
+    - cocos2d::CardinalSplineTo
+    - cocos2d::CardinalSplineBy
+    - cocos2d::TransitionFlipY
+    - cocos2d::TurnOffTiles
+    - cocos2d::TintTo
+    - cocos2d::CatmullRomTo
+    - cocos2d::ToggleVisibility
+    - cocos2d::DrawNode
+    - cocos2d::TransitionTurnOffTiles
+    - cocos2d::RotateTo
+    - cocos2d::TransitionSplitRows
+    - cocos2d::TransitionProgressRadialCCW
+    - cocos2d::ScaleTo
+    - cocos2d::TransitionPageTurn
+    - cocos2d::BezierBy
+    - cocos2d::BezierTo
+    - cocos2d::Menu
+    - cocos2d::SpriteFrame
+    - cocos2d::ActionManager
+    - cocos2d::TransitionFade
+    - cocos2d::TransitionZoomFlipX
+    - cocos2d::EventListenerTouchAllAtOnce
+    - cocos2d::SpriteFrameCache
+    - cocos2d::TransitionCrossFade
+    - cocos2d::Ripple3D
+    - cocos2d::Lens3D
+    - cocos2d::TransitionSlideInL
+    - cocos2d::TransitionSlideInT
+    - cocos2d::StopGrid
+    - cocos2d::ShakyTiles3D
+    - cocos2d::PageTurn3D
+    - cocos2d::Grid3D
+    - cocos2d::TransitionProgressInOut
+    - cocos2d::EaseBackIn
+    - cocos2d::SplitRows
+    - cocos2d::Follow
+    - cocos2d::Animate
+    - cocos2d::ShuffleTiles
+    - cocos2d::ProgressTimer
+    - cocos2d::ParticleMeteor
+    - cocos2d::EaseInOut
+    - cocos2d::TransitionZoomFlipY
+    - cocos2d::ScaleBy
+    - cocos2d::EventTouch
+    - cocos2d::Animation
+    - cocos2d::TMXMapInfo
+    - cocos2d::EaseExponentialIn
+    - cocos2d::ReuseGrid
+    - cocos2d::EventDispatcher
+    - cocos2d::MenuItemAtlasFont
+    - cocos2d::Liquid
+    - cocos2d::OrbitCamera
+    - cocos2d::EventCustom
+    - cocos2d::Component
+    - cocos2d::EventListenerTouchOneByOne
+    - cocos2d::ParticleRain
+    - cocos2d::Waves
+    - cocos2d::EaseOut
+    - cocos2d::MenuItemFont
+    - cocos2d::TransitionFadeUp
+    - cocos2d::EaseSineOut
+    - cocos2d::JumpTiles3D
+    - cocos2d::MenuItemToggle
+    - cocos2d::RemoveSelf
+    - cocos2d::SplitCols
+    - cocos2d::MotionStreak
+    - cocos2d::RotateBy
+    - cocos2d::ProgressTo
+    - cocos2d::TransitionProgressOutIn
+    - cocos2d::CatmullRomBy
+    - cocos2d::Sequence
+    - cocos2d::Shaky3D
+    - cocos2d::TransitionProgressRadialCW
+    - cocos2d::EaseBounceInOut
+    - cocos2d::TransitionSlideInR
+    - cocos2d::ParallaxNode
+    - cocos2d::Scheduler
+    - cocos2d::EaseSineIn
+    - cocos2d::WavesTiles3D
+    - cocos2d::TransitionSlideInB
+    - cocos2d::Speed
+    - cocos2d::ShatteredTiles3D
+    - cocos2d::extension::Control
+    - cocos2d::extension::TableViewCell
+    - cocos2d::extension::Scale9Sprite
+    - cocos2d::extension::ControlSwitch
+    - cocos2d::extension::ScrollView
+    - cocos2d::extension::TableView
+    - cocos2d::extension::AssetsManager
+    - cocos2d::extension::ControlButton
+    - cocos2d::extension::EditBox
+    - cocos2d::extension::ControlSlider
+    - cocos2d::extension::ControlStepper
+    - cocosbuilder::CCBReader
+    - cocos2d::extension::ControlSaturationBrightnessPicker
+    - cocos2d::extension::ControlColourPicker
+    - cocos2d::extension::ControlPotentiometer
+    - cocosbuilder::CCBAnimationManager
+    - cocos2d::extension::ControlHuePicker
+    - cocos2d::gui::Widget
+    - cocos2d::gui::Layout
+    - cocos2d::gui::PageView
+    - cocos2d::gui::CheckBox
+    - cocos2d::gui::Helper
+    - cocos2d::gui::Text
+    - cocos2d::gui::Button
+    - cocos2d::gui::LayoutParameter
+    - cocos2d::gui::LinearLayoutParameter
+    - cocos2d::gui::TextBMFont
+    - cocos2d::gui::ScrollView
+    - cocos2d::gui::LoadingBar
+    - cocos2d::gui::Slider
+    - cocos2d::gui::RelativeLayoutParameter
+    - cocos2d::gui::ImageView
+    - cocos2d::gui::TextAtlas
+    - cocos2d::gui::TextField
+    - cocos2d::gui::ListView
+    - cocostudio::Tween
+    - cocostudio::ContourData
+    - cocostudio::SceneReader
+    - cocostudio::ComAudio
+    - cocostudio::DisplayData
+    - cocostudio::ArmatureDisplayData
+    - cocostudio::MovementData
+    - cocostudio::ArmatureDataManager
+    - cocostudio::ArmatureData
+    - cocostudio::BaseData
+    - cocostudio::FrameData
+    - cocostudio::ComController
+    - cocostudio::BoneData
+    - cocostudio::ComRender
+    - cocostudio::ParticleDisplayData
+    - cocostudio::BatchNode
+    - cocostudio::ActionObject
+    - cocostudio::Skin
+    - cocostudio::MovementBoneData
+    - cocostudio::DisplayManager
+    - cocostudio::GUIReader
+    - cocostudio::ArmatureAnimation
+    - cocostudio::Armature
+    - cocostudio::SpriteDisplayData
+    - cocostudio::ActionManagerEx
+    - cocostudio::Bone
+    - cocostudio::ComAttribute
+    - cocostudio::TextureData
+    - cocostudio::AnimationData
+    - spine::Skeleton
+    - spine::SkeletonAnimation
+    - cocos2d::PhysicsBody
+    - cocos2d::EventListenerPhysicsContact
+    - cocos2d::EventListenerPhysicsContactWithGroup
+    - cocos2d::PhysicsShape
+    - cocos2d::PhysicsShapeBox
+    - cocos2d::PhysicsShapeCircle
+    - cocos2d::PhysicsShapeEdgePolygon
+    - cocos2d::PhysicsShapeEdgeChain
+    - cocos2d::PhysicsShapeEdgeSegment
+    - cocos2d::PhysicsContact
+    - cocos2d::PhysicsShapePolygon
+    - cocos2d::EventListenerPhysicsContactWithBodies
+    - cocos2d::EventListenerPhysicsContactWithShapes

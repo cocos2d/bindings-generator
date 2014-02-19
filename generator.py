@@ -540,6 +540,7 @@ class NativeClass(object):
         # the cursor to the implementation
         self.cursor = cursor
         self.class_name = cursor.displayname
+        self.is_ref_class = self.class_name == "Ref"
         self.namespaced_class_name = self.class_name
         self.parents = []
         self.fields = []
@@ -599,6 +600,10 @@ class NativeClass(object):
         actually generate the code. it uses the current target templates/rules in order to
         generate the right code
         '''
+
+        if not self.is_ref_class:
+            self.is_ref_class = self._is_ref_class()
+
         config = self.generator.config
         prelude_h = Template(file=os.path.join(self.generator.target, "templates", "prelude.h"),
                             searchList=[{"current_class": self}])
@@ -639,6 +644,20 @@ class NativeClass(object):
             return NativeClass._is_method_in_parents(current_class.parents[0], method_name)
         return False
 
+    def _is_ref_class(self, depth = 0):
+        """
+        Mark the class as 'cocos2d::Ref' or its subclass.
+        """
+        # print ">" * (depth + 1) + " " + self.class_name
+
+        if len(self.parents) > 0:
+            return self.parents[0]._is_ref_class(depth + 1)
+
+        if self.is_ref_class:
+            return True
+
+        return False
+
     def _process_node(self, cursor):
         '''
         process the node, depending on the type. If returns true, then it will perform a deep
@@ -646,16 +665,24 @@ class NativeClass(object):
 
         @param: cursor the cursor to analyze
         '''
-        if cursor.kind == cindex.CursorKind.CXX_BASE_SPECIFIER and not self.class_name in self.generator.classes_have_no_parents:
+        if cursor.kind == cindex.CursorKind.CXX_BASE_SPECIFIER:
             parent = cursor.get_definition()
-            if parent.displayname not in self.generator.base_classes_to_skip:
-                #if parent and self.generator.in_listed_classes(parent.displayname):
-                if not self.generator.generated_classes.has_key(parent.displayname):
-                    parent = NativeClass(parent, self.generator)
-                    self.generator.generated_classes[parent.class_name] = parent
-                else:
-                    parent = self.generator.generated_classes[parent.displayname]
-                self.parents.append(parent)
+            parent_name = parent.displayname
+
+            if not self.class_name in self.generator.classes_have_no_parents:
+                if parent_name and parent_name not in self.generator.base_classes_to_skip:
+                    #if parent and self.generator.in_listed_classes(parent.displayname):
+                    if not self.generator.generated_classes.has_key(parent.displayname):
+                        parent = NativeClass(parent, self.generator)
+                        self.generator.generated_classes[parent.class_name] = parent
+                    else:
+                        parent = self.generator.generated_classes[parent.displayname]
+
+                    self.parents.append(parent)
+
+            if parent_name == "Ref":
+                self.is_ref_class = True
+
         elif cursor.kind == cindex.CursorKind.FIELD_DECL:
             self.fields.append(NativeField(cursor))
         elif cursor.kind == cindex.CursorKind.CXX_ACCESS_SPEC_DECL:
@@ -944,12 +971,7 @@ class Generator(object):
                 raise Exception("The namespace (%s) conversion wasn't set in 'ns_map' section of the conversions.yaml" % namespace_class_name)
         else:
            return namespace_class_name
-    def is_object(self,namespace_class_name):
-        object_name_array = self.config['conversions']['object_name']
-        for m in object_name_array:
-            if m == namespace_class_name:
-                return 1
-        return 0
+
 def main():
     from optparse import OptionParser
 

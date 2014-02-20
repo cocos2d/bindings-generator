@@ -57,7 +57,7 @@ int ${signature_name}(lua_State* tolua_S)
         #if $is_constructor
             cobj = new ${namespaced_class_name}($arg_list);
 #if not $generator.script_control_cpp
-        #if $generator.is_object($namespaced_class_name)
+        #if $is_ref_class
             cobj->autorelease();
             int ID =  (int)cobj->_ID ;
             int* luaID =  &cobj->_luaID ;

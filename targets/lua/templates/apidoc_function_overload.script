@@ -1,0 +1,22 @@
+#for func in $implementations
+#if len($func.arguments) >= $func.min_args
+    #set arg_count = len($func.arguments)
+    #set arg_idx = $func.min_args 
+--------------------------------
+-- @function [parent=#${class_name}] ${func.func_name} 
+-- @param self
+    #if $arg_count > 0
+        #set $count = 0
+        #for $arg in func.arguments
+            #set $argValue = "arg" + str(count)
+-- @param #$arg.name.replace("*","") $argValue
+            #set $count = $count + 1
+        #end for
+    #end if
+    #if str($func.ret_type.name) != "void"
+-- @return $func.ret_type.name.replace("*", "")#$func.ret_type.name.replace("*", "") ret
+    #end if
+
+#end if
+#end for
+        

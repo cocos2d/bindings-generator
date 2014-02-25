@@ -1,0 +1,15 @@
+--------------------------------
+-- @function [parent=#${class_name}] ${func_name} 
+-- @param self
+#if $min_args > 0 
+    #set $count = 0
+    #for $arg in $arguments 
+        #set $argValue = "arg" + str(count)
+-- @param #$arg.name.replace("*", "") $argValue
+        #set $count = $count + 1
+    #end for
+#end if
+#if str($ret_type) != "void"
+-- @return $ret_type.name.replace("*", "")#$ret_type.name.replace("*", "") ret
+#end if
+        

@@ -1,0 +1,310 @@
+1.Event是否需要绑定，不从Object派生出来，getUserObject是否有问题
+2.std::function绑定转成对应的handler
+
+N7cocos2d14MenuItemSpriteE
+
+
+
+12.19
+EventAcceleration构造函数是否需要重写一下或者忽略
+
+
+12.23
+deprecated.lua:309: bad argument #1 to 'rawset' (table expected, got nil)
+
+12.24
+当初设计ScriptHandlerMgr时，考虑到每个类触发回调lua时，需要传递的参数大部分不一样，所以在lua层设置了一些常量用于区分不同回调类型，定义如下：
+
+cameral
+
+12.26
+1.ScriptSupport的迁移
+2.HandlerType的重命名
+3.测试例的修改
+
+12.30
+1.master分支，textInput有问题
+
+
+function TriggerMng:addArmatureMovementCallBack(armature, callfunc, target)
+    if nil == armature or nil == callfunc or nil == target then
+        return
+    end
+
+    local locAmd,hasADD = false,false
+    for i = 1, table.getn(self._movementDispatches) do
+        locAmd = self._movementDispatches[i]
+        if nil ~= locAmd and locAmd[1] == armature then
+            locAmd:addAnimationEventCallBack(callfunc, target)
+            hasADD = true
+        end
+    end
+
+    if not hasADD then
+        local newAmd = ArmatureMovementDispatcher.new()
+        armature:getAnimation().setMovementEventCallFunc(newAmd.animationEvent, newAmd)
+        newAmd:addAnimationEventCallBack(callfunc, target)
+        table.insert(self._movementDispatches, newAmd)
+    end
+end
+
+function TriggerMng:removeArmatureMovementCallBack( armature, target, callFunc )
+    if armature == nill or target == nill or callFunc == nill then
+        return
+    end
+
+    local locAmd
+    for i = 1,table.getn(self._movementDispatches) do
+        locAmd = self._movementDispatches[i]
+        if nil ~= locAmd and locAmd[1] == armature then
+            locAmd:removeAnimationEventCallBack(callfunc,target)
+        end 
+    end
+end
+
+function TriggerMng:removeArmatureAllMovementCallBack(armature) 
+    if armature == nill then
+        return
+    end
+        
+    local locAmd = nil
+    for i = 1,table.getn(self._movementDispatches) do
+        locAmd = self._movementDispatches[i]
+        if nil ~= locAmd and locAmd[1] == armature then
+            table.remove(self._movementDispatches,i)
+            break
+        end
+    end
+end
+
+function removeAllArmatureMovementCallBack()
+    self._movementDispatches = {}
+end
+
+local ArmatureMovementDispatcher = class("ArmatureMovementDispatcher")
+ArmatureMovementDispatcher._mapEventAnimation = nil
+
+function ArmatureMovementDispatcher:ctor()
+    self._mapEventAnimation = {}
+end
+
+function ArmatureMovementDispatcher:animationEvent(armature, movementType, movementID)
+    local locEventAni,locTarget, locFunc = nil, nil, nil
+    for i = 1, table.getn(self._mapEventAnimation) do
+        locEventAni = self._mapEventAnimation[i]
+        locTarget   = locEventAni[1]
+        locFunc     = locEventAni[2]
+        if nil ~= locFunc then
+
+        end
+    end
+end
+
+function ArmatureMovementDispatcher:addAnnimationEventCallBack(target, callfunc)
+    
+end
+
+function ArmatureMovementDispatcher:removeAnnimationEventCallBack(target, callFunc)
+    -- body
+end
+
+CCNode* getNodeByTag(int nTag);
+
+1.添加CocoStudio trigger事件触发响应支持，并添加测试例
+2.develop将gui从studio抽离，设置namespace为ccui
+3.同步更新Armature及gui测试例，修改相关手动绑定函数
+function SceneEditorTestLayer.extend(target)
+    local t = tolua.getpeer(target)
+    if not t then
+        t = {}
+        tolua.setpeer(target, t)
+    end
+    setmetatable(t, SceneEditorTestLayer)
+    return target
+end
+
+function SceneEditorTestLayer:createGameScene()
+    local node = SceneReader:sharedSceneReader():createNodeWithSceneFile("scenetest/FishJoy2.json")
+    if nil == node then
+        return
+    end
+    self._curNode = node
+
+    local winSize = CCDirector:sharedDirector():getWinSize()
+    local scale = winSize.height / 320
+    self._curNode:setScale(scale)
+    self._curNode:setPosition(ccp((winSize.width - 480 * scale) / 2, (winSize.height - 320 * scale) / 2))
+
+    local function menuCloseCallback( sender )
+        SceneReader:sharedSceneReader():purgeSceneReader()
+        ActionManager:purgeActionManager()
+        TriggerMng.destroyInstance()
+        local scene = CocoStudioTest()
+        if scene ~= nil then
+            CCDirector:sharedDirector():replaceScene(scene)
+        end
+    end
+
+    CCMenuItemFont:setFontName("Arial")
+    CCMenuItemFont:setFontSize(24)
+    local itemBack = CCMenuItemFont:create("Back")
+    itemBack:setColor(ccc3(255, 255, 255))
+    itemBack:setPosition( ccp(430,30) )
+    itemBack:registerScriptTapHandler(menuCloseCallback)
+    local menuBack = CCMenu:create()
+    menuBack:setPosition(ccp(0.0, 0.0))
+    menuBack:setZOrder(4)
+    menuBack:addChild(itemBack)
+
+    node:addChild(menuBack)
+
+    ActionManager:shareManager():playActionByName("startMenu_1.json","Animation1")
+
+    local function onNodeEvent(event)
+        if event == "enter" then
+            self:onEnter()
+        elseif event == "exit" then
+            self:onExit()
+        end
+    end
+
+    self:registerScriptHandler(onNodeEvent)
+
+    local function onTouchEvent(eventType, x, y)
+        if eventType == "began" then
+            return self:onTouchBegan(x, y)
+        elseif eventType == "moved" then
+            self:onTouchMoved(x, y)
+        elseif eventType == "ended" then
+            self:onTouchEnded(x,y)
+        elseif eventType == "cancelled" then
+            self:onTouchCancelled(x, y)
+        end
+    end
+    self:setTouchEnabled(true)
+    self:registerScriptTouchHandler(onTouchEvent)
+
+    return node
+end
+
+function SceneEditorTestLayer:onEnter()
+    sendTriggerEvent(triggerEventDef.TRIGGEREVENT_ENTERSCENE)
+end
+
+function SceneEditorTestLayer:onExit()
+    sendTriggerEvent(triggerEventDef.TRIGGEREVENT_LEAVESCENE)
+end
+
+function SceneEditorTestLayer:onTouchBegan(x,y)
+    sendTriggerEvent(triggerEventDef.TRIGGEREVENT_TOUCHBEGAN)
+    return true
+end
+
+function SceneEditorTestLayer:onTouchMoved(x,y)
+    sendTriggerEvent(triggerEventDef.TRIGGEREVENT_TOUCHMOVED)
+end
+
+function SceneEditorTestLayer:onTouchEnded(x,y)
+    sendTriggerEvent(triggerEventDef.TRIGGEREVENT_TOUCHENDED)
+end
+
+function SceneEditorTestLayer:onTouchCancelled(x,y)
+    sendTriggerEvent(triggerEventDef.TRIGGEREVENT_TOUCHCANCELLED)
+end
+
+function SceneEditorTestLayer.create()
+    local scene = CCScene:create()
+    local layer = SceneEditorTestLayer.extend(CCLayerColor:create())
+    layer:addChild(layer:createGameScene(), 0, 1)
+    scene:addChild(layer)
+    return scene   
+end
+
+1.分模块
+2.lua map vector的重写
+3.不同命名空间的class的绑定
+4.
+
+CCBProxy添加命名空间
+AssetsManager
+
+TextFiled 
+bool init()
+ActionManager purgeActionManager
+SceneReader   purgeSceneReader
+GUIReader     purgeGUIReader
+
+
+12.10
+addEventListenerScrollView未添加
+websocket加入命名空间
+glNode
+
+
+CCBProxy加到cocosbuilder命名空间下
+
+LuaCocoStudioEventListener命名空间的添加
+
+LuaArmatureWrapper
+
+XMLHttpRequest,websocket的deprecated
+
+EventListenerCustom EventListenerAcceleration
+
+
+local x = (tolua.cast(dict:objectForKey(key), "String"))
+
+
+lua_cocos2dx_ArmatureAnimation_setMovementEventCallFunc：ScriptHandlerMgr::getInstance()->addObjectHandler应该不用了
+
+How does the bindings-generator support the namespace binding in the 3.0 version?
+
+The current lua bindings-generator doesn't support namespace binding,For example,the cc.ScrollView generated by the cocos2d::extension::ScrollView and the ccui.ScrollView generated by the gui::ScrollView pointed to the same metatable--_G[LUA_REGISTRYINDEX]["ScrollView"].When we input the script code below:
+
+   local scrollView1 = cc.ScrollView:create()
+   local screenSize = cc.Director:getInstance():getWinSize()
+   scrollView1:setViewSize(cc.size(screenSize.width / 2,screenSize.height))
+
+They will happen to error because the corresponding data of _G[LUA_REGISTRYINDEX]["ScrollView"] are the map of gui::ScrollView 
+
+Because the current lua binding generator is based on the tolua++,a feasible method is pass the whole namespace name to the binding generator parser.In this mechanism,we should pass the whole namespace name to the functions who have class name as parameter.For example:
+    In C++:
+        tolua_isusertype(state,stackIndex,"cocos2d::extension::ScrollView",def,err)
+    In lua script:
+        tolua.cast(obj,"cocos2d::extension::ScrollView")
+With this mechanism,we could bind c++ classes which have same name but different namespace to lua without confusion.
+
+Is that right,can anyone give me some suggestions?
+
+binding-generator的不足:
+1.struct无法自动绑定
+2.enum clasee无法自动绑定
+3.public成员变量无法自动绑定
+4.register回调函数无法自动绑定.pkg文件通过加入关键字识别，例如:void registerScriptHandler(LUA_FUNCTION funcID)
+5.指针类型的形参，无法解析，例如int*
+6.由于没有定义strut类的绑定，对一下strut类型的形参，需要写一些转换函数，否则也会转换也会不成功
+
+
+tolua_get_CCParticleBatchNode___CCTextureProtocol__
+
+/Users/cocos2d/MyWork/cocos2d-x-develop/cocos/scripting/lua/bindings/LuaBasicConversions.h:314:38: Dynamic_cast from 'const cocos2d::GLProgram *' to 'cocos2d::Object *' casts away qualifiers
+
+/Users/cocos2d/MyWork/cocos2d-x-develop/cocos/scripting/lua/bindings/LuaBasicConversions.h:314:38: Dynamic_cast from 'const cocos2d::Scheduler *' to 'cocos2d::Object *' casts away qualifiers
+
+/Users/cocos2d/MyWork/cocos2d-x-develop/cocos/scripting/lua/bindings/LuaBasicConversions.h:314:38: Dynamic_cast from 'const cocos2d::Node *' to 'cocos2d::Object *' casts away qualifiers
+
+/Users/cocos2d/MyWork/cocos2d-x-develop/cocos/scripting/lua/bindings/LuaBasicConversions.h:314:38: Dynamic_cast from 'const cocos2d::ActionManager *' to 'cocos2d::Object *' casts away qualifiers
+
+/Users/cocos2d/MyWork/cocos2d-x-develop/cocos/scripting/lua/bindings/LuaBasicConversions.h:314:38: Dynamic_cast from 'const cocos2d::Animation *' to 'cocos2d::Object *' casts away qualifiers
+
+/Users/cocos2d/MyWork/cocos2d-x-develop/cocos/scripting/lua/bindings/LuaBasicConversions.h:314:38: Dynamic_cast from 'const cocos2d::GridBase *' to 'cocos2d::Object *' casts away qualifiers
+
+
+
+
+
+
+
+
+
+

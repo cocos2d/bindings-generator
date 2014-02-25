@@ -485,11 +485,16 @@ class NativeFunction(object):
                             searchList=[current_class, self])
 
         gen.impl_file.write(str(tpl))
-        apidoc_function_js = Template(file=os.path.join(gen.target,
+        apidoc_function_script = Template(file=os.path.join(gen.target,
                                                         "templates",
-                                                        "apidoc_function.js"),
+                                                        "apidoc_function.script"),
                                       searchList=[current_class, self])
-        gen.doc_file.write(str(apidoc_function_js))
+        if gen.targetFlag == "spidermonkey":
+            gen.doc_file.write(str(apidoc_function_script))
+        else:
+            if gen.targetFlag == "lua" and current_class != None :
+                current_class.doc_func_file.write(str(apidoc_function_script))
+
 
 class NativeOverloadedFunction(object):
     def __init__(self, func_array):
@@ -533,6 +538,13 @@ class NativeOverloadedFunction(object):
             tpl = Template(file=os.path.join(gen.target, "templates", "ifunction_overloaded.c"),
                             searchList=[current_class, self])
         gen.impl_file.write(str(tpl))
+
+        if gen.targetFlag == "lua" and current_class != None :
+            apidoc_function_overload_script = Template(file=os.path.join(gen.target,
+                                                        "templates",
+                                                        "apidoc_function_overload.script"),
+                                      searchList=[current_class, self])
+            current_class.doc_func_file.write(str(apidoc_function_overload_script))
 
 
 class NativeClass(object):
@@ -609,13 +621,22 @@ class NativeClass(object):
                             searchList=[{"current_class": self}])
         prelude_c = Template(file=os.path.join(self.generator.target, "templates", "prelude.c"),
                             searchList=[{"current_class": self}])
-        apidoc_classhead_js = Template(file=os.path.join(self.generator.target,
+        apidoc_classhead_script = Template(file=os.path.join(self.generator.target,
                                                          "templates",
-                                                         "apidoc_classhead.js"),
+                                                         "apidoc_classhead.script"),
                                        searchList=[{"current_class": self}])
+        if self.generator.targetFlag == "lua":
+            docfuncfilepath = os.path.join(self.generator.outdir + "/api", self.class_name + ".lua")
+            self.doc_func_file = open(docfuncfilepath, "w+")
+            apidoc_fun_head_script  = Template(file=os.path.join(self.generator.target,
+                                                         "templates",
+                                                         "apidoc_function_head.script"),
+                                       searchList=[{"current_class": self}])
+            self.doc_func_file.write(str(apidoc_fun_head_script))
+
         self.generator.head_file.write(str(prelude_h))
         self.generator.impl_file.write(str(prelude_c))
-        self.generator.doc_file.write(str(apidoc_classhead_js))
+        self.generator.doc_file.write(str(apidoc_classhead_script))
         for m in self.methods_clean():
             m['impl'].generate_code(self)
         for m in self.static_methods_clean():
@@ -623,13 +644,19 @@ class NativeClass(object):
         # generate register section
         register = Template(file=os.path.join(self.generator.target, "templates", "register.c"),
                             searchList=[{"current_class": self}])
-        apidoc_classfoot_js = Template(file=os.path.join(self.generator.target,
+        apidoc_classfoot_script = Template(file=os.path.join(self.generator.target,
                                                          "templates",
-                                                         "apidoc_classfoot.js"),
+                                                         "apidoc_classfoot.script"),
                                        searchList=[{"current_class": self}])
         self.generator.impl_file.write(str(register))
-        self.generator.doc_file.write(str(apidoc_classfoot_js))
-
+        self.generator.doc_file.write(str(apidoc_classfoot_script))
+        if self.generator.targetFlag == "lua":
+            apidoc_fun_foot_script  = Template(file=os.path.join(self.generator.target,
+                                                         "templates",
+                                                         "apidoc_function_foot.script"),
+                                       searchList=[{"current_class": self}])
+            self.doc_func_file.write(str(apidoc_fun_foot_script))
+            self.doc_func_file.close()
     def _deep_iterate(self, cursor=None, depth=0):
         for node in cursor.get_children():
             # print("%s%s - %s" % ("> " * depth, node.displayname, node.kind))
@@ -766,6 +793,7 @@ class Generator(object):
         self.rename_classes = {}
         self.out_file = opts['out_file']
         self.script_control_cpp = opts['script_control_cpp'] == "yes"
+        self.targetFlag = opts['targetFlag']
 
         if opts['skip']:
             list_of_skips = re.split(",\n?", opts['skip'])
@@ -886,7 +914,16 @@ class Generator(object):
         self.config = data
         implfilepath = os.path.join(self.outdir, self.out_file + ".cpp")
         headfilepath = os.path.join(self.outdir, self.out_file + ".hpp")
-        docfilepath = os.path.join(self.outdir, self.out_file + "_api.js")
+
+        docfiledir   = self.outdir + "/api"
+        if not os.path.exists(docfiledir):
+            os.makedirs(docfiledir)
+
+        if self.targetFlag == "lua":
+            docfilepath = os.path.join(docfiledir, self.out_file + "_api.lua")
+        else:
+            docfilepath = os.path.join(docfiledir, self.out_file + "_api.js")
+        
         self.impl_file = open(implfilepath, "w+")
         self.head_file = open(headfilepath, "w+")
         self.doc_file = open(docfilepath, "w+")
@@ -895,11 +932,11 @@ class Generator(object):
                             searchList=[self])
         layout_c = Template(file=os.path.join(self.target, "templates", "layout_head.c"),
                             searchList=[self])
-        apidoc_ns_js = Template(file=os.path.join(self.target, "templates", "apidoc_ns.js"),
+        apidoc_ns_script = Template(file=os.path.join(self.target, "templates", "apidoc_ns.script"),
                                 searchList=[self])
         self.head_file.write(str(layout_h))
         self.impl_file.write(str(layout_c))
-        self.doc_file.write(str(apidoc_ns_js))
+        self.doc_file.write(str(apidoc_ns_script))
 
         self._parse_headers()
 
@@ -909,6 +946,10 @@ class Generator(object):
                             searchList=[self])
         self.head_file.write(str(layout_h))
         self.impl_file.write(str(layout_c))
+        if self.targetFlag == "lua":
+            apidoc_ns_foot_script = Template(file=os.path.join(self.target, "templates", "apidoc_ns_foot.script"),
+                                searchList=[self])
+            self.doc_file.write(str(apidoc_ns_foot_script))
 
         self.impl_file.close()
         self.head_file.close()
@@ -1061,7 +1102,8 @@ def main():
                 'rename_functions': config.get(s, 'rename_functions'),
                 'rename_classes': config.get(s, 'rename_classes'),
                 'out_file': opts.out_file or config.get(s, 'prefix'),
-                'script_control_cpp': config.get(s, 'script_control_cpp') if config.has_option(s, 'script_control_cpp') else 'no'
+                'script_control_cpp': config.get(s, 'script_control_cpp') if config.has_option(s, 'script_control_cpp') else 'no',
+                'targetFlag': t
                 }
             generator = Generator(gen_opts)
             generator.generate_code()

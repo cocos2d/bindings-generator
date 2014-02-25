@@ -1,0 +1,4 @@
+#set generator = $current_class.generator
+
+--------------------------------
+-- @module ${current_class.class_name}

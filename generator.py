@@ -539,19 +539,20 @@ class NativeOverloadedFunction(object):
                             searchList=[current_class, self])
         gen.impl_file.write(str(tpl))
 
-        if gen.script_type == "lua" and current_class != None :
-            apidoc_function_overload_script = Template(file=os.path.join(gen.target,
-                                                        "templates",
-                                                        "apidoc_function_overload.script"),
-                                      searchList=[current_class, self])
-            current_class.doc_func_file.write(str(apidoc_function_overload_script))
-        else:
-            if gen.script_type == "spidermonkey" and current_class != None :
+        if current_class != None:
+            if gen.script_type == "lua":
                 apidoc_function_overload_script = Template(file=os.path.join(gen.target,
                                                         "templates",
                                                         "apidoc_function_overload.script"),
                                       searchList=[current_class, self])
-                gen.doc_file.write(str(apidoc_function_overload_script))
+                current_class.doc_func_file.write(str(apidoc_function_overload_script))
+            else:
+                if gen.script_type == "spidermonkey":
+                    apidoc_function_overload_script = Template(file=os.path.join(gen.target,
+                                                        "templates",
+                                                        "apidoc_function_overload.script"),
+                                      searchList=[current_class, self])
+                    gen.doc_file.write(str(apidoc_function_overload_script))
 
 
 class NativeClass(object):
@@ -1025,9 +1026,9 @@ class Generator(object):
         for (k, v) in script_ns_dict.items():
             if namespace_class_name.find("std::") == 0:
                 return False
-            else:
-                if namespace_class_name.find(k) >= 0:
-                    return True
+            if namespace_class_name.find(k) >= 0:
+                return True
+
         return False
 
     def scriptname_cocos_class(self, namespace_class_name):
@@ -1037,37 +1038,104 @@ class Generator(object):
                 return namespace_class_name.replace("*","").replace("const ", "").replace(k,v)
         raise Exception("The namespace (%s) conversion wasn't set in 'ns_map' section of the conversions.yaml" % namespace_class_name)
 
+    def js_typename_from_natve(self, namespace_class_name):
+        script_ns_dict = self.config['conversions']['ns_map']
+        if namespace_class_name.find("std::") == 0:
+            if namespace_class_name.find("std::string") == 0:
+                return "String"
+            if namespace_class_name.find("std::vector") == 0:
+                return "Array"
+            if namespace_class_name.find("std::map") == 0 or namespace_class_name.find("std::unordered_map") == 0:
+                return "MapObject"
+            if namespace_class_name.find("std::function") == 0:
+                return "function"
+
+        for (k, v) in script_ns_dict.items():
+            if namespace_class_name.find(k) >= 0:
+                if namespace_class_name.find("cocos2d::Vector") == 0:
+                    return "Array"
+                if namespace_class_name.find("cocos2d::Map") == 0:
+                    return "MapObject"
+                if namespace_class_name.find("cocos2d::Point")  == 0:
+                    return "PointObject"
+                if namespace_class_name.find("cocos2d::Size")  == 0:
+                    return "SizeObject"
+                if namespace_class_name.find("cocos2d::Rect")  == 0:
+                    return "RectObject"
+                if namespace_class_name.find("cocos2d::Color3B") == 0:
+                    return "Color3BObject"
+                if namespace_class_name.find("cocos2d::Color4B") == 0:
+                    return "Color4BObject"
+                if namespace_class_name.find("cocos2d::Color4F") == 0:
+                    return "Color4FObject"
+                else:
+                    return namespace_class_name.replace("*","").replace("const ", "").replace(k,v)
+        return namespace_class_name
+
+    def lua_typename_from_natve(self, namespace_class_name):
+        script_ns_dict = self.config['conversions']['ns_map']
+        if namespace_class_name.find("std::") == 0:
+            if namespace_class_name.find("std::string") == 0:
+                return "string"
+            if namespace_class_name.find("std::vector") == 0:
+                return "array_table"
+            if namespace_class_name.find("std::map") == 0 or namespace_class_name.find("std::unordered_map") == 0:
+                return "map_table"
+            if namespace_class_name.find("std::function") == 0:
+                return "function"
+
+        for (k, v) in script_ns_dict.items():
+            if namespace_class_name.find(k) >= 0:
+                if namespace_class_name.find("cocos2d::Vector") == 0:
+                    return "array_table"
+                if namespace_class_name.find("cocos2d::Vector") == 0:
+                    return "map_table"
+                if namespace_class_name.find("cocos2d::Point")  == 0:
+                    return "point_table"
+                if namespace_class_name.find("cocos2d::Size")  == 0:
+                    return "size_table"
+                if namespace_class_name.find("cocos2d::Rect")  == 0:
+                    return "rect_table"
+                if namespace_class_name.find("cocos2d::Color3B") == 0:
+                    return "color3B_object"
+                if namespace_class_name.find("cocos2d::Color4B") == 0:
+                    return "color4B_object"
+                if namespace_class_name.find("cocos2d::Color4F") == 0:
+                    return "color4F_object"
+                else:
+                    return namespace_class_name.replace("*","").replace("const ", "").replace(k,v)
+        return namespace_class_name
+
+
     def api_param_name_from_native(self,native_name):
         lower_name = native_name.lower()
         if lower_name == "std::string":
             return "str"
-        else:
-            if lower_name.find("unsigned ") >= 0 :
-                return native_name.replace("unsigned ","")
-            else:
-                if lower_name.find("unordered_map") >= 0 or lower_name.find("map") >= 0:
-                    return "mapobject"
-                else:
-                    if lower_name.find("vector") >= 0 :
-                        return "array"
-                    else:
-                        if lower_name == "std::function":
-                            return "func"
-                        else:
-                            return lower_name
 
-    def api_ret_name_from_native(self, namespace_class_name, is_enum) :
+        if lower_name.find("unsigned ") >= 0 :
+            return native_name.replace("unsigned ","")
+
+        if lower_name.find("unordered_map") >= 0 or lower_name.find("map") >= 0:
+            return "map"
+
+        if lower_name.find("vector") >= 0 :
+            return "array"
+
+        if lower_name == "std::function":
+            return "func"
+        else:
+            return lower_name
+
+    def js_ret_name_from_native(self, namespace_class_name, is_enum) :
         if self.is_cocos_class(namespace_class_name):
             if namespace_class_name.find("cocos2d::Vector") >=0:
-                return "new Array()";
+                return "new Array()"
+            if namespace_class_name.find("cocos2d::Map") >=0:
+                return "map_object"
+            if is_enum:
+                return 0
             else:
-                if namespace_class_name.find("cocos2d::Map") >=0:
-                    return "mapobject";
-                else:
-                    if is_enum:
-                        return 0;
-                    else:
-                        return self.scriptname_cocos_class(namespace_class_name);
+                return self.scriptname_cocos_class(namespace_class_name)
 
         lower_name = namespace_class_name.lower()
 
@@ -1076,23 +1144,23 @@ class Generator(object):
 
         if lower_name == "std::string":
             return ""
-        else: 
-            if lower_name == "char" or lower_name == "short" or lower_name == "int" or lower_name == "float" or lower_name == "double" or lower_name == "long":
-                return 0;
-            else:
-                if lower_name == "bool":
-                    return "false"
-                else:
-                    if lower_name.find("std::vector") >= 0 or lower_name.find("vector") >= 0:
-                        return "new Array()";
-                    else:
-                        if lower_name.find("std::map") >= 0 or lower_name.find("std::unordered_map") >= 0 or lower_name.find("unordered_map") >= 0 or lower_name.find("map") >= 0:
-                            return "mapobject";
-                        else:
-                            if lower_name == "std::function":
-                                return "func"
-                            else:
-                                return namespace_class_name;
+
+        if lower_name == "char" or lower_name == "short" or lower_name == "int" or lower_name == "float" or lower_name == "double" or lower_name == "long":
+            return 0
+
+        if lower_name == "bool":
+            return "false"
+
+        if lower_name.find("std::vector") >= 0 or lower_name.find("vector") >= 0:
+            return "new Array()"
+
+        if lower_name.find("std::map") >= 0 or lower_name.find("std::unordered_map") >= 0 or lower_name.find("unordered_map") >= 0 or lower_name.find("map") >= 0:
+            return "map_object"
+
+        if lower_name == "std::function":
+            return "func"
+        else:
+            return namespace_class_name
 def main():
     from optparse import OptionParser
 

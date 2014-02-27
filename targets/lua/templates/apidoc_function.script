@@ -5,11 +5,11 @@
     #set $count = 0
     #for $arg in $arguments 
         #set $argValue = "arg" + str(count)
--- @param #$arg.name.replace("*", "") $argValue
+-- @param #$generator.lua_typename_from_natve($arg.namespaced_name) $generator.api_param_name_from_native($arg.name.replace("*", "").replace("const ", ""))
         #set $count = $count + 1
     #end for
 #end if
 #if str($ret_type) != "void"
--- @return $ret_type.name.replace("*", "")#$ret_type.name.replace("*", "") ret
+-- @return $generator.lua_typename_from_natve($ret_type.namespaced_name)#$generator.lua_typename_from_natve($ret_type.namespaced_name) ret
 #end if
         

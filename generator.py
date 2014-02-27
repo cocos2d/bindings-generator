@@ -485,11 +485,16 @@ class NativeFunction(object):
                             searchList=[current_class, self])
 
         gen.impl_file.write(str(tpl))
-        apidoc_function_js = Template(file=os.path.join(gen.target,
+        apidoc_function_script = Template(file=os.path.join(gen.target,
                                                         "templates",
-                                                        "apidoc_function.js"),
+                                                        "apidoc_function.script"),
                                       searchList=[current_class, self])
-        gen.doc_file.write(str(apidoc_function_js))
+        if gen.script_type == "spidermonkey":
+            gen.doc_file.write(str(apidoc_function_script))
+        else:
+            if gen.script_type == "lua" and current_class != None :
+                current_class.doc_func_file.write(str(apidoc_function_script))
+
 
 class NativeOverloadedFunction(object):
     def __init__(self, func_array):
@@ -533,6 +538,21 @@ class NativeOverloadedFunction(object):
             tpl = Template(file=os.path.join(gen.target, "templates", "ifunction_overloaded.c"),
                             searchList=[current_class, self])
         gen.impl_file.write(str(tpl))
+
+        if current_class != None:
+            if gen.script_type == "lua":
+                apidoc_function_overload_script = Template(file=os.path.join(gen.target,
+                                                        "templates",
+                                                        "apidoc_function_overload.script"),
+                                      searchList=[current_class, self])
+                current_class.doc_func_file.write(str(apidoc_function_overload_script))
+            else:
+                if gen.script_type == "spidermonkey":
+                    apidoc_function_overload_script = Template(file=os.path.join(gen.target,
+                                                        "templates",
+                                                        "apidoc_function_overload.script"),
+                                      searchList=[current_class, self])
+                    gen.doc_file.write(str(apidoc_function_overload_script))
 
 
 class NativeClass(object):
@@ -609,13 +629,22 @@ class NativeClass(object):
                             searchList=[{"current_class": self}])
         prelude_c = Template(file=os.path.join(self.generator.target, "templates", "prelude.c"),
                             searchList=[{"current_class": self}])
-        apidoc_classhead_js = Template(file=os.path.join(self.generator.target,
+        apidoc_classhead_script = Template(file=os.path.join(self.generator.target,
                                                          "templates",
-                                                         "apidoc_classhead.js"),
+                                                         "apidoc_classhead.script"),
                                        searchList=[{"current_class": self}])
+        if self.generator.script_type == "lua":
+            docfuncfilepath = os.path.join(self.generator.outdir + "/api", self.class_name + ".lua")
+            self.doc_func_file = open(docfuncfilepath, "w+")
+            apidoc_fun_head_script  = Template(file=os.path.join(self.generator.target,
+                                                         "templates",
+                                                         "apidoc_function_head.script"),
+                                       searchList=[{"current_class": self}])
+            self.doc_func_file.write(str(apidoc_fun_head_script))
+
         self.generator.head_file.write(str(prelude_h))
         self.generator.impl_file.write(str(prelude_c))
-        self.generator.doc_file.write(str(apidoc_classhead_js))
+        self.generator.doc_file.write(str(apidoc_classhead_script))
         for m in self.methods_clean():
             m['impl'].generate_code(self)
         for m in self.static_methods_clean():
@@ -623,13 +652,19 @@ class NativeClass(object):
         # generate register section
         register = Template(file=os.path.join(self.generator.target, "templates", "register.c"),
                             searchList=[{"current_class": self}])
-        apidoc_classfoot_js = Template(file=os.path.join(self.generator.target,
+        apidoc_classfoot_script = Template(file=os.path.join(self.generator.target,
                                                          "templates",
-                                                         "apidoc_classfoot.js"),
+                                                         "apidoc_classfoot.script"),
                                        searchList=[{"current_class": self}])
         self.generator.impl_file.write(str(register))
-        self.generator.doc_file.write(str(apidoc_classfoot_js))
-
+        self.generator.doc_file.write(str(apidoc_classfoot_script))
+        if self.generator.script_type == "lua":
+            apidoc_fun_foot_script  = Template(file=os.path.join(self.generator.target,
+                                                         "templates",
+                                                         "apidoc_function_foot.script"),
+                                       searchList=[{"current_class": self}])
+            self.doc_func_file.write(str(apidoc_fun_foot_script))
+            self.doc_func_file.close()
     def _deep_iterate(self, cursor=None, depth=0):
         for node in cursor.get_children():
             # print("%s%s - %s" % ("> " * depth, node.displayname, node.kind))
@@ -766,6 +801,7 @@ class Generator(object):
         self.rename_classes = {}
         self.out_file = opts['out_file']
         self.script_control_cpp = opts['script_control_cpp'] == "yes"
+        self.script_type = opts['script_type']
 
         if opts['skip']:
             list_of_skips = re.split(",\n?", opts['skip'])
@@ -886,7 +922,16 @@ class Generator(object):
         self.config = data
         implfilepath = os.path.join(self.outdir, self.out_file + ".cpp")
         headfilepath = os.path.join(self.outdir, self.out_file + ".hpp")
-        docfilepath = os.path.join(self.outdir, self.out_file + "_api.js")
+
+        docfiledir   = self.outdir + "/api"
+        if not os.path.exists(docfiledir):
+            os.makedirs(docfiledir)
+
+        if self.script_type == "lua":
+            docfilepath = os.path.join(docfiledir, self.out_file + "_api.lua")
+        else:
+            docfilepath = os.path.join(docfiledir, self.out_file + "_api.js")
+        
         self.impl_file = open(implfilepath, "w+")
         self.head_file = open(headfilepath, "w+")
         self.doc_file = open(docfilepath, "w+")
@@ -895,11 +940,11 @@ class Generator(object):
                             searchList=[self])
         layout_c = Template(file=os.path.join(self.target, "templates", "layout_head.c"),
                             searchList=[self])
-        apidoc_ns_js = Template(file=os.path.join(self.target, "templates", "apidoc_ns.js"),
+        apidoc_ns_script = Template(file=os.path.join(self.target, "templates", "apidoc_ns.script"),
                                 searchList=[self])
         self.head_file.write(str(layout_h))
         self.impl_file.write(str(layout_c))
-        self.doc_file.write(str(apidoc_ns_js))
+        self.doc_file.write(str(apidoc_ns_script))
 
         self._parse_headers()
 
@@ -909,6 +954,10 @@ class Generator(object):
                             searchList=[self])
         self.head_file.write(str(layout_h))
         self.impl_file.write(str(layout_c))
+        if self.script_type == "lua":
+            apidoc_ns_foot_script = Template(file=os.path.join(self.target, "templates", "apidoc_ns_foot.script"),
+                                searchList=[self])
+            self.doc_file.write(str(apidoc_ns_foot_script))
 
         self.impl_file.close()
         self.head_file.close()
@@ -970,8 +1019,148 @@ class Generator(object):
             else:
                 raise Exception("The namespace (%s) conversion wasn't set in 'ns_map' section of the conversions.yaml" % namespace_class_name)
         else:
-           return namespace_class_name
+            return namespace_class_name
 
+    def is_cocos_class(self, namespace_class_name):
+        script_ns_dict = self.config['conversions']['ns_map']
+        for (k, v) in script_ns_dict.items():
+            if namespace_class_name.find("std::") == 0:
+                return False
+            if namespace_class_name.find(k) >= 0:
+                return True
+
+        return False
+
+    def scriptname_cocos_class(self, namespace_class_name):
+        script_ns_dict = self.config['conversions']['ns_map']
+        for (k, v) in script_ns_dict.items():
+            if namespace_class_name.find(k) >= 0:
+                return namespace_class_name.replace("*","").replace("const ", "").replace(k,v)
+        raise Exception("The namespace (%s) conversion wasn't set in 'ns_map' section of the conversions.yaml" % namespace_class_name)
+
+    def js_typename_from_natve(self, namespace_class_name):
+        script_ns_dict = self.config['conversions']['ns_map']
+        if namespace_class_name.find("std::") == 0:
+            if namespace_class_name.find("std::string") == 0:
+                return "String"
+            if namespace_class_name.find("std::vector") == 0:
+                return "Array"
+            if namespace_class_name.find("std::map") == 0 or namespace_class_name.find("std::unordered_map") == 0:
+                return "MapObject"
+            if namespace_class_name.find("std::function") == 0:
+                return "function"
+
+        for (k, v) in script_ns_dict.items():
+            if namespace_class_name.find(k) >= 0:
+                if namespace_class_name.find("cocos2d::Vector") == 0:
+                    return "Array"
+                if namespace_class_name.find("cocos2d::Map") == 0:
+                    return "MapObject"
+                if namespace_class_name.find("cocos2d::Point")  == 0:
+                    return "PointObject"
+                if namespace_class_name.find("cocos2d::Size")  == 0:
+                    return "SizeObject"
+                if namespace_class_name.find("cocos2d::Rect")  == 0:
+                    return "RectObject"
+                if namespace_class_name.find("cocos2d::Color3B") == 0:
+                    return "Color3BObject"
+                if namespace_class_name.find("cocos2d::Color4B") == 0:
+                    return "Color4BObject"
+                if namespace_class_name.find("cocos2d::Color4F") == 0:
+                    return "Color4FObject"
+                else:
+                    return namespace_class_name.replace("*","").replace("const ", "").replace(k,v)
+        return namespace_class_name
+
+    def lua_typename_from_natve(self, namespace_class_name):
+        script_ns_dict = self.config['conversions']['ns_map']
+        if namespace_class_name.find("std::") == 0:
+            if namespace_class_name.find("std::string") == 0:
+                return "string"
+            if namespace_class_name.find("std::vector") == 0:
+                return "array_table"
+            if namespace_class_name.find("std::map") == 0 or namespace_class_name.find("std::unordered_map") == 0:
+                return "map_table"
+            if namespace_class_name.find("std::function") == 0:
+                return "function"
+
+        for (k, v) in script_ns_dict.items():
+            if namespace_class_name.find(k) >= 0:
+                if namespace_class_name.find("cocos2d::Vector") == 0:
+                    return "array_table"
+                if namespace_class_name.find("cocos2d::Vector") == 0:
+                    return "map_table"
+                if namespace_class_name.find("cocos2d::Point")  == 0:
+                    return "point_table"
+                if namespace_class_name.find("cocos2d::Size")  == 0:
+                    return "size_table"
+                if namespace_class_name.find("cocos2d::Rect")  == 0:
+                    return "rect_table"
+                if namespace_class_name.find("cocos2d::Color3B") == 0:
+                    return "color3B_object"
+                if namespace_class_name.find("cocos2d::Color4B") == 0:
+                    return "color4B_object"
+                if namespace_class_name.find("cocos2d::Color4F") == 0:
+                    return "color4F_object"
+                else:
+                    return namespace_class_name.replace("*","").replace("const ", "").replace(k,v)
+        return namespace_class_name
+
+
+    def api_param_name_from_native(self,native_name):
+        lower_name = native_name.lower()
+        if lower_name == "std::string":
+            return "str"
+
+        if lower_name.find("unsigned ") >= 0 :
+            return native_name.replace("unsigned ","")
+
+        if lower_name.find("unordered_map") >= 0 or lower_name.find("map") >= 0:
+            return "map"
+
+        if lower_name.find("vector") >= 0 :
+            return "array"
+
+        if lower_name == "std::function":
+            return "func"
+        else:
+            return lower_name
+
+    def js_ret_name_from_native(self, namespace_class_name, is_enum) :
+        if self.is_cocos_class(namespace_class_name):
+            if namespace_class_name.find("cocos2d::Vector") >=0:
+                return "new Array()"
+            if namespace_class_name.find("cocos2d::Map") >=0:
+                return "map_object"
+            if is_enum:
+                return 0
+            else:
+                return self.scriptname_cocos_class(namespace_class_name)
+
+        lower_name = namespace_class_name.lower()
+
+        if lower_name.find("unsigned ") >= 0:
+            lower_name = lower_name.replace("unsigned ","")
+
+        if lower_name == "std::string":
+            return ""
+
+        if lower_name == "char" or lower_name == "short" or lower_name == "int" or lower_name == "float" or lower_name == "double" or lower_name == "long":
+            return 0
+
+        if lower_name == "bool":
+            return "false"
+
+        if lower_name.find("std::vector") >= 0 or lower_name.find("vector") >= 0:
+            return "new Array()"
+
+        if lower_name.find("std::map") >= 0 or lower_name.find("std::unordered_map") >= 0 or lower_name.find("unordered_map") >= 0 or lower_name.find("map") >= 0:
+            return "map_object"
+
+        if lower_name == "std::function":
+            return "func"
+        else:
+            return namespace_class_name
 def main():
     from optparse import OptionParser
 
@@ -1061,7 +1250,8 @@ def main():
                 'rename_functions': config.get(s, 'rename_functions'),
                 'rename_classes': config.get(s, 'rename_classes'),
                 'out_file': opts.out_file or config.get(s, 'prefix'),
-                'script_control_cpp': config.get(s, 'script_control_cpp') if config.has_option(s, 'script_control_cpp') else 'no'
+                'script_control_cpp': config.get(s, 'script_control_cpp') if config.has_option(s, 'script_control_cpp') else 'no',
+                'script_type': t
                 }
             generator = Generator(gen_opts)
             generator.generate_code()

@@ -18,6 +18,14 @@ conversions:
     "@std::vector<std::basic_string.*>.>.>": "std::vector<std::string>"
     "@std::vector<int.*>.>": "std::vector<int>"
     "@cocos2d::Map<std::basic_string.*,": "cocos2d::Map<std::string,"
+  ns_map:
+    "cocos2d::extension::": "cc."
+    "cocos2d::ui::": "ccui."
+    "cocos2d::": "cc."
+    "spine::": "sp."
+    "cocostudio::": "ccs."
+    "cocosbuilder::": "cc."
+    "CocosDenshion::": "cc."
   to_native:
     # jsval to int
     int: "ok &= jsval_to_int32(cx, ${in_value}, (int32_t *)&${out_value})"

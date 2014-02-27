@@ -3,14 +3,38 @@
 #if $is_constructor
  * @constructor
 #end if
-#if str($ret_type) != "void"
- * @return A value converted from C/C++ "${ret_type}"
-#end if
 #if $min_args > 0
-	#for $arg in $arguments
- * @param {$arg}
-	#end for
+    #set $count = 0
+    #for $arg in $arguments
+    #set $argValue = "arg" + str(count)
+ * @param {$generator.scriptname_from_native($arg.namespaced_name)} $argValue
+    #set $count = $count + 1
+    #end for
+#end if
+#if str($ret_type) != "void"
+ * @return {$generator.scriptname_from_native($ret_type.namespaced_name)}
 #end if
  */
-${func_name} : function () {},
+${func_name} : function (
+#if $min_args > 0
+    #set $length = len($arguments)
+    #set $index = 0
+    #for $arg in $arguments
+        #set $argname = $arg.name.replace("*", "").replace("const ", "")
+        #if $index < $length - 1 
+$generator.api_param_name_from_native(argname), 
+        #else 
+$generator.api_param_name_from_native(argname) 
+        #end if
+        #set $index = $index + 1
+    #end for
+#end if
+)
+{
+ #if str($ret_type) != "void"
+    #set $is_enum = $ret_type.is_enum
+    #set $ret = $ret_type.namespaced_name.replace("*", "").replace("const ", "")
+    return $generator.api_ret_name_from_native($ret,$is_enum);
+ #end if
+},
 

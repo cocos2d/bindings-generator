@@ -489,10 +489,10 @@ class NativeFunction(object):
                                                         "templates",
                                                         "apidoc_function.script"),
                                       searchList=[current_class, self])
-        if gen.targetFlag == "spidermonkey":
+        if gen.script_type == "spidermonkey":
             gen.doc_file.write(str(apidoc_function_script))
         else:
-            if gen.targetFlag == "lua" and current_class != None :
+            if gen.script_type == "lua" and current_class != None :
                 current_class.doc_func_file.write(str(apidoc_function_script))
 
 
@@ -539,12 +539,19 @@ class NativeOverloadedFunction(object):
                             searchList=[current_class, self])
         gen.impl_file.write(str(tpl))
 
-        if gen.targetFlag == "lua" and current_class != None :
+        if gen.script_type == "lua" and current_class != None :
             apidoc_function_overload_script = Template(file=os.path.join(gen.target,
                                                         "templates",
                                                         "apidoc_function_overload.script"),
                                       searchList=[current_class, self])
             current_class.doc_func_file.write(str(apidoc_function_overload_script))
+        else:
+            if gen.script_type == "spidermonkey" and current_class != None :
+                apidoc_function_overload_script = Template(file=os.path.join(gen.target,
+                                                        "templates",
+                                                        "apidoc_function_overload.script"),
+                                      searchList=[current_class, self])
+                gen.doc_file.write(str(apidoc_function_overload_script))
 
 
 class NativeClass(object):
@@ -625,7 +632,7 @@ class NativeClass(object):
                                                          "templates",
                                                          "apidoc_classhead.script"),
                                        searchList=[{"current_class": self}])
-        if self.generator.targetFlag == "lua":
+        if self.generator.script_type == "lua":
             docfuncfilepath = os.path.join(self.generator.outdir + "/api", self.class_name + ".lua")
             self.doc_func_file = open(docfuncfilepath, "w+")
             apidoc_fun_head_script  = Template(file=os.path.join(self.generator.target,
@@ -650,7 +657,7 @@ class NativeClass(object):
                                        searchList=[{"current_class": self}])
         self.generator.impl_file.write(str(register))
         self.generator.doc_file.write(str(apidoc_classfoot_script))
-        if self.generator.targetFlag == "lua":
+        if self.generator.script_type == "lua":
             apidoc_fun_foot_script  = Template(file=os.path.join(self.generator.target,
                                                          "templates",
                                                          "apidoc_function_foot.script"),
@@ -793,7 +800,7 @@ class Generator(object):
         self.rename_classes = {}
         self.out_file = opts['out_file']
         self.script_control_cpp = opts['script_control_cpp'] == "yes"
-        self.targetFlag = opts['targetFlag']
+        self.script_type = opts['script_type']
 
         if opts['skip']:
             list_of_skips = re.split(",\n?", opts['skip'])
@@ -919,7 +926,7 @@ class Generator(object):
         if not os.path.exists(docfiledir):
             os.makedirs(docfiledir)
 
-        if self.targetFlag == "lua":
+        if self.script_type == "lua":
             docfilepath = os.path.join(docfiledir, self.out_file + "_api.lua")
         else:
             docfilepath = os.path.join(docfiledir, self.out_file + "_api.js")
@@ -946,7 +953,7 @@ class Generator(object):
                             searchList=[self])
         self.head_file.write(str(layout_h))
         self.impl_file.write(str(layout_c))
-        if self.targetFlag == "lua":
+        if self.script_type == "lua":
             apidoc_ns_foot_script = Template(file=os.path.join(self.target, "templates", "apidoc_ns_foot.script"),
                                 searchList=[self])
             self.doc_file.write(str(apidoc_ns_foot_script))
@@ -1011,8 +1018,81 @@ class Generator(object):
             else:
                 raise Exception("The namespace (%s) conversion wasn't set in 'ns_map' section of the conversions.yaml" % namespace_class_name)
         else:
-           return namespace_class_name
+            return namespace_class_name
 
+    def is_cocos_class(self, namespace_class_name):
+        script_ns_dict = self.config['conversions']['ns_map']
+        for (k, v) in script_ns_dict.items():
+            if namespace_class_name.find("std::") == 0:
+                return False
+            else:
+                if namespace_class_name.find(k) >= 0:
+                    return True
+        return False
+
+    def scriptname_cocos_class(self, namespace_class_name):
+        script_ns_dict = self.config['conversions']['ns_map']
+        for (k, v) in script_ns_dict.items():
+            if namespace_class_name.find(k) >= 0:
+                return namespace_class_name.replace("*","").replace("const ", "").replace(k,v)
+        raise Exception("The namespace (%s) conversion wasn't set in 'ns_map' section of the conversions.yaml" % namespace_class_name)
+
+    def api_param_name_from_native(self,native_name):
+        lower_name = native_name.lower()
+        if lower_name == "std::string":
+            return "str"
+        else:
+            if lower_name.find("unsigned ") >= 0 :
+                return native_name.replace("unsigned ","")
+            else:
+                if lower_name.find("unordered_map") >= 0 or lower_name.find("map") >= 0:
+                    return "mapobject"
+                else:
+                    if lower_name.find("vector") >= 0 :
+                        return "array"
+                    else:
+                        if lower_name == "std::function":
+                            return "func"
+                        else:
+                            return lower_name
+
+    def api_ret_name_from_native(self, namespace_class_name, is_enum) :
+        if self.is_cocos_class(namespace_class_name):
+            if namespace_class_name.find("cocos2d::Vector") >=0:
+                return "new Array()";
+            else:
+                if namespace_class_name.find("cocos2d::Map") >=0:
+                    return "mapobject";
+                else:
+                    if is_enum:
+                        return 0;
+                    else:
+                        return self.scriptname_cocos_class(namespace_class_name);
+
+        lower_name = namespace_class_name.lower()
+
+        if lower_name.find("unsigned ") >= 0:
+            lower_name = lower_name.replace("unsigned ","")
+
+        if lower_name == "std::string":
+            return ""
+        else: 
+            if lower_name == "char" or lower_name == "short" or lower_name == "int" or lower_name == "float" or lower_name == "double" or lower_name == "long":
+                return 0;
+            else:
+                if lower_name == "bool":
+                    return "false"
+                else:
+                    if lower_name.find("std::vector") >= 0 or lower_name.find("vector") >= 0:
+                        return "new Array()";
+                    else:
+                        if lower_name.find("std::map") >= 0 or lower_name.find("std::unordered_map") >= 0 or lower_name.find("unordered_map") >= 0 or lower_name.find("map") >= 0:
+                            return "mapobject";
+                        else:
+                            if lower_name == "std::function":
+                                return "func"
+                            else:
+                                return namespace_class_name;
 def main():
     from optparse import OptionParser
 
@@ -1103,7 +1183,7 @@ def main():
                 'rename_classes': config.get(s, 'rename_classes'),
                 'out_file': opts.out_file or config.get(s, 'prefix'),
                 'script_control_cpp': config.get(s, 'script_control_cpp') if config.has_option(s, 'script_control_cpp') else 'no',
-                'targetFlag': t
+                'script_type': t
                 }
             generator = Generator(gen_opts)
             generator.generate_code()

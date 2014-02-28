@@ -1072,7 +1072,7 @@ class Generator(object):
                     return namespace_class_name.replace("*","").replace("const ", "").replace(k,v)
         return namespace_class_name
 
-    def lua_typename_from_natve(self, namespace_class_name):
+    def lua_typename_from_natve(self, namespace_class_name, is_ret = False):
         script_ns_dict = self.config['conversions']['ns_map']
         if namespace_class_name.find("std::") == 0:
             if namespace_class_name.find("std::string") == 0:
@@ -1088,7 +1088,7 @@ class Generator(object):
             if namespace_class_name.find(k) >= 0:
                 if namespace_class_name.find("cocos2d::Vector") == 0:
                     return "array_table"
-                if namespace_class_name.find("cocos2d::Vector") == 0:
+                if namespace_class_name.find("cocos2d::Map") == 0:
                     return "map_table"
                 if namespace_class_name.find("cocos2d::Point")  == 0:
                     return "point_table"
@@ -1097,14 +1097,16 @@ class Generator(object):
                 if namespace_class_name.find("cocos2d::Rect")  == 0:
                     return "rect_table"
                 if namespace_class_name.find("cocos2d::Color3B") == 0:
-                    return "color3B_object"
+                    return "color3B_table"
                 if namespace_class_name.find("cocos2d::Color4B") == 0:
-                    return "color4B_object"
+                    return "color4B_table"
                 if namespace_class_name.find("cocos2d::Color4F") == 0:
-                    return "color4F_object"
+                    return "color4F_table"
+                if is_ret == 1:
+                    return namespace_class_name.replace("*","").replace("const ", "").replace(k,"")
                 else:
                     return namespace_class_name.replace("*","").replace("const ", "").replace(k,v)
-        return namespace_class_name
+        return namespace_class_name.replace("*","").replace("const ","")
 
 
     def api_param_name_from_native(self,native_name):

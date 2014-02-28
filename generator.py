@@ -1072,7 +1072,7 @@ class Generator(object):
                     return namespace_class_name.replace("*","").replace("const ", "").replace(k,v)
         return namespace_class_name
 
-    def lua_typename_from_natve(self, namespace_class_name,is_ret = 0):
+    def lua_typename_from_natve(self, namespace_class_name, is_ret = False):
         script_ns_dict = self.config['conversions']['ns_map']
         if namespace_class_name.find("std::") == 0:
             if namespace_class_name.find("std::string") == 0:

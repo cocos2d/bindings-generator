@@ -37,6 +37,6 @@
     #end for
 #end if
 #if str($max_arg_func.ret_type) != "void"
--- @return $generator.lua_typename_from_natve(max_arg_func.ret_type.namespaced_name)#$generator.lua_typename_from_natve(max_arg_func.ret_type.namespaced_name) ret
+-- @return $generator.lua_typename_from_natve(max_arg_func.ret_type.namespaced_name,1)#$generator.lua_typename_from_natve(max_arg_func.ret_type.namespaced_name,1) ret (retunr value: $generator.lua_typename_from_natve(max_arg_func.ret_type.namespaced_name))
 #end if
 

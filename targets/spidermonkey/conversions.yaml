@@ -63,6 +63,7 @@ conversions:
     "ValueVector": "ok &= jsval_to_ccvaluevector(cx, ${in_value}, &${out_value})"
     "@vector<std::basic_string.*>": "ok &= jsval_to_std_vector_string(cx, ${in_value}, &${out_value})"
     "@vector<int.*>": "ok &= jsval_to_std_vector_int(cx, ${in_value}, &${out_value})"
+    "Acceleration": "ok &= jsval_to_ccacceleration(cx, ${in_value}, &${out_value})"
     object: |
       do {
       ${($level + 1) * '\t'}if (!${in_value}.isObject()) { ok = false; break; }
@@ -107,6 +108,7 @@ conversions:
     "ValueVector": "${out_value} = ccvaluevector_to_jsval(cx, ${in_value})"
     "@vector<std::basic_string.*>": "${out_value} = ccvector_std_string_to_jsval(cx, ${in_value})"
     "@vector<int.*>": "${out_value} = ccvector_int_to_jsval(cx, ${in_value})"
+    "Acceleration": "${out_value} = ccacceleration_to_jsval(cx, ${in_value})"
     object: |
       do {
       ${($level + 1) * '\t'}if (${in_value}) {

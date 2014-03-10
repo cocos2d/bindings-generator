@@ -56,9 +56,9 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 			typeClass = typeMapIter->second;
 			CCASSERT(typeClass, "The value is null.");
 			obj = JS_NewObject(cx, typeClass->jsclass, typeClass->proto, typeClass->parentProto);
-			js_proxy_t* proxy = jsb_new_proxy(cobj, obj);
+			js_proxy_t* p = jsb_new_proxy(cobj, obj);
 #if not $generator.script_control_cpp
-			JS_AddNamedObjectRoot(cx, &proxy->obj, "${namespaced_class_name}");
+			JS_AddNamedObjectRoot(cx, &p->obj, "${namespaced_class_name}");
 #end if
 		#else
 			#if str($func.ret_type) != "void"

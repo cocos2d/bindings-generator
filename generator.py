@@ -1018,7 +1018,7 @@ class Generator(object):
             else:
                 raise Exception("The namespace (%s) conversion wasn't set in 'ns_map' section of the conversions.yaml" % namespace_class_name)
         else:
-            return namespace_class_name
+            return namespace_class_name.replace("*","").replace("const ", "")
 
     def is_cocos_class(self, namespace_class_name):
         script_ns_dict = self.config['conversions']['ns_map']
@@ -1069,7 +1069,7 @@ class Generator(object):
                     return "Color4FObject"
                 else:
                     return namespace_class_name.replace("*","").replace("const ", "").replace(k,v)
-        return namespace_class_name
+        return namespace_class_name.replace("*","").replace("const ", "")
 
     def lua_typename_from_natve(self, namespace_class_name, is_ret = False):
         script_ns_dict = self.config['conversions']['ns_map']

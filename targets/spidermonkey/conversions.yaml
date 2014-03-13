@@ -108,7 +108,7 @@ conversions:
     "ValueVector": "${out_value} = ccvaluevector_to_jsval(cx, ${in_value})"
     "@vector<std::basic_string.*>": "${out_value} = ccvector_std_string_to_jsval(cx, ${in_value})"
     "@vector<int.*>": "${out_value} = ccvector_int_to_jsval(cx, ${in_value})"
-    "Acceleration": "${out_value} = ccacceleration_to_jsval(cx, ${in_value})"
+    "Acceleration*": "${out_value} = ccacceleration_to_jsval(cx, *${in_value})"
     object: |
       do {
       ${($level + 1) * '\t'}if (${in_value}) {

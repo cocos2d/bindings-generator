@@ -20,7 +20,7 @@ int ${signature_name}(lua_State* tolua_S)
 \#if COCOS2D_DEBUG >= 1
     if (!cobj) 
     {
-        tolua_error(tolua_S,"invalid 'cobj' in function '${signature_name}'", NULL);
+        tolua_error(tolua_S,"invalid 'cobj' in function '${signature_name}'", nullptr);
         return 0;
     }
 \#endif

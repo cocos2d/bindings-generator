@@ -24,7 +24,7 @@ static int lua_${generator.prefix}_${current_class.class_name}_finalize(lua_Stat
     {
         ${current_class.namespaced_class_name}* self = (${current_class.namespaced_class_name}*)  tolua_tousertype(tolua_S,1,0);
 \#if COCOS2D_DEBUG >= 1
-        if (!self) tolua_error(tolua_S,"invalid 'self' in function 'delete'", NULL);
+        if (!self) tolua_error(tolua_S,"invalid 'self' in function 'delete'", nullptr);
 \#endif
         delete self;
     }
@@ -42,9 +42,9 @@ int lua_register_${generator.prefix}_${current_class.class_name}(lua_State* tolu
 {
     tolua_usertype(tolua_S,"${generator.scriptname_from_native($current_class.namespaced_class_name)}");
     #if len($current_class.parents) > 0
-    tolua_cclass(tolua_S,"${current_class.class_name}","${generator.scriptname_from_native($current_class.namespaced_class_name)}","${generator.scriptname_from_native($current_class.parents[0].namespaced_class_name)}",NULL);
+    tolua_cclass(tolua_S,"${current_class.class_name}","${generator.scriptname_from_native($current_class.namespaced_class_name)}","${generator.scriptname_from_native($current_class.parents[0].namespaced_class_name)}",nullptr);
     #else
-    tolua_cclass(tolua_S,"${current_class.class_name}","${generator.scriptname_from_native($current_class.namespaced_class_name)}","",NULL);
+    tolua_cclass(tolua_S,"${current_class.class_name}","${generator.scriptname_from_native($current_class.namespaced_class_name)}","",nullptr);
     #end if
 
     tolua_beginmodule(tolua_S,"${current_class.class_name}");

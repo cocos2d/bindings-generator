@@ -33,7 +33,10 @@ void js_${current_class.underlined_class_name}_finalize(JSFreeOp *fop, JSObject 
 static bool js_${current_class.underlined_class_name}_ctor(JSContext *cx, uint32_t argc, jsval *vp)
 {
 	JSObject *obj = JS_THIS_OBJECT(cx, vp);
-    ${current_class.namespaced_class_name} *nobj = ${current_class.namespaced_class_name}::create();
+    ${current_class.namespaced_class_name} *nobj = new ${current_class.namespaced_class_name}();
+    if (nobj) {
+        nobj->autorelease();
+    }
     js_proxy_t* p = jsb_new_proxy(nobj, obj);
 #if not $generator.script_control_cpp
     JS_AddNamedObjectRoot(cx, &p->obj, "${current_class.namespaced_class_name}");

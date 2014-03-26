@@ -12,7 +12,8 @@
         #else
             #set $extend_info = $extend_info + $parent.class_name
         #end if
+        #set parent_index = parent_index + 1
     #end for
 -- $extend_info
-#end if 
+#end if
 

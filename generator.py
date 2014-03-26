@@ -482,7 +482,7 @@ class NativeFunction(object):
                                     searchList=[current_class, self])
                     self.signature_name = str(tpl)
             if self.is_constructor and gen.script_type == "spidermonkey" :
-                tpl = Template(file=os.path.join(gen.target, "templates", "cfunction.c"),
+                tpl = Template(file=os.path.join(gen.target, "templates", "constructor.c"),
                                                 searchList=[current_class, self])
             else :
                 tpl = Template(file=os.path.join(gen.target, "templates", "ifunction.c"),

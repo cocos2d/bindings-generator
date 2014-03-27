@@ -481,8 +481,12 @@ class NativeFunction(object):
                     tpl = Template(config['definitions']['constructor'],
                                     searchList=[current_class, self])
                     self.signature_name = str(tpl)
-            tpl = Template(file=os.path.join(gen.target, "templates", "ifunction.c"),
-                            searchList=[current_class, self])
+            if self.is_constructor and gen.script_type == "spidermonkey" :
+                tpl = Template(file=os.path.join(gen.target, "templates", "constructor.c"),
+                                                searchList=[current_class, self])
+            else :
+                tpl = Template(file=os.path.join(gen.target, "templates", "ifunction.c"),
+                                searchList=[current_class, self])
         if not is_override:
             gen.impl_file.write(str(tpl))
         apidoc_function_script = Template(file=os.path.join(gen.target,

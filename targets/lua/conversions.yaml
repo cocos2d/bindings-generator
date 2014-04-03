@@ -62,6 +62,7 @@ conversions:
     "ValueVector": "ok &= luaval_to_ccvaluevector(tolua_S, ${arg_idx}, &${out_value})"
     "@vector<std::basic_string.*>": "ok &= luaval_to_std_vector_string(tolua_S, ${arg_idx}, &${out_value})"
     "@vector<int.*>": "ok &= luaval_to_std_vector_int(tolua_S, ${arg_idx}, &${out_value})"
+    "kmMat4": "ok &= luaval_to_kmMat4(tolua_S, ${arg_idx}, &${out_value})"
 
     object: "ok &= luaval_to_object<${arg.to_string($generator).replace(\"*\", \"\")}>(tolua_S, ${arg_idx}, \"${scriptname}\",&${out_value})"
   from_native:

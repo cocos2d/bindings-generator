@@ -32,12 +32,19 @@ void js_${current_class.underlined_class_name}_finalize(JSFreeOp *fop, JSObject 
 #if $generator.in_listed_extend_classed($current_class.class_name) and not $current_class.is_abstract
 static bool js_${current_class.underlined_class_name}_ctor(JSContext *cx, uint32_t argc, jsval *vp)
 {
+    jsval *argv = JS_ARGV(cx, vp);
 	JSObject *obj = JS_THIS_OBJECT(cx, vp);
-    ${current_class.namespaced_class_name} *nobj = ${current_class.namespaced_class_name}::create();
+    ${current_class.namespaced_class_name} *nobj = new ${current_class.namespaced_class_name}();
+    if (nobj) {
+        nobj->autorelease();
+    }
     js_proxy_t* p = jsb_new_proxy(nobj, obj);
 #if not $generator.script_control_cpp
     JS_AddNamedObjectRoot(cx, &p->obj, "${current_class.namespaced_class_name}");
-#end if 
+#end if
+    bool isFound = false;
+    if (JS_HasProperty(cx, obj, "_ctor", &isFound))
+        ScriptingCore::getInstance()->executeFunctionWithOwner(OBJECT_TO_JSVAL(obj), "_ctor", argc, argv);
     JS_SET_RVAL(cx, vp, JSVAL_VOID);
     return true;
 }

@@ -158,6 +158,3 @@ Currently the generator is leveraging clang in order to get information about th
 can only get as much information as clang give us. Known list of things that won't work:
 
 * variable number of arguments. Solution: write a manual wrapper
-* default arguments. Solution: write another function that actually calls the real function with the
-  default argument.
-

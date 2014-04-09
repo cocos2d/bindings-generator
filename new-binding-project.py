@@ -96,7 +96,7 @@ test_ini = \
     """
 [testandroid]
 name = {name}
-prefix = autogentestbindings
+prefix = {name}
 classes = {class_name}
 
 android_headers = -I%(androidndkdir)s/platforms/android-14/arch-arm/usr/include -I%(androidndkdir)s/sources/cxx-stl/gnu-libstdc++/4.7/libs/armeabi-v7a/include -I%(androidndkdir)s/sources/cxx-stl/gnu-libstdc++/4.7/include

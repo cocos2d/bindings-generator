@@ -25,7 +25,8 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 			#set $count = 0
 			#while $count < $arg_idx
 			#set $arg = $func.arguments[$count]
-			${arg.to_string($generator)} arg${count};
+			#set $arg_type = arg.to_string($generator)
+			${arg_type} arg${count};
 			${arg.to_native({"generator": $generator,
 							 "in_value": "argv[" + str(count) + "]",
 							 "out_value": "arg" + str(count),
@@ -34,7 +35,7 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 							 "ntype": str($arg)})};
 				#set $arg_array += ["arg"+str(count)]
 				#set $count = $count + 1
-			#if $arg_idx > 0
+			#if $arg_idx > 0 and arg_type != "bool"
 			if (!ok) { ok = true; break; }
 			#end if
 			#end while

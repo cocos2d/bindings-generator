@@ -34,7 +34,7 @@ conversions:
     short: "ok &= jsval_to_int32(cx, ${in_value}, &${out_value})"
     "unsigned short": "ok &= jsval_to_ushort(cx, ${in_value}, &${out_value})"
     char: "ok &= jsval_to_int32(cx, ${in_value}, &${out_value})"
-    bool: "ok &= JS_ValueToBoolean(cx, ${in_value}, &${out_value})"
+    bool: "${out_value} = JS::ToBoolean(JS::RootedValue(cx, ${in_value}))"
     float: "ok &= JS::ToNumber( cx, JS::RootedValue(cx, ${in_value}), &${out_value})"
     double: "ok &= JS::ToNumber( cx, JS::RootedValue(cx, ${in_value}), &${out_value})"
     long: "ok &= jsval_to_long(cx, ${in_value}, &${out_value})"

@@ -1083,6 +1083,12 @@ class Generator(object):
 
         for (k, v) in script_ns_dict.items():
             if namespace_class_name.find(k) >= 0:
+                if namespace_class_name.find("cocos2d::Vector2") == 0:
+                    return "Vector2Object"
+                if namespace_class_name.find("cocos2d::Vector3") == 0:
+                    return "Vector3Object"
+                if namespace_class_name.find("cocos2d::Matrix") == 0:
+                    return "MatrixObject"
                 if namespace_class_name.find("cocos2d::Vector") == 0:
                     return "Array"
                 if namespace_class_name.find("cocos2d::Map") == 0:
@@ -1117,8 +1123,14 @@ class Generator(object):
 
         for (k, v) in script_ns_dict.items():
             if namespace_class_name.find(k) >= 0:
+                if namespace_class_name.find("cocos2d::Vector2") == 0:
+                    return "vector2_table"
+                if namespace_class_name.find("cocos2d::Vector3") == 0:
+                    return "vector3_table"
                 if namespace_class_name.find("cocos2d::Vector") == 0:
                     return "array_table"
+                if namespace_class_name.find("cocos2d::Matrix") == 0:
+                    return "matrix_table"
                 if namespace_class_name.find("cocos2d::Map") == 0:
                     return "map_table"
                 if namespace_class_name.find("cocos2d::Point")  == 0:

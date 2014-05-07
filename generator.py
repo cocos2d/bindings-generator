@@ -1100,11 +1100,11 @@ class Generator(object):
                 if namespace_class_name.find("cocos2d::Rect")  == 0:
                     return "rect_object"
                 if namespace_class_name.find("cocos2d::Color3B") == 0:
-                    return "color3B_object"
+                    return "color3b_object"
                 if namespace_class_name.find("cocos2d::Color4B") == 0:
-                    return "color4B_object"
+                    return "color4b_object"
                 if namespace_class_name.find("cocos2d::Color4F") == 0:
-                    return "color4F_object"
+                    return "color4f_object"
                 else:
                     return namespace_class_name.replace("*","").replace("const ", "").replace(k,v)
         return namespace_class_name.replace("*","").replace("const ", "")
@@ -1140,11 +1140,11 @@ class Generator(object):
                 if namespace_class_name.find("cocos2d::Rect")  == 0:
                     return "rect_table"
                 if namespace_class_name.find("cocos2d::Color3B") == 0:
-                    return "color3B_table"
+                    return "color3b_table"
                 if namespace_class_name.find("cocos2d::Color4B") == 0:
-                    return "color4B_table"
+                    return "color4b_table"
                 if namespace_class_name.find("cocos2d::Color4F") == 0:
-                    return "color4F_table"
+                    return "color4f_table"
                 if is_ret == 1:
                     return namespace_class_name.replace("*","").replace("const ", "").replace(k,"")
                 else:

@@ -1077,34 +1077,34 @@ class Generator(object):
             if namespace_class_name.find("std::vector") == 0:
                 return "Array"
             if namespace_class_name.find("std::map") == 0 or namespace_class_name.find("std::unordered_map") == 0:
-                return "MapObject"
+                return "map_object"
             if namespace_class_name.find("std::function") == 0:
                 return "function"
 
         for (k, v) in script_ns_dict.items():
             if namespace_class_name.find(k) >= 0:
                 if namespace_class_name.find("cocos2d::Vector2") == 0:
-                    return "Vector2Object"
+                    return "vector2_object"
                 if namespace_class_name.find("cocos2d::Vector3") == 0:
-                    return "Vector3Object"
+                    return "vector3_object"
                 if namespace_class_name.find("cocos2d::Matrix") == 0:
-                    return "MatrixObject"
+                    return "matrix_object"
                 if namespace_class_name.find("cocos2d::Vector") == 0:
                     return "Array"
                 if namespace_class_name.find("cocos2d::Map") == 0:
-                    return "MapObject"
+                    return "map_object"
                 if namespace_class_name.find("cocos2d::Point")  == 0:
-                    return "PointObject"
+                    return "point_object"
                 if namespace_class_name.find("cocos2d::Size")  == 0:
-                    return "SizeObject"
+                    return "size_object"
                 if namespace_class_name.find("cocos2d::Rect")  == 0:
-                    return "RectObject"
+                    return "rect_object"
                 if namespace_class_name.find("cocos2d::Color3B") == 0:
-                    return "Color3BObject"
+                    return "color3B_object"
                 if namespace_class_name.find("cocos2d::Color4B") == 0:
-                    return "Color4BObject"
+                    return "color4B_object"
                 if namespace_class_name.find("cocos2d::Color4F") == 0:
-                    return "Color4FObject"
+                    return "color4F_object"
                 else:
                     return namespace_class_name.replace("*","").replace("const ", "").replace(k,v)
         return namespace_class_name.replace("*","").replace("const ", "")

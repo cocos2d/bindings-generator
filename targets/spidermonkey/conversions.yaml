@@ -64,9 +64,9 @@ conversions:
     "@vector<std::basic_string.*>": "ok &= jsval_to_std_vector_string(cx, ${in_value}, &${out_value})"
     "@vector<int.*>": "ok &= jsval_to_std_vector_int(cx, ${in_value}, &${out_value})"
     "Acceleration": "ok &= jsval_to_ccacceleration(cx, ${in_value}, &${out_value})"
-    "Matrix": "ok &= jsval_to_matrix(cx, ${in_value}, &${out_value})"
-    "Vector2": "ok &= jsval_to_vector2(cx, ${in_value}, &${out_value})"
-    "Vector3": "ok &= jsval_to_vector3(cx, ${in_value}, &${out_value})"
+    "Mat4": "ok &= jsval_to_matrix(cx, ${in_value}, &${out_value})"
+    "Vec2": "ok &= jsval_to_vector2(cx, ${in_value}, &${out_value})"
+    "Vec3": "ok &= jsval_to_vector3(cx, ${in_value}, &${out_value})"
     "BlendFunc": "ok &= jsval_to_blendfunc(cx, ${in_value}, &${out_value})"
     object: |
       do {
@@ -113,9 +113,9 @@ conversions:
     "@vector<std::basic_string.*>": "${out_value} = std_vector_string_to_jsval(cx, ${in_value})"
     "@vector<int.*>": "${out_value} = std_vector_int_to_jsval(cx, ${in_value})"
     "Acceleration*": "${out_value} = ccacceleration_to_jsval(cx, *${in_value})"
-    "Matrix": "${out_value} = matrix_to_jsval(cx, ${in_value})"
-    "Vector2": "${out_value} = vector2_to_jsval(cx, ${in_value})"
-    "Vector3": "${out_value} = vector3_to_jsval(cx, ${in_value})"
+    "Mat4": "${out_value} = matrix_to_jsval(cx, ${in_value})"
+    "Vec2": "${out_value} = vector2_to_jsval(cx, ${in_value})"
+    "Vec3": "${out_value} = vector3_to_jsval(cx, ${in_value})"
     "BlendFunc": "${out_value} = blendfunc_to_jsval(cx, ${in_value})"
     object: |
       do {

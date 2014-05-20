@@ -46,6 +46,7 @@ conversions:
     "Point": "ok &= luaval_to_point(tolua_S, ${arg_idx}, &${out_value})"
     "Vec2": "ok &= luaval_to_vec2(tolua_S, ${arg_idx}, &${out_value})"
     "Vec3": "ok &= luaval_to_vec3(tolua_S, ${arg_idx}, &${out_value})"
+    "Vec4": "ok &= luaval_to_vec4(tolua_S, ${arg_idx}, &${out_value})"
     "Rect": "ok &= luaval_to_rect(tolua_S, ${arg_idx}, &${out_value})"
     "Size": "ok &= luaval_to_size(tolua_S, ${arg_idx}, &${out_value})"
     "Color4B": "ok &=luaval_to_color4b(tolua_S, ${arg_idx}, &${out_value})"
@@ -67,6 +68,9 @@ conversions:
     "kmMat4": "ok &= luaval_to_kmMat4(tolua_S, ${arg_idx}, &${out_value})"
     "Mat4": "ok &= luaval_to_mat4(tolua_S, ${arg_idx}, &${out_value})"
     "_ttfConfig": "ok &= luaval_to_ttfconfig(tolua_S, ${arg_idx}, &${out_value})"
+    "MeshVertexAttrib": "ok &= luaval_to_mesh_vertex_attrib(tolua_S, ${arg_idx}, &${out_value})"
+    "@vector<float.*>": "ok &= luaval_to_std_vector_float(tolua_S, ${arg_idx}, &${out_value})"
+    "@vector<unsigned short.*>": "ok &= luaval_to_std_vector_ushort(tolua_S, ${arg_idx}, &${out_value})"
 
     object: "ok &= luaval_to_object<${arg.to_string($generator).replace(\"*\", \"\")}>(tolua_S, ${arg_idx}, \"${scriptname}\",&${out_value})"
   from_native:
@@ -90,6 +94,7 @@ conversions:
     "Point": "point_to_luaval(tolua_S, ${in_value})"
     "Vec2": "vec2_to_luaval(tolua_S, ${in_value})"
     "Vec3": "vec3_to_luaval(tolua_S, ${in_value})"
+    "Vec4": "vec4_to_luaval(tolua_S, ${in_value})"
     "Rect": "rect_to_luaval(tolua_S, ${in_value})"
     "Size": "size_to_luaval(tolua_S, ${in_value})"
     "Color4B": "color4b_to_luaval(tolua_S, ${in_value})"
@@ -113,6 +118,9 @@ conversions:
     "Mat4": "mat4_to_luaval(tolua_S, ${in_value})"
     "BlendFunc": "blendfunc_to_luaval(tolua_S, ${in_value})"
     "_ttfConfig": "ttfconfig_to_luaval(tolua_S, ${in_value})"
+    "MeshVertexAttrib": "mesh_vertex_attrib_to_luaval(tolua_S, ${in_value})"
+    "@vector<float.*>": "ccvector_float_to_luaval(tolua_S, ${in_value})"
+    "@vector<unsigned short.*>": "ccvector_ushort_to_luaval(tolua_S, ${in_value})"
 
     object: "object_to_luaval<${ntype.replace(\"*\", \"\").replace(\"const \", \"\")}>(tolua_S, \"${scriptname}\",(${ntype.replace(\"const \", \"\")})${in_value})"
 

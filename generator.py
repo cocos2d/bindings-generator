@@ -1083,10 +1083,12 @@ class Generator(object):
 
         for (k, v) in script_ns_dict.items():
             if namespace_class_name.find(k) >= 0:
-                if namespace_class_name.find("cocos2d::Vector2") == 0:
-                    return "vector2_object"
-                if namespace_class_name.find("cocos2d::Vector3") == 0:
-                    return "vector3_object"
+                if namespace_class_name.find("cocos2d::Vec2") == 0:
+                    return "vec2_object"
+                if namespace_class_name.find("cocos2d::Vec3") == 0:
+                    return "vec3_object"
+                if namespace_class_name.find("cocos2d::Vec4") == 0:
+                    return "vec4_object"
                 if namespace_class_name.find("cocos2d::Matrix") == 0:
                     return "matrix_object"
                 if namespace_class_name.find("cocos2d::Vector") == 0:
@@ -1123,10 +1125,12 @@ class Generator(object):
 
         for (k, v) in script_ns_dict.items():
             if namespace_class_name.find(k) >= 0:
-                if namespace_class_name.find("cocos2d::Vector2") == 0:
-                    return "vector2_table"
-                if namespace_class_name.find("cocos2d::Vector3") == 0:
-                    return "vector3_table"
+                if namespace_class_name.find("cocos2d::Vec2") == 0:
+                    return "vec2_table"
+                if namespace_class_name.find("cocos2d::Vec3") == 0:
+                    return "vec3_table"
+                if namespace_class_name.find("cocos2d::Vec4") == 0:
+                    return "vec4_table"
                 if namespace_class_name.find("cocos2d::Vector") == 0:
                     return "array_table"
                 if namespace_class_name.find("cocos2d::Matrix") == 0:

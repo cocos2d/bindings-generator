@@ -48,15 +48,13 @@ int lua_register_${generator.prefix}_${current_class.class_name}(lua_State* tolu
     #end if
 
     tolua_beginmodule(tolua_S,"${current_class.class_name}");
-    #if len(methods) > 0
-        #for m in methods
+    #if has_constructor
+        tolua_function(tolua_S,"new",lua_${generator.prefix}_${current_class.class_name}_constructor);
+    #end if
+    #for m in methods
         #set fn = m['impl']
         tolua_function(tolua_S,"${m['name']}",${fn.signature_name});
-        #end for
-#if has_constructor
-        tolua_function(tolua_S,"new",lua_${generator.prefix}_${current_class.class_name}_constructor);
-#end if
-        #end if
+    #end for
     #if len(st_methods) > 0
         #for m in st_methods
         #set fn = m['impl']

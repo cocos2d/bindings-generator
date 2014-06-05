@@ -48,19 +48,21 @@ int lua_register_${generator.prefix}_${current_class.class_name}(lua_State* tolu
     #end if
 
     tolua_beginmodule(tolua_S,"${current_class.class_name}");
+    
     #if has_constructor
         tolua_function(tolua_S,"new",lua_${generator.prefix}_${current_class.class_name}_constructor);
     #end if
+
     #for m in methods
         #set fn = m['impl']
         tolua_function(tolua_S,"${m['name']}",${fn.signature_name});
     #end for
-    #if len(st_methods) > 0
-        #for m in st_methods
+
+    #for m in st_methods
         #set fn = m['impl']
         tolua_function(tolua_S,"${m['name']}", ${fn.signature_name});
-        #end for
-    #end if
+    #end for
+
     tolua_endmodule(tolua_S);
     std::string typeName = typeid(${current_class.namespaced_class_name}).name();
     g_luaType[typeName] = "${generator.scriptname_from_native($current_class.namespaced_class_name)}";

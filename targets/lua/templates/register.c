@@ -59,7 +59,6 @@ int lua_register_${generator.prefix}_${current_class.class_name}(lua_State* tolu
         #set fn = m['impl']
         tolua_function(tolua_S,"${m['name']}", ${fn.signature_name});
     #end for
-
     tolua_endmodule(tolua_S);
     std::string typeName = typeid(${current_class.namespaced_class_name}).name();
     g_luaType[typeName] = "${generator.scriptname_from_native($current_class.namespaced_class_name)}";

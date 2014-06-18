@@ -138,7 +138,58 @@ class NativeType(object):
         self.is_const = False
         self.is_pointer = False
         self.canonical_type = None
+    @staticmethod
+    def can_transform_into_native(generator,ntype):
+        nt = NativeType.from_type(ntype)
+        keys = []
+        if nt.canonical_type != None:
+            keys.append(nt.canonical_type.name)
+        keys.append(nt.name)
 
+        to_native_dict = generator.config['conversions']['to_native']
+        if nt.is_object:
+            if not NativeType.dict_has_key_re(to_native_dict, keys):
+                keys.append("object")
+        elif nt.is_enum:
+            keys.append("int")
+
+        if nt.is_function:
+            if generator.script_type == "lua":
+                return False
+            else:
+                return True
+
+        if NativeType.dict_has_key_re(to_native_dict, keys):
+            return True
+
+        return False
+
+    @staticmethod
+    def can_transform_from_native(generator, type):
+        nt = NativeType.from_type(type)
+        keys = []
+
+        if nt.canonical_type != None:
+            keys.append(nt.canonical_type.name)
+        keys.append(nt.name)
+
+        from_native_dict = generator.config['conversions']['from_native']
+
+        if nt.is_object:
+            if not NativeType.dict_has_key_re(from_native_dict, keys):
+                keys.append("object")
+        elif nt.is_enum:
+            keys.append("int")
+
+        if NativeType.dict_has_key_re(from_native_dict, keys):
+            return True
+
+        if nt.name == "void":
+            return True
+
+        return False
+
+        
     @staticmethod
     def from_type(ntype):
         if ntype.kind == cindex.TypeKind.POINTER:
@@ -456,6 +507,16 @@ class NativeFunction(object):
 
         self.min_args = index if found_default_arg else len(self.arguments)
 
+    @staticmethod
+    def can_parse_function_successful(generator,cursor):
+        if not NativeType.can_transform_from_native(generator, cursor.result_type):
+            return False
+        for arg in cursor.type.argument_types():
+            if not NativeType.can_transform_into_native(generator, arg):
+                return False
+        return True
+
+
     def generate_code(self, current_class=None, generator=None, is_override=False):
         gen = current_class.generator if current_class else generator
         config = gen.config
@@ -746,6 +807,9 @@ class NativeClass(object):
             self._current_visibility = cursor.get_access_specifier()
         elif cursor.kind == cindex.CursorKind.CXX_METHOD and cursor.get_availability() != cindex.AvailabilityKind.DEPRECATED:
             # skip if variadic
+            if not NativeFunction.can_parse_function_successful(self.generator, cursor):
+                return False
+
             if self._current_visibility == cindex.AccessSpecifierKind.PUBLIC and not cursor.type.is_function_variadic():
                 m = NativeFunction(cursor)
                 registration_name = self.generator.should_rename_function(self.class_name, m.func_name) or m.func_name

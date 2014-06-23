@@ -577,6 +577,7 @@ class NativeClass(object):
         self._current_visibility = cindex.AccessSpecifierKind.PRIVATE
         #for generate lua api doc
         self.override_methods = {}
+        self.has_constructor  = False
 
         registration_name = generator.get_class_or_rename_class(self.class_name)
         if generator.remove_prefix:
@@ -793,6 +794,7 @@ class NativeClass(object):
 
             m = NativeFunction(cursor)
             m.is_constructor = True
+            self.has_constructor = True
             if not self.methods.has_key('constructor'):
                 self.methods['constructor'] = m
             else:

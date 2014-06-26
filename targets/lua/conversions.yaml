@@ -21,6 +21,7 @@ conversions:
     "cocos2d::ui::": "ccui."
     "cocos2d::": "cc."
     "spine::": "sp."
+    "cocostudio::timeline::": "ccs."
     "cocostudio::": "ccs."
     "cocosbuilder::": "cc."
     "CocosDenshion::": "cc."

@@ -835,6 +835,7 @@ class Generator(object):
         self.out_file = opts['out_file']
         self.script_control_cpp = opts['script_control_cpp'] == "yes"
         self.script_type = opts['script_type']
+        self.macro_judgement = opts['macro_judgement']
 
         if opts['skip']:
             list_of_skips = re.split(",\n?", opts['skip'])
@@ -1043,9 +1044,16 @@ class Generator(object):
             self._deep_iterate(node, depth + 1)
     def scriptname_from_native(self, namespace_class_name):
         script_ns_dict = self.config['conversions']['ns_map']
+        is_in_script_ns_dict = False
+        max_match = ""
         for (k, v) in script_ns_dict.items():
             if namespace_class_name.find(k) >= 0:
-                return namespace_class_name.replace("*","").replace("const ", "").replace(k,v)
+                is_in_script_ns_dict = True
+                if len(k) > len(max_match):
+                    max_match = k
+        if is_in_script_ns_dict:
+            return namespace_class_name.replace("*","").replace("const ", "").replace(max_match,script_ns_dict[max_match])
+
         if namespace_class_name.find("::") >= 0:
             if namespace_class_name.find("std::") == 0:
                 return namespace_class_name
@@ -1302,7 +1310,8 @@ def main():
                 'rename_classes': config.get(s, 'rename_classes'),
                 'out_file': opts.out_file or config.get(s, 'prefix'),
                 'script_control_cpp': config.get(s, 'script_control_cpp') if config.has_option(s, 'script_control_cpp') else 'no',
-                'script_type': t
+                'script_type': t,
+                'macro_judgement': config.get(s, 'macro_judgement') if config.has_option(s, 'macro_judgement') else None
                 }
             generator = Generator(gen_opts)
             generator.generate_code()

@@ -42,9 +42,17 @@ int lua_register_${generator.prefix}_${current_class.class_name}(lua_State* tolu
 {
     tolua_usertype(tolua_S,"${generator.scriptname_from_native($current_class.namespaced_class_name)}");
     #if len($current_class.parents) > 0
+        #if $generator.script_control_cpp and $current_class.has_constructor
+    tolua_cclass(tolua_S,"${current_class.class_name}","${generator.scriptname_from_native($current_class.namespaced_class_name)}","${generator.scriptname_from_native($current_class.parents[0].namespaced_class_name)}",lua_${generator.prefix}_${current_class.class_name}_finalize);
+        #else
     tolua_cclass(tolua_S,"${current_class.class_name}","${generator.scriptname_from_native($current_class.namespaced_class_name)}","${generator.scriptname_from_native($current_class.parents[0].namespaced_class_name)}",nullptr);
+        #end if
     #else
+        #if $generator.script_control_cpp and $current_class.has_constructor
+    tolua_cclass(tolua_S,"${current_class.class_name}","${generator.scriptname_from_native($current_class.namespaced_class_name)}","",lua_${generator.prefix}_${current_class.class_name}_finalize);
+        #else
     tolua_cclass(tolua_S,"${current_class.class_name}","${generator.scriptname_from_native($current_class.namespaced_class_name)}","",nullptr);
+        #end if
     #end if
 
     tolua_beginmodule(tolua_S,"${current_class.class_name}");

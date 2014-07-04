@@ -16,4 +16,5 @@
     #end for
 -- $extend_info
 #end if
+-- @parent_module ${generator.target_ns}
 

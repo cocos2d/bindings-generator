@@ -76,7 +76,7 @@ Included in this repository is a simple test. Use this to confirm the generator 
 * Download python2.7.3 (`32bit`) from (http://www.python.org/ftp/python/2.7.3/python-2.7.3.msi).
 * Add the installed path of python (e.g. C:\Python27) to windows environment variable named 'PATH'.
 * Download pyyaml from http://pyyaml.org/download/pyyaml/PyYAML-3.10.win32-py2.7.exe and install it.
-* Download pyCheetah from https://raw.github.com/dumganhar/cocos2d-x/download/downloads/Cheetah.zip, unzip it to "C:\Python27\Lib\site-packages"
+* Download pyCheetah from https://raw.github.com/dumganhar/my_old_cocos2d-x_backup/download/downloads/Cheetah.zip, unzip it to "C:\Python27\Lib\site-packages"
 * Download [64bit NDK-r9b](http://dl.google.com/android/ndk/android-ndk-r9b-windows-x86_64.zip) from [google](http://developer.android.com/tools/sdk/ndk/index.html)
 * Set the environment variables (`PYTHON_ROOT` and `NDK_ROOT`) or just them in `test.bat`.
 * Run "test.bat". The generated codes will be under "simple_test_bindings".

@@ -15,6 +15,6 @@
         #set parent_index = parent_index + 1
     #end for
 -- $extend_info
--- @parent_module ${generator.target_ns}
 #end if
+-- @parent_module ${generator.target_ns}
 

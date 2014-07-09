@@ -9,7 +9,7 @@ int ${signature_name}(lua_State* tolua_S)
 \#endif
 
 \#if COCOS2D_DEBUG >= 1
-    if (!tolua_isusertable(tolua_S,1,"${generator.scriptname_from_native($namespaced_class_name)}",0,&tolua_err)) goto tolua_lerror;
+    if (!tolua_isusertable(tolua_S,1,"${generator.scriptname_from_native($namespaced_class_name, $namespace_name)}",0,&tolua_err)) goto tolua_lerror;
 \#endif
 
     argc = lua_gettop(tolua_S) - 1;
@@ -39,7 +39,7 @@ int ${signature_name}(lua_State* tolua_S)
                          "level": 2,
                          "arg":$arg,
                          "ntype": $arg.namespaced_name.replace("*", ""),
-                         "scriptname": $generator.scriptname_from_native($arg.namespaced_name)})};
+                         "scriptname": $generator.scriptname_from_native($arg.namespaced_name, $arg.namespace_name)})};
                 #set $arg_array += ["arg"+str($count)]
                 #set $count = $count + 1
         #end while
@@ -61,7 +61,7 @@ int ${signature_name}(lua_State* tolua_S)
                                 "ntype": $ret_type.get_whole_name($generator),
                                 "class_name": $class_name,
                                 "level": 2,
-                                "scriptname": $generator.scriptname_from_native($ret_type.namespaced_name)})};
+                                "scriptname": $generator.scriptname_from_native($ret_type.namespaced_name, $ret_type.namespace_name)})};
         return 1;
         #else
         ${namespaced_class_name}::${func_name}($arg_list);

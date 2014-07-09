@@ -20,3 +20,6 @@ TOLUA_API int register_all_${prefix}(lua_State* tolua_S)
 	return 1;
 }
 
+#if $macro_judgement
+\#endif
+#end if

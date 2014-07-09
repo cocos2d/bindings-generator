@@ -17,6 +17,7 @@ conversions:
     "@std::vector<int.*>.>": "std::vector<int>"
     "@cocos2d::Map<std::basic_string.*,": "cocos2d::Map<std::string,"
   ns_map:
+    "cocos2d::experimental::ui::": "ccexp."
     "cocos2d::extension::": "cc."
     "cocos2d::ui::": "ccui."
     "cocos2d::": "cc."

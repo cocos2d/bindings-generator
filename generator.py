@@ -123,6 +123,29 @@ def get_namespaced_name(declaration_cursor):
         return ns + "::" + declaration_cursor.displayname
     return declaration_cursor.displayname
 
+def generate_namespace_list(cursor, namespaces=[]):
+    '''
+    build the full namespace for a specific cursor
+    '''
+    if cursor:
+        parent = cursor.semantic_parent
+        if parent:
+            if parent.kind == cindex.CursorKind.NAMESPACE or parent.kind == cindex.CursorKind.CLASS_DECL:
+                if parent.kind == cindex.CursorKind.NAMESPACE:
+                    namespaces.append(parent.displayname)
+                generate_namespace_list(parent, namespaces)
+    return namespaces
+
+def get_namespace_name(declaration_cursor):
+    ns_list = generate_namespace_list(declaration_cursor, [])
+    ns_list.reverse()
+    ns = "::".join(ns_list)
+
+    if len(ns) > 0:
+        return ns + "::"
+
+    return declaration_cursor.displayname
+
 
 class NativeType(object):
     def __init__(self):
@@ -133,6 +156,7 @@ class NativeType(object):
         self.param_types = []
         self.ret_type = None
         self.namespaced_name = ""
+        self.namespace_name  = ""
         self.name = ""
         self.whole_name = None
         self.is_const = False
@@ -176,6 +200,7 @@ class NativeType(object):
                     nt.is_object = True
                 nt.name = decl.displayname
                 nt.namespaced_name = get_namespaced_name(decl)
+                nt.namespace_name  = get_namespace_name(decl)
                 nt.whole_name = nt.namespaced_name
             else:
                 if decl.kind == cindex.CursorKind.NO_DECL_FOUND:
@@ -183,6 +208,7 @@ class NativeType(object):
                 else:
                     nt.name = decl.spelling
                 nt.namespaced_name = get_namespaced_name(decl)
+                nt.namespace_name  = get_namespace_name(decl)
 
                 if nt.namespaced_name == "std::string":
                     nt.name = nt.namespaced_name
@@ -578,6 +604,7 @@ class NativeClass(object):
         #for generate lua api doc
         self.override_methods = {}
         self.has_constructor  = False
+        self.namespace_name   = ""
 
         registration_name = generator.get_class_or_rename_class(self.class_name)
         if generator.remove_prefix:
@@ -585,6 +612,7 @@ class NativeClass(object):
         else:
             self.target_class_name = registration_name
         self.namespaced_class_name = get_namespaced_name(cursor)
+        self.namespace_name        = get_namespace_name(cursor)
         self.parse()
 
     @property
@@ -835,6 +863,7 @@ class Generator(object):
         self.out_file = opts['out_file']
         self.script_control_cpp = opts['script_control_cpp'] == "yes"
         self.script_type = opts['script_type']
+        self.macro_judgement = opts['macro_judgement']
 
         if opts['skip']:
             list_of_skips = re.split(",\n?", opts['skip'])
@@ -1041,11 +1070,11 @@ class Generator(object):
         for node in cursor.get_children():
             # print("%s %s - %s" % (">" * depth, node.displayname, node.kind))
             self._deep_iterate(node, depth + 1)
-    def scriptname_from_native(self, namespace_class_name):
+    def scriptname_from_native(self, namespace_class_name, namespace_name):
         script_ns_dict = self.config['conversions']['ns_map']
         for (k, v) in script_ns_dict.items():
-            if namespace_class_name.find(k) >= 0:
-                return namespace_class_name.replace("*","").replace("const ", "").replace(k,v)
+            if k == namespace_name:
+                return namespace_class_name.replace("*","").replace("const ", "").replace(k, v)
         if namespace_class_name.find("::") >= 0:
             if namespace_class_name.find("std::") == 0:
                 return namespace_class_name
@@ -1302,7 +1331,8 @@ def main():
                 'rename_classes': config.get(s, 'rename_classes'),
                 'out_file': opts.out_file or config.get(s, 'prefix'),
                 'script_control_cpp': config.get(s, 'script_control_cpp') if config.has_option(s, 'script_control_cpp') else 'no',
-                'script_type': t
+                'script_type': t,
+                'macro_judgement': config.get(s, 'macro_judgement') if config.has_option(s, 'macro_judgement') else None
                 }
             generator = Generator(gen_opts)
             generator.generate_code()

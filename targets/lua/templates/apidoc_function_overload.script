@@ -8,10 +8,11 @@
         #set $max_arg_count = len($func.arguments)
         #set $max_arg_func = func
     #end if
-    #set $func_tip = "overload function: " + $func_name + "("
+    #set $func_tip = "@overload self"
     #if len($func.arguments) >= $func.min_args
         #set $arg_count = len($func.arguments)
         #if $arg_count >0 
+            #set $func_tip = $func_tip + ", "
             #set $arg_index = 0
             #for $arg in func.arguments
                 #if $arg_index < $arg_count - 1
@@ -23,9 +24,8 @@
             #end for
         #end if 
     #end if
-    #set $func_tip =  $func_tip + ")"
--- $func_tip
---          
+    #set $func_tip =  $func_tip
+-- $func_tip         
     #set $func_index = $func_index + 1
 #end for
 -- @function [parent=#${class_name}] ${func_name}

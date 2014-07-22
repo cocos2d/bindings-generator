@@ -106,7 +106,7 @@ int ${signature_name}(lua_State* tolua_S)
         #set $arg_idx = $arg_idx + 1
     #end while
 #end if
-    CCLOG("%s has wrong number of arguments: %d, was expecting %d \n", "${func_name}",argc, ${min_args});
+    CCLOG("%s has wrong number of arguments: %d, was expecting %d \n", "${generator.scriptname_from_native($namespaced_class_name, $namespace_name)}:${func_name}",argc, ${min_args});
     return 0;
 
 \#if COCOS2D_DEBUG >= 1

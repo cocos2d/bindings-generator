@@ -33,6 +33,8 @@ int ${signature_name}(lua_State* tolua_S)
                              "out_value": "arg" + str(count),
                              "arg_idx": $count+2,
                              "class_name": $class_name,
+                             "lua_namespaced_class_name": $generator.scriptname_from_native($namespaced_class_name, $namespace_name),
+                             "func_name": $func_name,
                              "level": 2,
                              "arg":$arg,
                              "ntype": $arg.namespaced_name.replace("*", ""),
@@ -70,7 +72,7 @@ int ${signature_name}(lua_State* tolua_S)
     #end while
     #end if
     #end for
-    CCLOG("%s has wrong number of arguments: %d, was expecting %d", "${func.func_name}",argc, ${func.min_args});
+    CCLOG("%s has wrong number of arguments: %d, was expecting %d", "${generator.scriptname_from_native($namespaced_class_name, $namespace_name)}:${func.func_name}",argc, ${func.min_args});
     return 0;
 \#if COCOS2D_DEBUG >= 1
     tolua_lerror:

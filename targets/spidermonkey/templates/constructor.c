@@ -30,7 +30,7 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
     JSB_PRECONDITION2(ok, cx, false, "${signature_name} : Error processing arguments");
     #end if
     #set $arg_list = ", ".join($arg_array)
-    ${namespaced_class_name}* cobj = new ${namespaced_class_name}($arg_list);
+    ${namespaced_class_name}* cobj = new (std::nothrow) ${namespaced_class_name}($arg_list);
 #if not $generator.script_control_cpp
     cocos2d::Ref *_ccobj = dynamic_cast<cocos2d::Ref *>(cobj);
     if (_ccobj) {

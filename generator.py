@@ -242,8 +242,9 @@ class NativeType(object):
                 if nt.name == "std::function":
                     nt.namespaced_name = get_namespaced_name(cdecl)
 
-                    r = re.compile('function<(.+) \((.*)\)>').search(cdecl.displayname)
+                    r = re.compile('function<(.+)\((.*)\)>').search(cdecl.displayname)
                     (ret_type, params) = r.groups()
+                    ret_type = ret_type.strip()
                     params = filter(None, params.split(", "))
 
                     nt.is_function = True

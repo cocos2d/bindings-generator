@@ -364,7 +364,7 @@ class NativeType(object):
             tpl = NativeType.dict_get_value_re(to_native_dict, keys)
             tpl = Template(tpl, searchList=[convert_opts])
             return str(tpl).rstrip()
-        return "#pragma warning NO CONVERSION TO NATIVE FOR " + self.name
+        return "#pragma warning NO CONVERSION TO NATIVE FOR " + self.name + "\n" + convert_opts['level'] * "\t" +  "ok = false"
 
     def to_string(self, generator):
         conversions = generator.config['conversions']

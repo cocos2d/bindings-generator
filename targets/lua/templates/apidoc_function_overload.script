@@ -42,10 +42,11 @@
     #set $arg_index = 0
     #for $arg in $max_arg_func.arguments
         #if $arg.is_enum
--- @param #int $generator.api_param_name_from_native($arg.name.replace("*", "").replace("const ", ""))
+-- @param #int $max_arg_func.argumtntTips[$arg_index]
         #else
--- @param #$generator.lua_typename_from_natve($arg.namespaced_name) $generator.api_param_name_from_native($arg.name.replace("*", "").replace("const ", ""))
+-- @param #$generator.lua_typename_from_natve($arg.namespaced_name) $max_arg_func.argumtntTips[$arg_index]
         #end if
+        #set $arg_index = $arg_index + 1
     #end for
 #end if
 #if str($max_arg_func.ret_type) != "void"

@@ -449,17 +449,21 @@ class NativeFunction(object):
         self.func_name = cursor.spelling
         self.signature_name = self.func_name
         self.arguments = []
+        self.argumtntTips = []
         self.static = cursor.kind == cindex.CursorKind.CXX_METHOD and cursor.is_static_method()
         self.implementations = []
         self.is_constructor = False
         self.not_supported = False
         self.is_override = False
-
         self.ret_type = NativeType.from_type(cursor.result_type)
+        self.comment = self.get_comment(cursor.getRawComment())
 
         # parse the arguments
         # if self.func_name == "spriteWithFile":
         #   pdb.set_trace()
+        for arg in cursor.get_arguments():
+            self.argumtntTips.append(arg.spelling)
+
         for arg in cursor.type.argument_types():
             nt = NativeType.from_type(arg)
             self.arguments.append(nt)
@@ -480,6 +484,34 @@ class NativeFunction(object):
                     break
 
         self.min_args = index if found_default_arg else len(self.arguments)
+
+    def get_comment(self, comment):
+        replaceStr = comment
+
+        if comment is None:
+            return ""
+
+        regular_replace_list = [
+            ("(\s)*//!",""),
+            ("(\s)*//",""),
+            ("(\s)*/\*\*",""),
+            ("(\s)*/\*",""),
+            ("\*/",""),
+            ("\n(\s)*\*", "\n"),
+            ("\n(\s)*@","\n"),
+            ("\n(\s)*","\n"), 
+            ("\n(\s)*\n", "\n"),
+            ("^(\s)*\n",""), 
+            ("\n(\s)*$", ""),
+            ("\n","<br>\n"),
+            ("\n", "\n-- ")
+        ]
+
+        for item in regular_replace_list:
+            replaceStr = re.sub(item[0], item[1], replaceStr)
+
+
+        return replaceStr
 
     def generate_code(self, current_class=None, generator=None, is_override=False):
         gen = current_class.generator if current_class else generator
@@ -534,6 +566,35 @@ class NativeOverloadedFunction(object):
         self.is_constructor = False
         for m in func_array:
             self.min_args = min(self.min_args, m.min_args)
+
+        self.comment = self.get_comment(func_array[0].cursor.getRawComment())
+
+    def get_comment(self, comment):
+        replaceStr = comment
+
+        if comment is None:
+            return ""
+
+        regular_replace_list = [
+            ("(\s)*//!",""),
+            ("(\s)*//",""),
+            ("(\s)*/\*\*",""),
+            ("(\s)*/\*",""),
+            ("\*/",""),
+            ("\n(\s)*\*", "\n"),
+            ("\n(\s)*@","\n"),
+            ("\n(\s)*","\n"), 
+            ("\n(\s)*\n", "\n"),
+            ("^(\s)*\n",""), 
+            ("\n(\s)*$", ""),
+            ("\n","<br>\n"),
+            ("\n", "\n-- ")
+        ]
+
+        for item in regular_replace_list:
+            replaceStr = re.sub(item[0], item[1], replaceStr)
+
+        return replaceStr
 
     def append(self, func):
         self.min_args = min(self.min_args, func.min_args)
@@ -902,6 +963,7 @@ class Generator(object):
         return None
 
     def get_class_or_rename_class(self, class_name):
+
         if self.rename_classes.has_key(class_name):
             # print >> sys.stderr, "will rename %s to %s" % (method_name, self.rename_functions[class_name][method_name])
             return self.rename_classes[class_name]

@@ -1242,6 +1242,9 @@ class Cursor(Structure):
         another translation unit."""
         return conf.lib.clang_getCursorUSR(self)
 
+    def getRawComment(self):
+        return conf.lib.clang_Cursor_getRawCommentText(self)
+
     @property
     def kind(self):
         """Return the kind of this cursor."""
@@ -3264,6 +3267,12 @@ functionList = [
   ("clang_Type_getSizeOf",
    [Type],
    c_ulonglong),
+
+  ("clang_Cursor_getRawCommentText",
+   [Cursor],
+   _CXString,
+   _CXString.from_result),
+
 ]
 
 class LibclangError(Exception):

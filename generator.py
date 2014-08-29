@@ -429,7 +429,7 @@ class NativeField(object):
         if match:
             self.pretty_name = match.group(1)
         else:
-            self.pretty_name = self.name   
+            self.pretty_name = self.name
 
 # return True if found default argument.
 def iterate_param_node(param_node, depth=1):

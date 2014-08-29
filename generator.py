@@ -491,19 +491,25 @@ class NativeFunction(object):
         if comment is None:
             return ""
 
-        replaceStr = re.sub("(\s)*//!", "", replaceStr)
-        replaceStr = re.sub("(\s)*//", "", replaceStr)
-        replaceStr = re.sub("(\s)*/\*\*", "", replaceStr)
-        replaceStr = re.sub("(\s)*/\*", "", replaceStr)
-        replaceStr = re.sub("\*/", "", replaceStr)
-        replaceStr = re.sub("\n(\s)*\*", "\n", replaceStr)
-        replaceStr = re.sub("\n(\s)*@", "\n", replaceStr)
-        replaceStr = re.sub("\n(\s)*", "\n", replaceStr)
-        replaceStr = re.sub("\n(\s)*\n", "\n", replaceStr)
-        replaceStr = re.sub("^(\s)*\n", "", replaceStr)
-        replaceStr = re.sub("\n(\s)*$", "", replaceStr)
-        replaceStr = re.sub("\n", "<br>\n", replaceStr)
-        replaceStr = re.sub("\n", "\n-- ", replaceStr)
+        regular_replace_list = [
+            ("(\s)*//!",""),
+            ("(\s)*//",""),
+            ("(\s)*/\*\*",""),
+            ("(\s)*/\*",""),
+            ("\*/",""),
+            ("\n(\s)*\*", "\n"),
+            ("\n(\s)*@","\n"),
+            ("\n(\s)*","\n"), 
+            ("\n(\s)*\n", "\n"),
+            ("^(\s)*\n",""), 
+            ("\n(\s)*$", ""),
+            ("\n","<br>\n"),
+            ("\n", "\n-- ")
+        ]
+
+        for item in regular_replace_list:
+            replaceStr = re.sub(item[0], item[1], replaceStr)
+
 
         return replaceStr
 
@@ -569,19 +575,24 @@ class NativeOverloadedFunction(object):
         if comment is None:
             return ""
 
-        replaceStr = re.sub("(\s)*//!", "", replaceStr)
-        replaceStr = re.sub("(\s)*//", "", replaceStr)
-        replaceStr = re.sub("(\s)*/\*\*", "", replaceStr)
-        replaceStr = re.sub("(\s)*/\*", "", replaceStr)
-        replaceStr = re.sub("\*/", "", replaceStr)
-        replaceStr = re.sub("\n(\s)*\*", "\n", replaceStr)
-        replaceStr = re.sub("\n(\s)*@", "\n", replaceStr)
-        replaceStr = re.sub("\n(\s)*", "\n", replaceStr)
-        replaceStr = re.sub("\n(\s)*\n", "\n", replaceStr)
-        replaceStr = re.sub("^(\s)*\n", "", replaceStr)
-        replaceStr = re.sub("\n(\s)*$", "", replaceStr)
-        replaceStr = re.sub("\n", "<br>\n", replaceStr)
-        replaceStr = re.sub("\n", "\n-- ", replaceStr)
+        regular_replace_list = [
+            ("(\s)*//!",""),
+            ("(\s)*//",""),
+            ("(\s)*/\*\*",""),
+            ("(\s)*/\*",""),
+            ("\*/",""),
+            ("\n(\s)*\*", "\n"),
+            ("\n(\s)*@","\n"),
+            ("\n(\s)*","\n"), 
+            ("\n(\s)*\n", "\n"),
+            ("^(\s)*\n",""), 
+            ("\n(\s)*$", ""),
+            ("\n","<br>\n"),
+            ("\n", "\n-- ")
+        ]
+
+        for item in regular_replace_list:
+            replaceStr = re.sub(item[0], item[1], replaceStr)
 
         return replaceStr
 

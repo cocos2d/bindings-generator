@@ -34,7 +34,7 @@ static bool js_${current_class.underlined_class_name}_ctor(JSContext *cx, uint32
 {
     jsval *argv = JS_ARGV(cx, vp);
 	JSObject *obj = JS_THIS_OBJECT(cx, vp);
-    ${current_class.namespaced_class_name} *nobj = new ${current_class.namespaced_class_name}();
+    ${current_class.namespaced_class_name} *nobj = new (std::nothrow) ${current_class.namespaced_class_name}();
     if (nobj) {
         nobj->autorelease();
     }

@@ -33,7 +33,7 @@ static bool dummy_constructor(JSContext *cx, uint32_t argc, jsval *vp) {
 	}
 
 #if not $script_control_cpp
-    JS_ReportError(cx, "Don't use `new cc.XXX`, please use `cc.XXX.create` instead! ");
+    JS_ReportError(cx, "Constructor for the requested class is not available, please refer to the API reference.");
 #end if
     return false;
 }

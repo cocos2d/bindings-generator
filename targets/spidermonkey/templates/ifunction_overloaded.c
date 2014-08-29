@@ -42,7 +42,7 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 			#set $arg_list = ", ".join($arg_array)
 		#end if
 		#if $is_constructor
-			cobj = new ${namespaced_class_name}(${arg_list});
+			cobj = new (std::nothrow) ${namespaced_class_name}(${arg_list});
 #if not $generator.script_control_cpp
 			cocos2d::Ref *_ccobj = dynamic_cast<cocos2d::Ref *>(cobj);
 			if (_ccobj) {
@@ -90,6 +90,9 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 #end for
 #if $is_constructor
 	if (cobj) {
+		if (JS_HasProperty(cx, obj, "_ctor", &ok))
+        		ScriptingCore::getInstance()->executeFunctionWithOwner(OBJECT_TO_JSVAL(obj), "_ctor", argc, argv);
+
 		JS_SET_RVAL(cx, vp, OBJECT_TO_JSVAL(obj));
 		return true;
 	}

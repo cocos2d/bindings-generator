@@ -240,9 +240,8 @@ class NativeType(object):
                 nt.is_enum = ntype.get_canonical().kind == cindex.TypeKind.ENUM
 
                 if nt.name == "std::function":
-                    nt.namespaced_name = get_namespaced_name(cdecl)
-
-                    r = re.compile('function<(.+) \((.*)\)>').search(cdecl.displayname)
+                    nt.namespaced_name = get_namespaced_name(cdecl)                    
+                    r = re.compile('function<(.+) .*\((.*)\)>').search(cdecl.displayname)
                     (ret_type, params) = r.groups()
                     params = filter(None, params.split(", "))
 
@@ -365,7 +364,7 @@ class NativeType(object):
             tpl = NativeType.dict_get_value_re(to_native_dict, keys)
             tpl = Template(tpl, searchList=[convert_opts])
             return str(tpl).rstrip()
-        return "#pragma warning NO CONVERSION TO NATIVE FOR " + self.name
+        return "#pragma warning NO CONVERSION TO NATIVE FOR " + self.name + "\n" + convert_opts['level'] * "\t" +  "ok = false"
 
     def to_string(self, generator):
         conversions = generator.config['conversions']

@@ -90,7 +90,7 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 #end for
 #if $is_constructor
     if (cobj) {
-        if (JS_HasProperty(cx, obj, "_ctor", &ok))
+        if (JS_HasProperty(cx, obj, "_ctor", &ok) && ok)
                 ScriptingCore::getInstance()->executeFunctionWithOwner(OBJECT_TO_JSVAL(obj), "_ctor", argc, argv);
 
         JS_SET_RVAL(cx, vp, OBJECT_TO_JSVAL(obj));

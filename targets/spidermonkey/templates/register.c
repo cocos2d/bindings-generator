@@ -43,7 +43,7 @@ static bool js_${current_class.underlined_class_name}_ctor(JSContext *cx, uint32
     JS_AddNamedObjectRoot(cx, &p->obj, "${current_class.namespaced_class_name}");
 #end if
     bool isFound = false;
-    if (JS_HasProperty(cx, obj, "_ctor", &isFound))
+    if (JS_HasProperty(cx, obj, "_ctor", &isFound) && isFound)
         ScriptingCore::getInstance()->executeFunctionWithOwner(OBJECT_TO_JSVAL(obj), "_ctor", argc, argv);
     JS_SET_RVAL(cx, vp, JSVAL_VOID);
     return true;

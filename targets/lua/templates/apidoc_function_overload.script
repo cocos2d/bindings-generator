@@ -51,9 +51,9 @@
 #end if
 #if str($max_arg_func.ret_type) != "void"
     #if $max_arg_func.ret_type.is_enum
--- @return int#int ret (retunr value: int)
+-- @return int#int ret (return value: int)
     #else
--- @return $generator.lua_typename_from_natve(max_arg_func.ret_type.namespaced_name, True)#$generator.lua_typename_from_natve(max_arg_func.ret_type.namespaced_name, True) ret (retunr value: $generator.lua_typename_from_natve(max_arg_func.ret_type.namespaced_name))
+-- @return $generator.lua_typename_from_natve(max_arg_func.ret_type.namespaced_name, True)#$generator.lua_typename_from_natve(max_arg_func.ret_type.namespaced_name, True) ret (return value: $generator.lua_typename_from_natve(max_arg_func.ret_type.namespaced_name))
     #end if
 #end if
 

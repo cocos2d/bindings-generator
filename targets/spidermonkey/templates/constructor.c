@@ -1,11 +1,11 @@
 ## ===== constructor function implementation template
 bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 {
-	jsval *argv = JS_ARGV(cx, vp);
-	bool ok = true;
+    jsval *argv = JS_ARGV(cx, vp);
+    bool ok = true;
 #if len($arguments) >= $min_args
-	#set arg_count = len($arguments)
-	#set arg_idx = $min_args
+    #set arg_count = len($arguments)
+    #set arg_idx = $min_args
     #set $count = 0
     #while $count < $arg_idx
         #set $arg = $arguments[$count]
@@ -51,7 +51,7 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 #if not $generator.script_control_cpp
     JS_AddNamedObjectRoot(cx, &p->obj, "${namespaced_class_name}");
 #end if
-    if (JS_HasProperty(cx, obj, "_ctor", &ok))
+    if (JS_HasProperty(cx, obj, "_ctor", &ok) && ok)
         ScriptingCore::getInstance()->executeFunctionWithOwner(OBJECT_TO_JSVAL(obj), "_ctor", argc, argv);
     return true;
 #end if

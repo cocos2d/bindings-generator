@@ -70,13 +70,13 @@ conversions:
     "BlendFunc": "ok &= jsval_to_blendfunc(cx, ${in_value}, &${out_value})"
     object: |
       do {
-      ${($level + 1) * '\t'}if (!${in_value}.isObject()) { ok = false; break; }
-      ${($level + 1) * '\t'}js_proxy_t *jsProxy;
-      ${($level + 1) * '\t'}JSObject *tmpObj = JSVAL_TO_OBJECT(${in_value});
-      ${($level + 1) * '\t'}jsProxy = jsb_get_js_proxy(tmpObj);
-      ${($level + 1) * '\t'}${out_value} = (${ntype})(jsProxy ? jsProxy->ptr : NULL);
-      ${($level + 1) * '\t'}JSB_PRECONDITION2( ${out_value}, cx, false, "Invalid Native Object");
-      ${($level + 0) * '\t'}} while (0)
+      ${($level + 1) * '    '}if (!${in_value}.isObject()) { ok = false; break; }
+      ${($level + 1) * '    '}js_proxy_t *jsProxy;
+      ${($level + 1) * '    '}JSObject *tmpObj = JSVAL_TO_OBJECT(${in_value});
+      ${($level + 1) * '    '}jsProxy = jsb_get_js_proxy(tmpObj);
+      ${($level + 1) * '    '}${out_value} = (${ntype})(jsProxy ? jsProxy->ptr : NULL);
+      ${($level + 1) * '    '}JSB_PRECONDITION2( ${out_value}, cx, false, "Invalid Native Object");
+      ${($level + 0) * '    '}} while (0)
 
   from_native:
     # int to jsval
@@ -120,10 +120,10 @@ conversions:
     "BlendFunc": "${out_value} = blendfunc_to_jsval(cx, ${in_value})"
     object: |
       do {
-      ${($level + 1) * '\t'}if (${in_value}) {
-      ${($level + 2) * '\t'}js_proxy_t *jsProxy = js_get_or_create_proxy<${ntype.replace("*", "").replace("const ", "")}>(cx, (${ntype.replace("const ", "")})${in_value});
-      ${($level + 2) * '\t'}${out_value} = OBJECT_TO_JSVAL(jsProxy->obj);
-      ${($level + 1) * '\t'}} else {
-      ${($level + 2) * '\t'}${out_value} = JSVAL_NULL;
-      ${($level + 1) * '\t'}}
-      ${($level) * '\t'}} while (0)
+      ${($level + 1) * '    '}if (${in_value}) {
+      ${($level + 2) * '    '}js_proxy_t *jsProxy = js_get_or_create_proxy<${ntype.replace("*", "").replace("const ", "")}>(cx, (${ntype.replace("const ", "")})${in_value});
+      ${($level + 2) * '    '}${out_value} = OBJECT_TO_JSVAL(jsProxy->obj);
+      ${($level + 1) * '    '}} else {
+      ${($level + 2) * '    '}${out_value} = JSVAL_NULL;
+      ${($level + 1) * '    '}}
+      ${($level) * '    '}} while (0)

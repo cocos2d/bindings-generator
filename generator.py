@@ -457,6 +457,7 @@ class NativeFunction(object):
         self.is_override = False
         self.ret_type = NativeType.from_type(cursor.result_type)
         self.comment = self.get_comment(cursor.getRawComment())
+        self.func_desc = ""
 
         # parse the arguments
         # if self.func_name == "spriteWithFile":
@@ -514,9 +515,32 @@ class NativeFunction(object):
 
         return replaceStr
 
+    def set_funtion_desc(self, generator):
+        if generator.script_type == "lua":
+            arg_count    = len(self.arguments)
+            arg_min_args = self.min_args
+            func_count   = 0
+            while arg_min_args <= arg_count:
+                arg_idx = 0
+                if func_count > 0:
+                    self.func_desc += " or "
+                self.func_desc +=  self.func_name + "("
+                while arg_idx < arg_min_args:
+                    arg = self.arguments[arg_idx]
+                    if arg_idx == arg_min_args - 1:
+                        self.func_desc +=  generator.lua_scriptname_tip_from_native(arg.namespaced_name, arg.namespace_name)
+                    else:
+                        self.func_desc +=  generator.lua_scriptname_tip_from_native(arg.namespaced_name, arg.namespace_name) + ", "
+                    arg_idx += 1
+
+                self.func_desc = self.func_desc + ")"
+                arg_min_args += 1
+                func_count   += 1
+
     def generate_code(self, current_class=None, generator=None, is_override=False):
         gen = current_class.generator if current_class else generator
         config = gen.config
+        self.set_funtion_desc(gen)
         tpl = Template(file=os.path.join(gen.target, "templates", "function.h"),
                         searchList=[current_class, self])
         if not is_override:
@@ -569,6 +593,7 @@ class NativeOverloadedFunction(object):
             self.min_args = min(self.min_args, m.min_args)
 
         self.comment = self.get_comment(func_array[0].cursor.getRawComment())
+        self.func_descs = ""
 
     def get_comment(self, comment):
         replaceStr = comment
@@ -598,6 +623,30 @@ class NativeOverloadedFunction(object):
 
         return replaceStr
 
+    def set_funtion_desc(self, generator):
+        if generator.script_type == "lua":
+            func_count = 0
+            for func in self.implementations:
+                arg_count = len(func.arguments)
+                arg_min_args = func.min_args
+                while arg_min_args <= arg_count:
+                    arg_idx = 0
+                    if func_count > 0:
+                        self.func_descs += " or "
+                    self.func_descs += self.func_name + "("
+                    while arg_idx < arg_min_args:
+                        arg = func.arguments[arg_idx]
+                        if arg_idx == arg_min_args - 1:
+                            self.func_descs +=  generator.lua_scriptname_tip_from_native(arg.namespaced_name, arg.namespace_name)
+                        else:
+                            self.func_descs +=  generator.lua_scriptname_tip_from_native(arg.namespaced_name, arg.namespace_name) + ", "
+                        arg_idx += 1
+
+                    self.func_descs = self.func_descs + ")"
+                    arg_min_args += 1
+                    func_count   += 1
+                
+
     def append(self, func):
         self.min_args = min(self.min_args, func.min_args)
         self.implementations.append(func)
@@ -605,6 +654,7 @@ class NativeOverloadedFunction(object):
     def generate_code(self, current_class=None, is_override=False):
         gen = current_class.generator
         config = gen.config
+        self.set_funtion_desc(gen)
         static = self.implementations[0].static
         tpl = Template(file=os.path.join(gen.target, "templates", "function.h"),
                         searchList=[current_class, self])
@@ -1304,6 +1354,28 @@ class Generator(object):
             return "func"
         else:
             return namespace_class_name
+
+    def lua_scriptname_tip_from_native(self, namespace_class_name, namespace_name):
+        script_ns_dict = self.config['conversions']['ns_map']
+        for (k, v) in script_ns_dict.items():
+            if k == namespace_name:
+                return namespace_class_name.replace("*","").replace("const ", "").replace(k, v)
+        if namespace_class_name.find("::") >= 0:
+            if namespace_class_name.find("std::vector") == 0:
+                return "array_table"
+            elif namespace_class_name.find("std::unordered_map") == 0 or namespace_class_name.find("std::map") == 0:
+                return "map_table"
+            elif namespace_class_name.find("std::function") == 0:
+                return "function"
+            elif namespace_class_name.find("std::string") == 0:
+                return "string"
+            elif namespace_class_name.find("std::") == 0:
+                return namespace_class_name
+            else:
+                raise Exception("The namespace (%s) conversion wasn't set in 'ns_map' section of the conversions.yaml" % namespace_class_name)
+        else:
+            return namespace_class_name.replace("*","").replace("const ", "")
+
 def main():
     from optparse import OptionParser
 

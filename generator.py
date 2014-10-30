@@ -675,6 +675,7 @@ class NativeClass(object):
             self.target_class_name = registration_name
         self.namespaced_class_name = get_namespaced_name(cursor)
         self.namespace_name        = get_namespace_name(cursor)
+        self.record_deprecated_func = False
         self.parse()
 
     @property
@@ -685,7 +686,9 @@ class NativeClass(object):
         '''
         parse the current cursor, getting all the necesary information
         '''
+        #print "parse %s class begin" % (self.class_name)
         self._deep_iterate(self.cursor)
+        #print "parse %s class end" % (self.class_name)
 
     def methods_clean(self):
         '''
@@ -778,6 +781,8 @@ class NativeClass(object):
                                        searchList=[{"current_class": self}])
             self.doc_func_file.write(str(apidoc_fun_foot_script))
             self.doc_func_file.close()
+            if self.record_deprecated_func:
+                self.record_deprecated_file.close()
     def _deep_iterate(self, cursor=None, depth=0):
         for node in cursor.get_children():
             # print("%s%s - %s" % ("> " * depth, node.displayname, node.kind))
@@ -835,6 +840,15 @@ class NativeClass(object):
             self.fields.append(NativeField(cursor))
         elif cursor.kind == cindex.CursorKind.CXX_ACCESS_SPEC_DECL:
             self._current_visibility = cursor.get_access_specifier()
+        elif cursor.kind == cindex.CursorKind.CXX_METHOD and cursor.get_availability() == cindex.AvailabilityKind.DEPRECATED and self._current_visibility == cindex.AccessSpecifierKind.PUBLIC:
+            if self.generator.script_type == "lua" and self.generator.record_deprecated_func:
+                if not self.record_deprecated_func:
+                    docdeprecatedfilepath = os.path.join(self.generator.outdir + "/deprecated", self.class_name + ".txt")
+                    self.record_deprecated_file = open(docdeprecatedfilepath, "w+")
+                    self.record_deprecated_file.write("Deprecated functions of " + self.class_name + "as follows:\n")
+                    self.record_deprecated_func = True
+                m = NativeFunction(cursor)
+                self.record_deprecated_file.write(m.func_name + "\n")
         elif cursor.kind == cindex.CursorKind.CXX_METHOD and cursor.get_availability() != cindex.AvailabilityKind.DEPRECATED:
             # skip if variadic
             if self._current_visibility == cindex.AccessSpecifierKind.PUBLIC and not cursor.type.is_function_variadic():
@@ -926,6 +940,7 @@ class Generator(object):
         self.script_control_cpp = opts['script_control_cpp'] == "yes"
         self.script_type = opts['script_type']
         self.macro_judgement = opts['macro_judgement']
+        self.record_deprecated_func = opts['record_deprecated_func'] == "yes"
 
         if opts['skip']:
             list_of_skips = re.split(",\n?", opts['skip'])
@@ -1051,6 +1066,11 @@ class Generator(object):
         docfiledir   = self.outdir + "/api"
         if not os.path.exists(docfiledir):
             os.makedirs(docfiledir)
+
+        if self.script_type == "lua" and self.record_deprecated_func:
+            record_files_dir = self.outdir + "/deprecated"
+            if not os.path.exists(record_files_dir):
+                os.makedirs(record_files_dir)
 
         if self.script_type == "lua":
             docfilepath = os.path.join(docfiledir, self.out_file + "_api.lua")
@@ -1395,7 +1415,8 @@ def main():
                 'out_file': opts.out_file or config.get(s, 'prefix'),
                 'script_control_cpp': config.get(s, 'script_control_cpp') if config.has_option(s, 'script_control_cpp') else 'no',
                 'script_type': t,
-                'macro_judgement': config.get(s, 'macro_judgement') if config.has_option(s, 'macro_judgement') else None
+                'macro_judgement': config.get(s, 'macro_judgement') if config.has_option(s, 'macro_judgement') else None,
+                'record_deprecated_func' : config.get(s, 'record_deprecated_func') if config.has_option(s, 'record_deprecated_func') else 'no'
                 }
             generator = Generator(gen_opts)
             generator.generate_code()

@@ -5,6 +5,7 @@ ${current_class.methods.constructor.generate_code($current_class)}
 #set generator = $current_class.generator
 #set methods = $current_class.methods_clean()
 #set st_methods = $current_class.static_methods_clean()
+#set public_fields = $current_class.public_fields
 #
 static int lua_${generator.prefix}_${current_class.class_name}_finalize(lua_State* tolua_S)
 {
@@ -64,6 +65,9 @@ int lua_register_${generator.prefix}_${current_class.class_name}(lua_State* tolu
     #for m in st_methods
         #set fn = m['impl']
         tolua_function(tolua_S,"${m['name']}", ${fn.signature_name});
+    #end for
+    #for m in public_fields   
+        tolua_variable(tolua_S,"${m.name}", ${m.signature_name}_get${m.name}, ${m.signature_name}_set${m.name});
     #end for
     tolua_endmodule(tolua_S);
     std::string typeName = typeid(${current_class.namespaced_class_name}).name();

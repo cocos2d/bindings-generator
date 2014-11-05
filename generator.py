@@ -417,6 +417,23 @@ class NativeType(object):
     def __str__(self):
         return  self.canonical_type.whole_name if None != self.canonical_type else self.whole_name
 
+    def object_can_convert(self, generator, is_to_native = True):
+        if self.is_object:
+            keys = []
+            if  self.canonical_type != None:
+                keys.append(self.canonical_type.name)
+            keys.append(self.name)
+            if is_to_native:
+                to_native_dict = generator.config['conversions']['to_native']
+                if NativeType.dict_has_key_re(to_native_dict, keys):
+                    return True
+            else:
+                from_native_dict = generator.config['conversions']['from_native']
+                if NativeType.dict_has_key_re(from_native_dict, keys):
+                    return True
+
+        return False
+
 class NativeField(object):
     def __init__(self, cursor):
         cursor = cursor.canonical
@@ -426,10 +443,33 @@ class NativeField(object):
         self.location = cursor.location
         member_field_re = re.compile('m_(\w+)')
         match = member_field_re.match(self.name)
+        self.signature_name = self.name
+        self.ntype  = NativeType.from_type(cursor.type)
         if match:
             self.pretty_name = match.group(1)
         else:
             self.pretty_name = self.name
+
+    @staticmethod
+    def can_parse(ntype):
+        if ntype.kind == cindex.TypeKind.POINTER:
+            return False
+        native_type = NativeType.from_type(ntype)
+        if ntype.kind == cindex.TypeKind.UNEXPOSED and native_type.name != "std::string":
+            return False
+        return True
+
+    def generate_code(self, current_class = None, generator = None):
+        gen = current_class.generator if current_class else generator
+        config = gen.config
+
+        if config['definitions'].has_key('public_field'):
+            tpl = Template(config['definitions']['public_field'],
+                                    searchList=[current_class, self])
+            self.signature_name = str(tpl)
+        tpl = Template(file=os.path.join(gen.target, "templates", "public_field.c"),
+                       searchList=[current_class, self])
+        gen.impl_file.write(str(tpl))
 
 # return True if found default argument.
 def iterate_param_node(param_node, depth=1):
@@ -658,6 +698,7 @@ class NativeClass(object):
         self.namespaced_class_name = self.class_name
         self.parents = []
         self.fields = []
+        self.public_fields = []
         self.methods = {}
         self.static_methods = {}
         self.generator = generator
@@ -765,6 +806,8 @@ class NativeClass(object):
         if self.generator.script_type == "lua":  
             for m in self.override_methods_clean():
                 m['impl'].generate_code(self, is_override = True)
+        for m in self.public_fields:
+            m.generate_code(self)
         # generate register section
         register = Template(file=os.path.join(self.generator.target, "templates", "register.c"),
                             searchList=[{"current_class": self}])
@@ -838,6 +881,8 @@ class NativeClass(object):
 
         elif cursor.kind == cindex.CursorKind.FIELD_DECL:
             self.fields.append(NativeField(cursor))
+            if self._current_visibility == cindex.AccessSpecifierKind.PUBLIC and NativeField.can_parse(cursor.type):
+                self.public_fields.append(NativeField(cursor))
         elif cursor.kind == cindex.CursorKind.CXX_ACCESS_SPEC_DECL:
             self._current_visibility = cursor.get_access_specifier()
         elif cursor.kind == cindex.CursorKind.CXX_METHOD and cursor.get_availability() == cindex.AvailabilityKind.DEPRECATED and self._current_visibility == cindex.AccessSpecifierKind.PUBLIC:

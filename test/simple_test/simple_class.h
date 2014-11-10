@@ -3,6 +3,8 @@
 
 #include <string>
 #include <stdint.h>
+#include <stdio.h>
+#include <string.h>
 
 enum someThingEnumerated {
 	kValue1 = 1,

@@ -1,5 +1,5 @@
 do {
-    if(!JSVAL_IS_NULL(${in_value}))
+    if(JS_TypeOfValue(cx, ${in_value}) == JSTYPE_FUNCTION)
     {
         std::shared_ptr<JSFunctionWrapper> func(new JSFunctionWrapper(cx, JS_THIS_OBJECT(cx, vp), ${in_value}));
         auto lambda = [=](${lambda_parameters}) -> ${ret_type.name} {

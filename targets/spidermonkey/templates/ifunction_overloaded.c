@@ -1,7 +1,7 @@
 ## ===== instance function implementation template - for overloaded functions
 bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 {
-    jsval *argv = JS_ARGV(cx, vp);
+    JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
     bool ok = true;
 
     JSObject *obj = NULL;
@@ -28,7 +28,7 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
             #set $arg_type = arg.to_string($generator)
             ${arg_type} arg${count};
             ${arg.to_native({"generator": $generator,
-                             "in_value": "argv[" + str(count) + "]",
+                             "in_value": "args.get(" + str(count) + ")",
                              "out_value": "arg" + str(count),
                              "class_name": $class_name,
                              "level": 3,
@@ -59,7 +59,7 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
             obj = JS_NewObject(cx, typeClass->jsclass, typeClass->proto, typeClass->parentProto);
             js_proxy_t* p = jsb_new_proxy(cobj, obj);
 #if not $generator.script_control_cpp
-            JS_AddNamedObjectRoot(cx, &p->obj, "${namespaced_class_name}");
+            AddNamedObjectRoot(cx, &p->obj, "${namespaced_class_name}");
 #end if
         #else
             #if str($func.ret_type) != "void"
@@ -74,10 +74,10 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
                                                       "out_value": "jsret",
                                                       "ntype": str($func.ret_type),
                                                       "level": 2})};
-            JS_SET_RVAL(cx, vp, jsret);
+            args.rval().set(jsret);
             #else
             cobj->${func.func_name}($arg_list);
-            JS_SET_RVAL(cx, vp, JSVAL_VOID);
+            args.rval().setUndefined();
             #end if
             return true;
         #end if
@@ -93,7 +93,7 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
         if (JS_HasProperty(cx, obj, "_ctor", &ok) && ok)
                 ScriptingCore::getInstance()->executeFunctionWithOwner(OBJECT_TO_JSVAL(obj), "_ctor", argc, argv);
 
-        JS_SET_RVAL(cx, vp, OBJECT_TO_JSVAL(obj));
+        args.rval().set(OBJECT_TO_JSVAL(obj));
         return true;
     }
 #end if

@@ -1,8 +1,8 @@
 ## ===== instance function implementation template
 bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 {
+    JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
 #if len($arguments) > 0
-    jsval *argv = JS_ARGV(cx, vp);
     bool ok = true;
 #end if
 #if not $is_constructor
@@ -28,7 +28,7 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
         #while $count < $arg_idx
             #set $arg = $arguments[$count]
         ${arg.to_native({"generator": $generator,
-                             "in_value": "argv[" + str(count) + "]",
+                             "in_value": "args.get(" + str(count) + ")",
                              "out_value": "arg" + str(count),
                              "class_name": $class_name,
                              "level": 2,
@@ -56,11 +56,11 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
         typeClass = typeMapIter->second;
         CCASSERT(typeClass, "The value is null.");
         JSObject *obj = JS_NewObject(cx, typeClass->jsclass, typeClass->proto, typeClass->parentProto);
-        JS_SET_RVAL(cx, vp, OBJECT_TO_JSVAL(obj));
+        args.rval().set(OBJECT_TO_JSVAL(obj));
         // link the native object with the javascript object
         js_proxy_t* p = jsb_new_proxy(cobj, obj);
 #if not $generator.script_control_cpp
-        JS_AddNamedObjectRoot(cx, &p->obj, "${namespaced_class_name}");
+        AddNamedObjectRoot(cx, &p->obj, "${namespaced_class_name}");
 #end if
         #else
             #if $ret_type.name != "void"
@@ -75,10 +75,10 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
                                     "out_value": "jsret",
                                     "ntype": str($ret_type),
                                     "level": 2})};
-        JS_SET_RVAL(cx, vp, jsret);
+        args.rval().set(jsret);
             #else
         cobj->${func_name}($arg_list);
-        JS_SET_RVAL(cx, vp, JSVAL_VOID);
+        args.rval().setUndefined();
             #end if
         #end if
         return true;

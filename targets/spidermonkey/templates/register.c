@@ -33,7 +33,7 @@ void js_${current_class.underlined_class_name}_finalize(JSFreeOp *fop, JSObject 
 static bool js_${current_class.underlined_class_name}_ctor(JSContext *cx, uint32_t argc, jsval *vp)
 {
     JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
-    JS::RootedObject obj(cx, JSVAL_TO_OBJECT(args.thisv()));
+    JS::RootedObject obj(cx, args.thisv().toObjectOrNull());
     ${current_class.namespaced_class_name} *nobj = new (std::nothrow) ${current_class.namespaced_class_name}();
     if (nobj) {
         nobj->autorelease();
@@ -95,7 +95,7 @@ void js_register_${generator.prefix}_${current_class.class_name}(JSContext *cx, 
 #if len($current_class.parents) > 0
         JS::RootedObject(cx, jsb_${current_class.parents[0].underlined_class_name}_prototype),
 #else
-        JS::RootedObject(cx, JSVAL_TO_OBJECT(JSVAL_NULL)), // parent proto
+        JS::RootedObject(cx, JS::NullHandleValue.toObjectOrNull()), // parent proto
 #end if
         jsb_${current_class.underlined_class_name}_class,
 #if has_constructor

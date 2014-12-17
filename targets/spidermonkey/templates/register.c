@@ -44,7 +44,7 @@ static bool js_${current_class.underlined_class_name}_ctor(JSContext *cx, uint32
 #end if
     bool isFound = false;
     if (JS_HasProperty(cx, obj, "_ctor", &isFound) && isFound)
-        ScriptingCore::getInstance()->executeFunctionWithOwner(OBJECT_TO_JSVAL(obj), "_ctor", argc, args.array());
+        ScriptingCore::getInstance()->executeFunctionWithOwner(OBJECT_TO_JSVAL(obj), "_ctor", args);
     args.rval().setUndefined();
     return true;
 }

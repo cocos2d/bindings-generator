@@ -55,7 +55,7 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
     AddNamedObjectRoot(cx, &p->obj, "${namespaced_class_name}");
 #end if
     if (JS_HasProperty(cx, obj, "_ctor", &ok) && ok)
-        ScriptingCore::getInstance()->executeFunctionWithOwner(OBJECT_TO_JSVAL(obj), "_ctor", argc, args.array());
+        ScriptingCore::getInstance()->executeFunctionWithOwner(OBJECT_TO_JSVAL(obj), "_ctor", args);
     return true;
 #end if
 }

@@ -95,7 +95,7 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 #if $is_constructor
     if (cobj) {
         if (JS_HasProperty(cx, JS::RootedObject(cx, obj), "_ctor", &ok) && ok)
-                ScriptingCore::getInstance()->executeFunctionWithOwner(OBJECT_TO_JSVAL(obj), "_ctor", argc, args.array());
+                ScriptingCore::getInstance()->executeFunctionWithOwner(OBJECT_TO_JSVAL(obj), "_ctor", args);
 
         args.rval().set(OBJECT_TO_JSVAL(obj));
         return true;

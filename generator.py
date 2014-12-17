@@ -927,6 +927,19 @@ class Generator(object):
         self.script_type = opts['script_type']
         self.macro_judgement = opts['macro_judgement']
 
+        extend_clang_args = []
+
+        for clang_arg in self.clang_args:
+            if not os.path.exists(clang_arg.replace("-I","")):
+                pos = clang_arg.find("lib/clang/3.3/include")
+                if -1 != pos:
+                    extend_clang_arg = clang_arg.replace("3.3", "3.4")
+                    if os.path.exists(extend_clang_arg.replace("-I","")):
+                        extend_clang_args.append(extend_clang_arg)
+
+        if len(extend_clang_args) > 0:
+            self.clang_args.extend(extend_clang_args)
+
         if opts['skip']:
             list_of_skips = re.split(",\n?", opts['skip'])
             for skip in list_of_skips:

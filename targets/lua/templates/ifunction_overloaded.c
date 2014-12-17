@@ -101,7 +101,7 @@ int ${signature_name}(lua_State* tolua_S)
     #end while
 #end if
 #end for
-    CCLOG("%s has wrong number of arguments: %d, was expecting %d \n",  "${generator.scriptname_from_native($namespaced_class_name, $namespace_name)}:${func.func_name}",argc, ${func.min_args});
+    luaL_error(tolua_S, "%s has wrong number of arguments: %d, was expecting %d \n",  "${generator.scriptname_from_native($namespaced_class_name, $namespace_name)}:${func.func_name}",argc, ${func.min_args});
     return 0;
 
 \#if COCOS2D_DEBUG >= 1

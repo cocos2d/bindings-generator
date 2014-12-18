@@ -4,10 +4,10 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
     JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
     bool ok = true;
 
-    JSObject *obj = NULL;
+    JS::RootedObject obj(cx);
     ${namespaced_class_name}* cobj = NULL;
 #if not $is_constructor
-    obj = JS_THIS_OBJECT(cx, vp);
+    obj = args.thisv().toObjectOrNull();
     js_proxy_t *proxy = jsb_get_js_proxy(obj);
     cobj = (${namespaced_class_name} *)(proxy ? proxy->ptr : NULL);
     JSB_PRECONDITION2( cobj, cx, false, "${signature_name} : Invalid Native Object");

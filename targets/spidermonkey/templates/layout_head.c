@@ -23,8 +23,8 @@ static bool dummy_constructor(JSContext *cx, uint32_t argc, jsval *vp) {
         typeClass = typeMapIter->second;
         CCASSERT(typeClass, "The value is null.");
 
-        JS::RootedObject proto(cx, const_cast<JSObject*>(typeClass->proto.get()));
-        JS::RootedObject parent(cx, const_cast<JSObject*>(typeClass->parentProto.get()));
+        JS::RootedObject proto(cx, typeClass->proto.get());
+        JS::RootedObject parent(cx, typeClass->parentProto.get());
         JS::RootedObject _tmp(cx, JS_NewObject(cx, typeClass->jsclass, proto, parent));
         
     #if $script_control_cpp

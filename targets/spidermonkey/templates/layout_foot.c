@@ -5,9 +5,7 @@ void register_all_${prefix}(JSContext* cx, JS::HandleObject obj) {
     JS::RootedObject ns(cx);
     JS_GetProperty(cx, obj, "${target_ns}", &nsval);
     if (nsval == JSVAL_VOID) {
-        JS::RootedObject proto(cx);
-        JS::RootedObject parent(cx);
-        ns = JS_NewObject(cx, NULL, proto, parent);
+        ns = JS_NewObject(cx, NULL, JS::NullPtr(), JS::NullPtr());
         nsval = OBJECT_TO_JSVAL(ns);
         JS_SetProperty(cx, obj, "${target_ns}", nsval);
     } else {

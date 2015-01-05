@@ -57,8 +57,8 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
             typeClass = typeMapIter->second;
             CCASSERT(typeClass, "The value is null.");
             // obj = JS_NewObject(cx, typeClass->jsclass, typeClass->proto, typeClass->parentProto);
-            JS::RootedObject proto(cx, const_cast<JSObject*>(typeClass->proto.get()));
-            JS::RootedObject parent(cx, const_cast<JSObject*>(typeClass->parentProto.get()));
+            JS::RootedObject proto(cx, typeClass->proto.get());
+            JS::RootedObject parent(cx, typeClass->parentProto.get());
             JS::RootedObject obj(cx, JS_NewObject(cx, typeClass->jsclass, proto, parent));
 
             js_proxy_t* p = jsb_new_proxy(cobj, obj);

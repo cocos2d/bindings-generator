@@ -70,6 +70,7 @@ conversions:
     "@vector<int.*>": "ok &= luaval_to_std_vector_int(tolua_S, ${arg_idx}, &${out_value}, \"${lua_namespaced_class_name}:${func_name}\")"
     "kmMat4": "ok &= luaval_to_kmMat4(tolua_S, ${arg_idx}, &${out_value}, \"${lua_namespaced_class_name}:${func_name}\")"
     "Mat4": "ok &= luaval_to_mat4(tolua_S, ${arg_idx}, &${out_value}, \"${lua_namespaced_class_name}:${func_name}\")"
+    "BlendFunc": "ok &= luaval_to_blendfunc(tolua_S, ${arg_idx}, &${out_value}, \"${lua_namespaced_class_name}:${func_name}\")"
     "_ttfConfig": "ok &= luaval_to_ttfconfig(tolua_S, ${arg_idx}, &${out_value}, \"${lua_namespaced_class_name}:${func_name}\")"
     "MeshVertexAttrib": "ok &= luaval_to_mesh_vertex_attrib(tolua_S, ${arg_idx}, &${out_value}, \"${lua_namespaced_class_name}:${func_name}\")"
     "@vector<float.*>": "ok &= luaval_to_std_vector_float(tolua_S, ${arg_idx}, &${out_value}, \"${lua_namespaced_class_name}:${func_name}\")"

@@ -68,6 +68,7 @@ conversions:
     "Vec2": "ok &= jsval_to_vector2(cx, ${in_value}, &${out_value})"
     "Vec3": "ok &= jsval_to_vector3(cx, ${in_value}, &${out_value})"
     "BlendFunc": "ok &= jsval_to_blendfunc(cx, ${in_value}, &${out_value})"
+    "AnimationInfo": "ok &= jsval_to_animationInfo(cx, ${in_value}, &${out_value})"
     object: |
       do {
       ${($level + 1) * '    '}if (!${in_value}.isObject()) { ok = false; break; }
@@ -118,6 +119,7 @@ conversions:
     "Vec2": "${out_value} = vector2_to_jsval(cx, ${in_value})"
     "Vec3": "${out_value} = vector3_to_jsval(cx, ${in_value})"
     "BlendFunc": "${out_value} = blendfunc_to_jsval(cx, ${in_value})"
+    "AnimationInfo": "${out_value} = animationInfo_to_jsval(cx, ${in_value})"
     object: |
       do {
       ${($level + 1) * '    '}if (${in_value}) {

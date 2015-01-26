@@ -70,10 +70,12 @@ conversions:
     "@vector<int.*>": "ok &= luaval_to_std_vector_int(tolua_S, ${arg_idx}, &${out_value}, \"${lua_namespaced_class_name}:${func_name}\")"
     "kmMat4": "ok &= luaval_to_kmMat4(tolua_S, ${arg_idx}, &${out_value}, \"${lua_namespaced_class_name}:${func_name}\")"
     "Mat4": "ok &= luaval_to_mat4(tolua_S, ${arg_idx}, &${out_value}, \"${lua_namespaced_class_name}:${func_name}\")"
+    "BlendFunc": "ok &= luaval_to_blendfunc(tolua_S, ${arg_idx}, &${out_value}, \"${lua_namespaced_class_name}:${func_name}\")"
     "_ttfConfig": "ok &= luaval_to_ttfconfig(tolua_S, ${arg_idx}, &${out_value}, \"${lua_namespaced_class_name}:${func_name}\")"
     "MeshVertexAttrib": "ok &= luaval_to_mesh_vertex_attrib(tolua_S, ${arg_idx}, &${out_value}, \"${lua_namespaced_class_name}:${func_name}\")"
     "@vector<float.*>": "ok &= luaval_to_std_vector_float(tolua_S, ${arg_idx}, &${out_value}, \"${lua_namespaced_class_name}:${func_name}\")"
     "@vector<unsigned short.*>": "ok &= luaval_to_std_vector_ushort(tolua_S, ${arg_idx}, &${out_value}, \"${lua_namespaced_class_name}:${func_name}\")"
+    "AnimationInfo": "ok &= luaval_to_animationInfo(tolua_S, ${arg_idx}, &${out_value}, \"${lua_namespaced_class_name}:${func_name}\")"
 
     object: "ok &= luaval_to_object<${arg.to_string($generator).replace(\"*\", \"\")}>(tolua_S, ${arg_idx}, \"${scriptname}\",&${out_value})"
   from_native:
@@ -124,6 +126,7 @@ conversions:
     "MeshVertexAttrib": "mesh_vertex_attrib_to_luaval(tolua_S, ${in_value})"
     "@vector<float.*>": "ccvector_float_to_luaval(tolua_S, ${in_value})"
     "@vector<unsigned short.*>": "ccvector_ushort_to_luaval(tolua_S, ${in_value})"
+    "AnimationInfo": "animationInfo_to_luaval(tolua_S, ${in_value})"
 
     object: "object_to_luaval<${ntype.replace(\"*\", \"\").replace(\"const \", \"\")}>(tolua_S, \"${scriptname}\",(${ntype.replace(\"const \", \"\")})${in_value})"
 

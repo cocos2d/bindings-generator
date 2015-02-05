@@ -120,6 +120,18 @@ conversions:
     "Vec3": "${out_value} = vector3_to_jsval(cx, ${in_value})"
     "BlendFunc": "${out_value} = blendfunc_to_jsval(cx, ${in_value})"
     "AnimationInfo": "${out_value} = animationInfo_to_jsval(cx, ${in_value})"
+    "spEventData*": "${out_value} = speventdata_to_jsval(cx, *${in_value})"
+    "spEvent*": "${out_value} = spevent_to_jsval(cx, *${in_value})"
+    "spBoneData*": "${out_value} = spbonedata_to_jsval(cx, *${in_value})"
+    "spBone*": "${out_value} = spbone_to_jsval(cx, *${in_value})"
+    "spSkeleton*": "${out_value} = spskeleton_to_jsval(cx, *${in_value})"
+    "spAttachment*": "${out_value} = spattachment_to_jsval(cx, *${in_value})"
+    "spSlotData*": "${out_value} = spslotdata_to_jsval(cx, *${in_value})"
+    "spSlot*": "${out_value} = spslot_to_jsval(cx, *${in_value})"
+    "spTimeline*": "${out_value} = sptimeline_to_jsval(cx, *${in_value})"
+    "spAnimationState*": "${out_value} = spanimationstate_to_jsval(cx, *${in_value})"
+    "spAnimation*": "${out_value} = spanimation_to_jsval(cx, *${in_value})"
+    "spTrackEntry*": "${out_value} = sptrackentry_to_jsval(cx, *${in_value})"
     object: |
       do {
       ${($level + 1) * '    '}if (${in_value}) {

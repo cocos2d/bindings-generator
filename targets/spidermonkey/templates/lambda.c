@@ -3,6 +3,7 @@ do {
     {
         std::shared_ptr<JSFunctionWrapper> func(new JSFunctionWrapper(cx, JS_THIS_OBJECT(cx, vp), ${in_value}));
         auto lambda = [=](${lambda_parameters}) -> ${ret_type.name} {
+            JSB_AUTOCOMPARTMENT_WITH_GLOBAL_OBJCET
             #set arg_count = len($param_types)
             #if $arg_count > 0
             jsval largv[${arg_count}];

@@ -30,6 +30,7 @@ conversions:
 
   to_native:
     # lua to native
+    LUA_FUNCTION : "${out_value} = toluafix_ref_function(tolua_S,${arg_idx},0);ok &= ${out_value} != 0;"
     int: "ok &= luaval_to_int32(tolua_S, ${arg_idx},(int *)&${out_value}, \"${lua_namespaced_class_name}:${func_name}\")"
     "unsigned int": "ok &= luaval_to_uint32(tolua_S, ${arg_idx},&${out_value}, \"${lua_namespaced_class_name}:${func_name}\")"
     "unsigned char": "ok &= luaval_to_uint16(tolua_S, ${arg_idx},&${out_value}, \"${lua_namespaced_class_name}:${func_name}\")"

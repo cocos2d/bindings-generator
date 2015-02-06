@@ -4,6 +4,7 @@ definitions:
   ifunction: "lua_${generator.prefix}_${class_name}_${func_name}"
   sfunction: "lua_${generator.prefix}_${class_name}_${func_name}"
   constructor: "lua_${generator.prefix}_${class_name}_constructor"
+  public_field: "lua_${generator.prefix}_${class_name}"
 conversions:
   # some times you want to use a special native type when converting from spidermonkey to native
   # the most common case would be from JS-boolean to bool. Using "bool" will fail here since we

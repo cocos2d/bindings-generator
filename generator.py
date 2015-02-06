@@ -417,6 +417,23 @@ class NativeType(object):
     def __str__(self):
         return  self.canonical_type.whole_name if None != self.canonical_type else self.whole_name
 
+    def object_can_convert(self, generator, is_to_native = True):
+        if self.is_object:
+            keys = []
+            if  self.canonical_type != None:
+                keys.append(self.canonical_type.name)
+            keys.append(self.name)
+            if is_to_native:
+                to_native_dict = generator.config['conversions']['to_native']
+                if NativeType.dict_has_key_re(to_native_dict, keys):
+                    return True
+            else:
+                from_native_dict = generator.config['conversions']['from_native']
+                if NativeType.dict_has_key_re(from_native_dict, keys):
+                    return True
+
+        return False
+
 class NativeField(object):
     def __init__(self, cursor):
         cursor = cursor.canonical
@@ -426,10 +443,33 @@ class NativeField(object):
         self.location = cursor.location
         member_field_re = re.compile('m_(\w+)')
         match = member_field_re.match(self.name)
+        self.signature_name = self.name
+        self.ntype  = NativeType.from_type(cursor.type)
         if match:
             self.pretty_name = match.group(1)
         else:
             self.pretty_name = self.name
+
+    @staticmethod
+    def can_parse(ntype):
+        if ntype.kind == cindex.TypeKind.POINTER:
+            return False
+        native_type = NativeType.from_type(ntype)
+        if ntype.kind == cindex.TypeKind.UNEXPOSED and native_type.name != "std::string":
+            return False
+        return True
+
+    def generate_code(self, current_class = None, generator = None):
+        gen = current_class.generator if current_class else generator
+        config = gen.config
+
+        if config['definitions'].has_key('public_field'):
+            tpl = Template(config['definitions']['public_field'],
+                                    searchList=[current_class, self])
+            self.signature_name = str(tpl)
+        tpl = Template(file=os.path.join(gen.target, "templates", "public_field.c"),
+                       searchList=[current_class, self])
+        gen.impl_file.write(str(tpl))
 
 # return True if found default argument.
 def iterate_param_node(param_node, depth=1):
@@ -658,6 +698,7 @@ class NativeClass(object):
         self.namespaced_class_name = self.class_name
         self.parents = []
         self.fields = []
+        self.public_fields = []
         self.methods = {}
         self.static_methods = {}
         self.generator = generator
@@ -675,6 +716,7 @@ class NativeClass(object):
             self.target_class_name = registration_name
         self.namespaced_class_name = get_namespaced_name(cursor)
         self.namespace_name        = get_namespace_name(cursor)
+        self.record_deprecated_func = False
         self.parse()
 
     @property
@@ -685,7 +727,9 @@ class NativeClass(object):
         '''
         parse the current cursor, getting all the necesary information
         '''
+        #print "parse %s class begin" % (self.class_name)
         self._deep_iterate(self.cursor)
+        #print "parse %s class end" % (self.class_name)
 
     def methods_clean(self):
         '''
@@ -762,6 +806,8 @@ class NativeClass(object):
         if self.generator.script_type == "lua":  
             for m in self.override_methods_clean():
                 m['impl'].generate_code(self, is_override = True)
+        for m in self.public_fields:
+            m.generate_code(self)
         # generate register section
         register = Template(file=os.path.join(self.generator.target, "templates", "register.c"),
                             searchList=[{"current_class": self}])
@@ -778,6 +824,8 @@ class NativeClass(object):
                                        searchList=[{"current_class": self}])
             self.doc_func_file.write(str(apidoc_fun_foot_script))
             self.doc_func_file.close()
+            if self.record_deprecated_func:
+                self.record_deprecated_file.close()
     def _deep_iterate(self, cursor=None, depth=0):
         for node in cursor.get_children():
             # print("%s%s - %s" % ("> " * depth, node.displayname, node.kind))
@@ -833,8 +881,19 @@ class NativeClass(object):
 
         elif cursor.kind == cindex.CursorKind.FIELD_DECL:
             self.fields.append(NativeField(cursor))
+            if self._current_visibility == cindex.AccessSpecifierKind.PUBLIC and NativeField.can_parse(cursor.type):
+                self.public_fields.append(NativeField(cursor))
         elif cursor.kind == cindex.CursorKind.CXX_ACCESS_SPEC_DECL:
             self._current_visibility = cursor.get_access_specifier()
+        elif cursor.kind == cindex.CursorKind.CXX_METHOD and cursor.get_availability() == cindex.AvailabilityKind.DEPRECATED and self._current_visibility == cindex.AccessSpecifierKind.PUBLIC:
+            if self.generator.script_type == "lua" and self.generator.record_deprecated_func:
+                if not self.record_deprecated_func:
+                    docdeprecatedfilepath = os.path.join(self.generator.outdir + "/deprecated", self.class_name + ".txt")
+                    self.record_deprecated_file = open(docdeprecatedfilepath, "w+")
+                    self.record_deprecated_file.write("Deprecated functions of " + self.class_name + "as follows:\n")
+                    self.record_deprecated_func = True
+                m = NativeFunction(cursor)
+                self.record_deprecated_file.write(m.func_name + "\n")
         elif cursor.kind == cindex.CursorKind.CXX_METHOD and cursor.get_availability() != cindex.AvailabilityKind.DEPRECATED:
             # skip if variadic
             if self._current_visibility == cindex.AccessSpecifierKind.PUBLIC and not cursor.type.is_function_variadic():
@@ -926,6 +985,7 @@ class Generator(object):
         self.script_control_cpp = opts['script_control_cpp'] == "yes"
         self.script_type = opts['script_type']
         self.macro_judgement = opts['macro_judgement']
+        self.record_deprecated_func = opts['record_deprecated_func'] == "yes"
 
         extend_clang_args = []
 
@@ -1064,6 +1124,11 @@ class Generator(object):
         docfiledir   = self.outdir + "/api"
         if not os.path.exists(docfiledir):
             os.makedirs(docfiledir)
+
+        if self.script_type == "lua" and self.record_deprecated_func:
+            record_files_dir = self.outdir + "/deprecated"
+            if not os.path.exists(record_files_dir):
+                os.makedirs(record_files_dir)
 
         if self.script_type == "lua":
             docfilepath = os.path.join(docfiledir, self.out_file + "_api.lua")
@@ -1408,7 +1473,8 @@ def main():
                 'out_file': opts.out_file or config.get(s, 'prefix'),
                 'script_control_cpp': config.get(s, 'script_control_cpp') if config.has_option(s, 'script_control_cpp') else 'no',
                 'script_type': t,
-                'macro_judgement': config.get(s, 'macro_judgement') if config.has_option(s, 'macro_judgement') else None
+                'macro_judgement': config.get(s, 'macro_judgement') if config.has_option(s, 'macro_judgement') else None,
+                'record_deprecated_func' : config.get(s, 'record_deprecated_func') if config.has_option(s, 'record_deprecated_func') else 'no'
                 }
             generator = Generator(gen_opts)
             generator.generate_code()

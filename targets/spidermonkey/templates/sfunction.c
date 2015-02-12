@@ -1,8 +1,8 @@
 ## ===== static function implementation template
 bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 {
+    JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
 #if len($arguments) > 0
-    jsval *argv = JS_ARGV(cx, vp);
     bool ok = true;
 #end if
 #if len($arguments) >= $min_args
@@ -22,7 +22,7 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
         #while $count < $arg_idx
             #set $arg = $arguments[$count]
         ${arg.to_native({"generator": $generator,
-            "in_value": "argv[" + str(count) + "]",
+            "in_value": "args.get(" + str(count) + ")",
             "out_value": "arg" + str(count),
             "class_name": $class_name,
             "level": 2,
@@ -46,10 +46,10 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
                                 "out_value": "jsret",
                                 "ntype": str($ret_type),
                                 "level": 1})};
-        JS_SET_RVAL(cx, vp, jsret);
+        args.rval().set(jsret);
     #else
         ${namespaced_class_name}::${func_name}($arg_list);
-        JS_SET_RVAL(cx, vp, JSVAL_VOID);
+        args.rval().setUndefined();
     #end if
         return true;
     }

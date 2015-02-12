@@ -6,11 +6,12 @@
 
 template<class T>
 static bool dummy_constructor(JSContext *cx, uint32_t argc, jsval *vp) {
+    JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
     JS::RootedValue initializing(cx);
     bool isNewValid = true;
 #if not $script_control_cpp
-    JSObject* global = ScriptingCore::getInstance()->getGlobalObject();
-    isNewValid = JS_GetProperty(cx, global, "initializing", &initializing) && JSVAL_TO_BOOLEAN(initializing);
+    JS::RootedObject global(cx, ScriptingCore::getInstance()->getGlobalObject());
+    isNewValid = JS_GetProperty(cx, global, "initializing", &initializing) && initializing.toBoolean();
 #end if
     if (isNewValid)
     {
@@ -22,13 +23,16 @@ static bool dummy_constructor(JSContext *cx, uint32_t argc, jsval *vp) {
         typeClass = typeMapIter->second;
         CCASSERT(typeClass, "The value is null.");
 
-        JSObject *_tmp = JS_NewObject(cx, typeClass->jsclass, typeClass->proto, typeClass->parentProto);
+        JS::RootedObject proto(cx, typeClass->proto.get());
+        JS::RootedObject parent(cx, typeClass->parentProto.get());
+        JS::RootedObject _tmp(cx, JS_NewObject(cx, typeClass->jsclass, proto, parent));
+        
     #if $script_control_cpp
         T* cobj = new T();
         js_proxy_t *pp = jsb_new_proxy(cobj, _tmp);
-        JS_AddObjectRoot(cx, &pp->obj);
+        AddObjectRoot(cx, &pp->obj);
     #end if
-        JS_SET_RVAL(cx, vp, OBJECT_TO_JSVAL(_tmp));
+        args.rval().set(OBJECT_TO_JSVAL(_tmp));
         return true;
     }
 
@@ -42,8 +46,9 @@ static bool empty_constructor(JSContext *cx, uint32_t argc, jsval *vp) {
     return false;
 }
 
-static bool js_is_native_obj(JSContext *cx, JS::HandleObject obj, JS::HandleId id, JS::MutableHandleValue vp)
+static bool js_is_native_obj(JSContext *cx, uint32_t argc, jsval *vp)
 {
-    vp.set(BOOLEAN_TO_JSVAL(true));
+    JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+    args.rval().setBoolean(true);
     return true;    
 }

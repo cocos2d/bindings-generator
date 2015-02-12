@@ -1,7 +1,7 @@
 do {
     if(JS_TypeOfValue(cx, ${in_value}) == JSTYPE_FUNCTION)
     {
-        std::shared_ptr<JSFunctionWrapper> func(new JSFunctionWrapper(cx, JS_THIS_OBJECT(cx, vp), ${in_value}));
+        std::shared_ptr<JSFunctionWrapper> func(new JSFunctionWrapper(cx, args.thisv().toObjectOrNull(), ${in_value}));
         auto lambda = [=](${lambda_parameters}) -> ${ret_type.name} {
             JSB_AUTOCOMPARTMENT_WITH_GLOBAL_OBJCET
             #set arg_count = len($param_types)
@@ -19,11 +19,11 @@ do {
                                  "ntype": str($arg)})};
                 #set $count = $count + 1
             #end while
-            jsval rval;
+            JS::RootedValue rval(cx);
             #if $arg_count > 0
-            bool ok = func->invoke(${arg_count}, &largv[0], rval);
+            bool ok = func->invoke(${arg_count}, &largv[0], &rval);
             #else
-            bool ok = func->invoke(${arg_count}, nullptr, rval);
+            bool ok = func->invoke(${arg_count}, nullptr, &rval);
             #end if
             if (!ok && JS_IsExceptionPending(cx)) {
                 JS_ReportPendingException(cx);

@@ -69,6 +69,7 @@ conversions:
     "Vec3": "ok &= jsval_to_vector3(cx, ${in_value}, &${out_value})"
     "BlendFunc": "ok &= jsval_to_blendfunc(cx, ${in_value}, &${out_value})"
     "AnimationInfo": "ok &= jsval_to_animationInfo(cx, ${in_value}, &${out_value})"
+    "Quaternion": "ok &= jsval_to_quaternion(cx, ${in_value}, &${out_value})"
     object: |
       do {
       ${($level + 1) * '    '}if (!${in_value}.isObject()) { ok = false; break; }
@@ -132,6 +133,7 @@ conversions:
     "spAnimationState*": "${out_value} = spanimationstate_to_jsval(cx, *${in_value})"
     "spAnimation*": "${out_value} = spanimation_to_jsval(cx, *${in_value})"
     "spTrackEntry*": "${out_value} = sptrackentry_to_jsval(cx, *${in_value})"
+    "Quaternion": "${out_value} = quaternion_to_jsval(cx, ${in_value})"
     object: |
       do {
       ${($level + 1) * '    '}if (${in_value}) {

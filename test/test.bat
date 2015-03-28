@@ -26,14 +26,17 @@ if defined NDK_ROOT (echo NDK_ROOT is defined.) else (
     exit /b 1
     )
 
+set LLVM="%NDK_ROOT%/toolchains/llvm-3.3/prebuilt/"
+if not exist "%NDK_ROOT%/toolchains/llvm-3.3/prebuilt/" set LLVM="%NDK_ROOT%/toolchains/llvm-3.4/prebuilt/"
+
 :: Check use 32-bit or 64-bit
 :: Assume 64-bit
 set TEMP=windows-x86_64
-if not exist "%NDK_ROOT%/toolchains/llvm-3.3/prebuilt/%TEMP%" set TEMP=
+if not exist "%LLVM%%TEMP%" set TEMP=
 :: Otherwise fall back to 32-bit make
 if "%TEMP%"=="" set TEMP=windows
 
-set NDK_LLVM_ROOT=%NDK_ROOT%/toolchains/llvm-3.3/prebuilt/%TEMP%
+set NDK_LLVM_ROOT=%LLVM%%TEMP%
 
 set CXX_GENERATOR_ROOT=%cd%/..
 set "CXX_GENERATOR_ROOT=%CXX_GENERATOR_ROOT:\=/%"

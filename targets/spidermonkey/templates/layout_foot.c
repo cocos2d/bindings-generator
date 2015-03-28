@@ -1,22 +1,13 @@
-void register_all_${prefix}(JSContext* cx, JSObject* obj) {
+void register_all_${prefix}(JSContext* cx, JS::HandleObject obj) {
     #if $target_ns
-    // first, try to get the ns
-    JS::RootedValue nsval(cx);
+    // Get the ns
     JS::RootedObject ns(cx);
-    JS_GetProperty(cx, obj, "${target_ns}", &nsval);
-    if (nsval == JSVAL_VOID) {
-        ns = JS_NewObject(cx, NULL, NULL, NULL);
-        nsval = OBJECT_TO_JSVAL(ns);
-        JS_SetProperty(cx, obj, "${target_ns}", nsval);
-    } else {
-        JS_ValueToObject(cx, nsval, &ns);
-    }
-    obj = ns;
+    get_or_create_js_obj(cx, obj, "${target_ns}", &ns);
     #end if
 
     #for jsclass in $sorted_classes
     #if $in_listed_classes(jsclass)
-    js_register_${prefix}_${jsclass}(cx, obj);
+    js_register_${prefix}_${jsclass}(cx, ns);
     #end if
     #end for
 }

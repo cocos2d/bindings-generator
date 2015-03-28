@@ -47,15 +47,18 @@ echo "    CXX_GENERATOR_ROOT: $CXX_GENERATOR_ROOT"
 echo "    TO_JS_ROOT: $TO_JS_ROOT"
 
 # check NDK version, must be r9b
-if ! grep -q r9b $NDK_ROOT/RELEASE.TXT
-then
-    echo " Fatal Error: NDK r9b must be required!"
-    exit 1
-fi
+# if ! grep -q r9b $NDK_ROOT/RELEASE.TXT
+# then
+#     echo " Fatal Error: NDK r9b must be required!"
+#     exit 1
+# fi
 
 # check clang include path
 OS_NAME=$('uname')
 NDK_LLVM_ROOT=$NDK_ROOT/toolchains/llvm-3.3/prebuilt
+if [ ! -d "$DIRECTORY" ]; then
+    NDK_LLVM_ROOT=$NDK_ROOT/toolchains/llvm-3.4/prebuilt
+fi
 case "$OS_NAME" in
     Darwin | darwin)
         echo "in darwin"
@@ -65,7 +68,7 @@ case "$OS_NAME" in
             NDK_LLVM_ROOT=$NDK_LLVM_ROOT/darwin-x86
         else
             echo $NDK_LLVM_ROOT
-            echo " Fatal Error: $NDK_LLVM_ROOT doesn't contains prebuilt llvm 3.3"
+            echo " Fatal Error: $NDK_LLVM_ROOT doesn't contains prebuilt llvm 3.3 or 3.4"
             exit 1
         fi
         ;;
@@ -76,7 +79,7 @@ case "$OS_NAME" in
         elif [ -d "$NDK_LLVM_ROOT/linux-x86" ]; then
             NDK_LLVM_ROOT=$NDK_LLVM_ROOT/linux-x86
         else
-            echo " Fatal Error: $NDK_LLVM_ROOT doesn't contains prebuilt llvm 3.3"
+            echo " Fatal Error: $NDK_LLVM_ROOT doesn't contains prebuilt llvm 3.3 or 3.4"
             exit 1
         fi
         ;;

@@ -32,24 +32,24 @@ void js_${current_class.underlined_class_name}_finalize(JSFreeOp *fop, JSObject 
 #if $generator.in_listed_extend_classed($current_class.class_name) and not $current_class.is_abstract
 static bool js_${current_class.underlined_class_name}_ctor(JSContext *cx, uint32_t argc, jsval *vp)
 {
-    jsval *argv = JS_ARGV(cx, vp);
-    JSObject *obj = JS_THIS_OBJECT(cx, vp);
+    JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+    JS::RootedObject obj(cx, args.thisv().toObjectOrNull());
     ${current_class.namespaced_class_name} *nobj = new (std::nothrow) ${current_class.namespaced_class_name}();
     if (nobj) {
         nobj->autorelease();
     }
     js_proxy_t* p = jsb_new_proxy(nobj, obj);
 #if not $generator.script_control_cpp
-    JS_AddNamedObjectRoot(cx, &p->obj, "${current_class.namespaced_class_name}");
+    AddNamedObjectRoot(cx, &p->obj, "${current_class.namespaced_class_name}");
 #end if
     bool isFound = false;
     if (JS_HasProperty(cx, obj, "_ctor", &isFound) && isFound)
-        ScriptingCore::getInstance()->executeFunctionWithOwner(OBJECT_TO_JSVAL(obj), "_ctor", argc, argv);
-    JS_SET_RVAL(cx, vp, JSVAL_VOID);
+        ScriptingCore::getInstance()->executeFunctionWithOwner(OBJECT_TO_JSVAL(obj), "_ctor", args);
+    args.rval().setUndefined();
     return true;
 }
 #end if
-void js_register_${generator.prefix}_${current_class.class_name}(JSContext *cx, JSObject *global) {
+void js_register_${generator.prefix}_${current_class.class_name}(JSContext *cx, JS::HandleObject global) {
     jsb_${current_class.underlined_class_name}_class = (JSClass *)calloc(1, sizeof(JSClass));
     jsb_${current_class.underlined_class_name}_class->name = "${current_class.target_class_name}";
     jsb_${current_class.underlined_class_name}_class->addProperty = JS_PropertyStub;
@@ -63,8 +63,8 @@ void js_register_${generator.prefix}_${current_class.class_name}(JSContext *cx, 
     jsb_${current_class.underlined_class_name}_class->flags = JSCLASS_HAS_RESERVED_SLOTS(2);
 
     static JSPropertySpec properties[] = {
-        {"__nativeObj", 0, JSPROP_ENUMERATE | JSPROP_PERMANENT, JSOP_WRAPPER(js_is_native_obj), JSOP_NULLWRAPPER},
-        {0, 0, 0, JSOP_NULLWRAPPER, JSOP_NULLWRAPPER}
+        JS_PSG("__nativeObj", js_is_native_obj, JSPROP_PERMANENT | JSPROP_ENUMERATE),
+        JS_PS_END
     };
 
     static JSFunctionSpec funcs[] = {
@@ -93,9 +93,9 @@ void js_register_${generator.prefix}_${current_class.class_name}(JSContext *cx, 
     jsb_${current_class.underlined_class_name}_prototype = JS_InitClass(
         cx, global,
 #if len($current_class.parents) > 0
-        jsb_${current_class.parents[0].underlined_class_name}_prototype,
+        JS::RootedObject(cx, jsb_${current_class.parents[0].underlined_class_name}_prototype),
 #else
-        NULL, // parent proto
+        JS::NullPtr(), // parent proto
 #end if
         jsb_${current_class.underlined_class_name}_class,
 #if has_constructor

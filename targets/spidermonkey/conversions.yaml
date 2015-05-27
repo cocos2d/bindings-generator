@@ -9,8 +9,6 @@ conversions:
   # the most common case would be from JS-boolean to bool. Using "bool" will fail here since we
   # pass the address to the conversion method, and a JSBool is defined as an integer in spidermonkey
   native_types:
-  # JSBool was removed from Firefox v27
-#    bool: "JSBool"
     float: "double"
     short: "int32_t"
     "unsigned char": "uint16_t"

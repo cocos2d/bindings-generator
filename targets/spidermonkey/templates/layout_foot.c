@@ -12,3 +12,6 @@ void register_all_${prefix}(JSContext* cx, JS::HandleObject obj) {
     #end for
 }
 
+#if $macro_judgement
+\#endif //$macro_judgement
+#end if

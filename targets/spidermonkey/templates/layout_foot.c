@@ -13,5 +13,5 @@ void register_all_${prefix}(JSContext* cx, JS::HandleObject obj) {
 }
 
 #if $macro_judgement
-\#endif
+\#endif //$macro_judgement
 #end if

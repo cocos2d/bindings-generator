@@ -1,4 +1,7 @@
 \#include "${out_file}.hpp"
+#if $macro_judgement
+$macro_judgement
+#end if 
 \#include "cocos2d_specifics.hpp"
 #for header in $headers
 \#include "${os.path.basename(header)}"

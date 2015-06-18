@@ -6,7 +6,7 @@ $macro_judgement
 \#define __${prefix}_h__
 #if $hpp_headers
 #for header in $hpp_headers
-\#include "${os.path.basename(header)}"
+\#include "${header}"
 #end for
 #end if 
 

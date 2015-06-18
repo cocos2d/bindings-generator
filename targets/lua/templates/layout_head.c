@@ -9,7 +9,7 @@ $macro_judgement
 \#include "LuaBasicConversions.h"
 #if $cpp_headers
 #for header in $cpp_headers
-\#include "${os.path.basename(header)}"
+\#include "${header}"
 #end for
 #end if 
 

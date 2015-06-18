@@ -6,6 +6,11 @@ $macro_judgement
 #for header in $headers
 \#include "${os.path.basename(header)}"
 #end for
+#if $cpp_headers
+#for header in $cpp_headers
+\#include "${os.path.basename(header)}"
+#end for
+#end if 
 
 template<class T>
 static bool dummy_constructor(JSContext *cx, uint32_t argc, jsval *vp) {

@@ -7,4 +7,8 @@ $macro_judgement
 
 \#include "jsapi.h"
 \#include "jsfriendapi.h"
-
+#if $hpp_headers
+#for header in $hpp_headers
+\#include "${os.path.basename(header)}"
+#end for
+#end if 

@@ -69,6 +69,7 @@ conversions:
     "AnimationInfo": "ok &= jsval_to_animationInfo(cx, ${in_value}, &${out_value})"
     "Quaternion": "ok &= jsval_to_quaternion(cx, ${in_value}, &${out_value})"
     "Ray": "ok &= jsval_to_ray(cx, ${in_value}, &${out_value})"
+    "NavMeshAgentParam": "ok &= jsval_to_NavMeshAgentParam(cx, ${in_value}, &${out_value})"
     object: |
       do {
       ${($level + 1) * '    '}if (${in_value}.isNull()) { ${out_value} = nullptr; break; }
@@ -134,6 +135,7 @@ conversions:
     "spAnimation*": "${out_value} = spanimation_to_jsval(cx, *${in_value})"
     "spTrackEntry*": "${out_value} = sptrackentry_to_jsval(cx, *${in_value})"
     "Quaternion": "${out_value} = quaternion_to_jsval(cx, ${in_value})"
+    "OffMeshLinkData": "${out_value} = offMeshLinkData_to_jsval(cx, ${in_value})"
     object: |
       do {
       ${($level + 1) * '    '}if (${in_value}) {

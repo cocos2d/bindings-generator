@@ -130,5 +130,8 @@ void js_register_${generator.prefix}_${current_class.class_name}(JSContext *cx, 
 #end if
         _js_global_type_map.insert(std::make_pair(typeName, p));
     }
+#if $generator.in_listed_extend_classed($current_class.class_name) and not $current_class.is_abstract
+    anonEvaluate(cx, global, "(function () { ${generator.target_ns}.${current_class.target_class_name}.extend = cc.Class.extend; })()");
+#end if
 }
 

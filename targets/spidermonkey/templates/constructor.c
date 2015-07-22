@@ -31,7 +31,7 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
     #end if
     #set $arg_list = ", ".join($arg_array)
     ${namespaced_class_name}* cobj = new (std::nothrow) ${namespaced_class_name}($arg_list);
-#if not $generator.script_control_cpp
+#if not $generator.script_control_cpp and $is_ref_class
     cocos2d::Ref *_ccobj = dynamic_cast<cocos2d::Ref *>(cobj);
     if (_ccobj) {
         _ccobj->autorelease();

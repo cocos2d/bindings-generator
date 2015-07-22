@@ -21,11 +21,11 @@ do {
             #end while
             JS::RootedValue rval(cx);
             #if $arg_count > 0
-            bool ok = func->invoke(${arg_count}, &largv[0], &rval);
+            bool succeed = func->invoke(${arg_count}, &largv[0], &rval);
             #else
-            bool ok = func->invoke(${arg_count}, nullptr, &rval);
+            bool succeed = func->invoke(${arg_count}, nullptr, &rval);
             #end if
-            if (!ok && JS_IsExceptionPending(cx)) {
+            if (!succeed && JS_IsExceptionPending(cx)) {
                 JS_ReportPendingException(cx);
             }
             #if $ret_type.name != "void"

@@ -798,8 +798,9 @@ class NativeClass(object):
         """
         # print ">" * (depth + 1) + " " + self.class_name
 
-        if len(self.parents) > 0:
-            return self.parents[0]._is_ref_class(depth + 1)
+        for parent in self.parents:
+            if parent._is_ref_class(depth + 1):
+                return True
 
         if self.is_ref_class:
             return True

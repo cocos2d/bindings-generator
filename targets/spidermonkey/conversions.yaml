@@ -16,6 +16,7 @@ conversions:
     "@std::vector<std::basic_string.*>.>.>": "std::vector<std::string>"
     "@std::vector<int.*>.>": "std::vector<int>"
     "@cocos2d::Map<std::basic_string.*,": "cocos2d::Map<std::string,"
+    "@std::map<std::basic_string.*,\\s*std::basic_string.*>": "std::map<std::string, std::string>"
   ns_map:
     "cocos2d::extension::": "cc."
     "cocos2d::ui::": "ccui."
@@ -55,6 +56,7 @@ conversions:
     "String*": "std::string ${out_value}_tmp; ok &= jsval_to_std_string(cx, ${in_value}, &${out_value}_tmp); ${out_value} = cocos2d::String::create(${out_value}_tmp)"
     "@Vector<.*>": "ok &= jsval_to_ccvector(cx, ${in_value}, &${out_value})"
     "@Map<std::basic_string.*>": "ok &= jsval_to_ccmap_string_key(cx, ${in_value}, &${out_value})"
+    "@map<std::basic_string.*,\\s*std::basic_string.*>": "ok &= jsval_to_std_map_string_string(cx, ${in_value}, &${out_value})"
     "Value": "ok &= jsval_to_ccvalue(cx, ${in_value}, &${out_value})"
     "ValueMap": "ok &= jsval_to_ccvaluemap(cx, ${in_value}, &${out_value})"
     "ValueMapIntKey": "ok &= jsval_to_ccvaluemapintkey(cx, ${in_value}, &${out_value})"
@@ -110,6 +112,7 @@ conversions:
     "String*": "${out_value} = std_string_to_jsval(cx, ${in_value}->getCString())"
     "@Vector<.*>": "${out_value} = ccvector_to_jsval(cx, ${in_value})"
     "@Map<std::basic_string.*>": "${out_value} = ccmap_string_key_to_jsval(cx, ${in_value})"
+    "@map<std::basic_string.*,\\s*std::basic_string.*>": "${out_value} = std_map_string_string_to_jsval(cx, ${in_value})"
     "Value": "${out_value} = ccvalue_to_jsval(cx, ${in_value})"
     "ValueMap": "${out_value} = ccvaluemap_to_jsval(cx, ${in_value})"
     "ValueMapIntKey": "${out_value} = ccvaluemapintkey_to_jsval(cx, ${in_value})"

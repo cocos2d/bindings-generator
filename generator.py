@@ -414,6 +414,23 @@ class NativeType(object):
 
         return name
 
+    def object_can_convert(self, generator, is_to_native = True):
+        if self.is_object:
+            keys = []
+            if  self.canonical_type != None:
+                keys.append(self.canonical_type.name)
+            keys.append(self.name)
+            if is_to_native:
+                to_native_dict = generator.config['conversions']['to_native']
+                if NativeType.dict_has_key_re(to_native_dict, keys):
+                    return True
+            else:
+                from_native_dict = generator.config['conversions']['from_native']
+                if NativeType.dict_has_key_re(from_native_dict, keys):
+                    return True
+
+        return False
+
     def __str__(self):
         return  self.canonical_type.whole_name if None != self.canonical_type else self.whole_name
 
@@ -426,10 +443,33 @@ class NativeField(object):
         self.location = cursor.location
         member_field_re = re.compile('m_(\w+)')
         match = member_field_re.match(self.name)
+        self.signature_name = self.name
+        self.ntype  = NativeType.from_type(cursor.type)
         if match:
             self.pretty_name = match.group(1)
         else:
             self.pretty_name = self.name
+
+    @staticmethod
+    def can_parse(ntype):
+        if ntype.kind == cindex.TypeKind.POINTER:
+            return False
+        native_type = NativeType.from_type(ntype)
+        if ntype.kind == cindex.TypeKind.UNEXPOSED and native_type.name != "std::string":
+            return False
+        return True
+
+    def generate_code(self, current_class = None, generator = None):
+        gen = current_class.generator if current_class else generator
+        config = gen.config
+
+        if config['definitions'].has_key('public_field'):
+            tpl = Template(config['definitions']['public_field'],
+                                    searchList=[current_class, self])
+            self.signature_name = str(tpl)
+        tpl = Template(file=os.path.join(gen.target, "templates", "public_field.c"),
+                       searchList=[current_class, self])
+        gen.impl_file.write(str(tpl))
 
 # return True if found default argument.
 def iterate_param_node(param_node, depth=1):
@@ -674,6 +714,7 @@ class NativeClass(object):
         self.namespaced_class_name = self.class_name
         self.parents = []
         self.fields = []
+        self.public_fields = []
         self.methods = {}
         self.static_methods = {}
         self.generator = generator
@@ -778,6 +819,9 @@ class NativeClass(object):
         if self.generator.script_type == "lua":  
             for m in self.override_methods_clean():
                 m['impl'].generate_code(self, is_override = True)
+        for m in self.public_fields:
+            if self.generator.should_bind_field(self.class_name, m.name):
+                m.generate_code(self)
         # generate register section
         register = Template(file=os.path.join(self.generator.target, "templates", "register.c"),
                             searchList=[{"current_class": self}])
@@ -850,6 +894,8 @@ class NativeClass(object):
 
         elif cursor.kind == cindex.CursorKind.FIELD_DECL:
             self.fields.append(NativeField(cursor))
+            if self._current_visibility == cindex.AccessSpecifierKind.PUBLIC and NativeField.can_parse(cursor.type):
+                self.public_fields.append(NativeField(cursor))
         elif cursor.kind == cindex.CursorKind.CXX_ACCESS_SPEC_DECL:
             self._current_visibility = cursor.get_access_specifier()
         elif cursor.kind == cindex.CursorKind.CXX_METHOD and cursor.get_availability() != cindex.AvailabilityKind.DEPRECATED:
@@ -936,6 +982,7 @@ class Generator(object):
         self.impl_file = None
         self.head_file = None
         self.skip_classes = {}
+        self.bind_fields = {}
         self.generated_classes = {}
         self.rename_functions = {}
         self.rename_classes = {}
@@ -973,6 +1020,16 @@ class Generator(object):
                     self.skip_classes[class_name] = match.group(1).split(" ")
                 else:
                     raise Exception("invalid list of skip methods")
+        if opts['field']:
+            list_of_fields = re.split(",\n?", opts['field'])
+            for field in list_of_fields:
+                class_name, fields = field.split("::")
+                self.bind_fields[class_name] = []
+                match = re.match("\[([^]]+)\]", fields)
+                if match:
+                    self.bind_fields[class_name] = match.group(1).split(" ")
+                else:
+                    raise Exception("invalid list of bind fields")
         if opts['rename_functions']:
             list_of_function_renames = re.split(",\n?", opts['rename_functions'])
             for rename in list_of_function_renames:
@@ -1029,6 +1086,28 @@ class Generator(object):
                                 return True
         if verbose:
             print "%s will be accepted (%s, %s)" % (class_name, key, self.skip_classes[key])
+        return False
+
+    def should_bind_field(self, class_name, field_name, verbose=False):
+        if class_name == "*" and self.bind_fields.has_key("*"):
+            for func in self.bind_fields["*"]:
+                if re.match(func, method_name):
+                    return True
+        else:
+            for key in self.bind_fields.iterkeys():
+                if key == "*" or re.match("^" + key + "$", class_name):
+                    if verbose:
+                        print "%s in bind_fields" % (class_name)
+                    if len(self.bind_fields[key]) == 1 and self.bind_fields[key][0] == "*":
+                        if verbose:
+                            print "All public fields of %s will be bound" % (class_name)
+                        return True
+                    if field_name != None:
+                        for field in self.bind_fields[key]:
+                            if re.match(field, field_name):
+                                if verbose:
+                                    print "Field %s of %s will be bound" % (field_name, class_name)
+                                return True
         return False
 
     def in_listed_classes(self, class_name):
@@ -1123,6 +1202,7 @@ class Generator(object):
         self.impl_file.close()
         self.head_file.close()
         self.doc_file.close()
+
 
     def _pretty_print(self, diagnostics):
         print("====\nErrors in parsing headers:")
@@ -1426,6 +1506,7 @@ def main():
                 'base_classes_to_skip': config.get(s, 'base_classes_to_skip'),
                 'abstract_classes': config.get(s, 'abstract_classes'),
                 'skip': config.get(s, 'skip'),
+                'field': config.get(s, 'field') if config.has_option(s, 'field') else None,
                 'rename_functions': config.get(s, 'rename_functions'),
                 'rename_classes': config.get(s, 'rename_classes'),
                 'out_file': opts.out_file or config.get(s, 'prefix'),

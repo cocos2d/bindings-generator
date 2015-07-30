@@ -8,10 +8,11 @@ ${current_class.methods.constructor.generate_code($current_class)}
 #set generator = $current_class.generator
 #set methods = $current_class.methods_clean()
 #set st_methods = $current_class.static_methods_clean()
+#set public_fields = $current_class.public_fields
 #if len($current_class.parents) > 0
 extern JSObject *jsb_${current_class.parents[0].underlined_class_name}_prototype;
-#end if
 
+#end if
 void js_${current_class.underlined_class_name}_finalize(JSFreeOp *fop, JSObject *obj) {
     CCLOGINFO("jsbindings: finalizing JS object %p (${current_class.class_name})", obj);
 #if (not $current_class.is_ref_class and $has_constructor) or $generator.script_control_cpp
@@ -51,6 +52,11 @@ void js_register_${generator.prefix}_${current_class.class_name}(JSContext *cx, 
 
     static JSPropertySpec properties[] = {
         JS_PSG("__nativeObj", js_is_native_obj, JSPROP_PERMANENT | JSPROP_ENUMERATE),
+#for m in public_fields
+    #if $generator.should_bind_field($current_class.class_name, m.name)
+        JS_PSGS("${m.name}", ${m.signature_name}_get_${m.name}, ${m.signature_name}_set_${m.name}, JSPROP_PERMANENT | JSPROP_ENUMERATE),
+    #end if
+#end for
         JS_PS_END
     };
 

@@ -597,15 +597,16 @@ class NativeFunction(object):
                                 searchList=[current_class, self])
         if not is_override:
             gen.impl_file.write(str(tpl))
-        apidoc_function_script = Template(file=os.path.join(gen.target,
-                                                        "templates",
-                                                        "apidoc_function.script"),
-                                      searchList=[current_class, self])
-        if gen.script_type == "spidermonkey":
-            gen.doc_file.write(str(apidoc_function_script))
-        else:
-            if gen.script_type == "lua" and current_class != None :
-                current_class.doc_func_file.write(str(apidoc_function_script))
+        if not is_ctor:
+            apidoc_function_script = Template(file=os.path.join(gen.target,
+                                                            "templates",
+                                                            "apidoc_function.script"),
+                                          searchList=[current_class, self])
+            if gen.script_type == "spidermonkey":
+                gen.doc_file.write(str(apidoc_function_script))
+            else:
+                if gen.script_type == "lua" and current_class != None :
+                    current_class.doc_func_file.write(str(apidoc_function_script))
 
 
 class NativeOverloadedFunction(object):
@@ -689,7 +690,7 @@ class NativeOverloadedFunction(object):
         if not is_override:
             gen.impl_file.write(str(tpl))
 
-        if current_class != None:
+        if current_class != None and not is_ctor:
             if gen.script_type == "lua":
                 apidoc_function_overload_script = Template(file=os.path.join(gen.target,
                                                         "templates",

@@ -1,6 +1,7 @@
 #set has_constructor = False
 #if $current_class.methods.has_key('constructor')
 #set has_constructor = True
+#set constructor = $current_class.methods.constructor
 ${current_class.methods.constructor.generate_code($current_class)}
 #end if
 
@@ -28,26 +29,12 @@ void js_${current_class.underlined_class_name}_finalize(JSFreeOp *fop, JSObject 
     }
 #end if
 }
-
-#if $generator.in_listed_extend_classed($current_class.class_name) and not $current_class.is_abstract
-static bool js_${current_class.underlined_class_name}_ctor(JSContext *cx, uint32_t argc, jsval *vp)
-{
-    JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
-    JS::RootedObject obj(cx, args.thisv().toObjectOrNull());
-    ${current_class.namespaced_class_name} *nobj = new (std::nothrow) ${current_class.namespaced_class_name}();
-    if (nobj) {
-        nobj->autorelease();
-    }
-    js_proxy_t* p = jsb_new_proxy(nobj, obj);
-#if not $generator.script_control_cpp
-    AddNamedObjectRoot(cx, &p->obj, "${current_class.namespaced_class_name}");
+#if $generator.in_listed_extend_classed($current_class.class_name) and $has_constructor
+#if not $constructor.is_overloaded
+    ${constructor.generate_code($current_class, None, False, True)}
+#else
+    ${constructor.generate_code($current_class, False, True)}
 #end if
-    bool isFound = false;
-    if (JS_HasProperty(cx, obj, "_ctor", &isFound) && isFound)
-        ScriptingCore::getInstance()->executeFunctionWithOwner(OBJECT_TO_JSVAL(obj), "_ctor", args);
-    args.rval().setUndefined();
-    return true;
-}
 #end if
 void js_register_${generator.prefix}_${current_class.class_name}(JSContext *cx, JS::HandleObject global) {
     jsb_${current_class.underlined_class_name}_class = (JSClass *)calloc(1, sizeof(JSClass));
@@ -72,8 +59,8 @@ void js_register_${generator.prefix}_${current_class.class_name}(JSContext *cx, 
         #set fn = m['impl']
         JS_FN("${m['name']}", ${fn.signature_name}, ${fn.min_args}, JSPROP_PERMANENT | JSPROP_ENUMERATE),
         #end for
-#if $generator.in_listed_extend_classed($current_class.class_name) and not $current_class.is_abstract
-        JS_FN("ctor", js_${current_class.underlined_class_name}_ctor, 0, JSPROP_PERMANENT | JSPROP_ENUMERATE),
+#if $generator.in_listed_extend_classed($current_class.class_name) and $has_constructor
+        JS_FN("ctor", js_${generator.prefix}_${current_class.class_name}_ctor, 0, JSPROP_PERMANENT | JSPROP_ENUMERATE),
 #end if
         JS_FS_END
     };

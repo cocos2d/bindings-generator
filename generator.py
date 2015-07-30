@@ -452,6 +452,7 @@ class NativeFunction(object):
         self.argumtntTips = []
         self.static = cursor.kind == cindex.CursorKind.CXX_METHOD and cursor.is_static_method()
         self.implementations = []
+        self.is_overloaded = False
         self.is_constructor = False
         self.not_supported = False
         self.is_override = False
@@ -514,13 +515,14 @@ class NativeFunction(object):
 
         return replaceStr
 
-    def generate_code(self, current_class=None, generator=None, is_override=False):
+    def generate_code(self, current_class=None, generator=None, is_override=False, is_ctor=False):
         gen = current_class.generator if current_class else generator
         config = gen.config
-        tpl = Template(file=os.path.join(gen.target, "templates", "function.h"),
+        if not is_ctor:
+            tpl = Template(file=os.path.join(gen.target, "templates", "function.h"),
                         searchList=[current_class, self])
-        if not is_override:
-            gen.head_file.write(str(tpl))
+            if not is_override:
+                gen.head_file.write(str(tpl))
         if self.static:
             if config['definitions'].has_key('sfunction'):
                 tpl = Template(config['definitions']['sfunction'],
@@ -536,11 +538,19 @@ class NativeFunction(object):
                     self.signature_name = str(tpl)
             else:
                 if config['definitions'].has_key('constructor'):
-                    tpl = Template(config['definitions']['constructor'],
+                    if not is_ctor:
+                        tpl = Template(config['definitions']['constructor'],
+                                    searchList=[current_class, self])
+                    else:
+                        tpl = Template(config['definitions']['ctor'],
                                     searchList=[current_class, self])
                     self.signature_name = str(tpl)
             if self.is_constructor and gen.script_type == "spidermonkey" :
-                tpl = Template(file=os.path.join(gen.target, "templates", "constructor.c"),
+                if not is_ctor:
+                    tpl = Template(file=os.path.join(gen.target, "templates", "constructor.c"),
+                                                searchList=[current_class, self])
+                else:
+                    tpl = Template(file=os.path.join(gen.target, "templates", "ctor.c"),
                                                 searchList=[current_class, self])
             else :
                 tpl = Template(file=os.path.join(gen.target, "templates", "ifunction.c"),
@@ -565,6 +575,7 @@ class NativeOverloadedFunction(object):
         self.signature_name = self.func_name
         self.min_args = 100
         self.is_constructor = False
+        self.is_overloaded = True
         for m in func_array:
             self.min_args = min(self.min_args, m.min_args)
 
@@ -602,14 +613,15 @@ class NativeOverloadedFunction(object):
         self.min_args = min(self.min_args, func.min_args)
         self.implementations.append(func)
 
-    def generate_code(self, current_class=None, is_override=False):
+    def generate_code(self, current_class=None, is_override=False, is_ctor=False):
         gen = current_class.generator
         config = gen.config
         static = self.implementations[0].static
-        tpl = Template(file=os.path.join(gen.target, "templates", "function.h"),
+        if not is_ctor:
+            tpl = Template(file=os.path.join(gen.target, "templates", "function.h"),
                         searchList=[current_class, self])
-        if not is_override:
-            gen.head_file.write(str(tpl))
+            if not is_override:
+                gen.head_file.write(str(tpl))
         if static:
             if config['definitions'].has_key('sfunction'):
                 tpl = Template(config['definitions']['sfunction'],
@@ -625,8 +637,12 @@ class NativeOverloadedFunction(object):
                     self.signature_name = str(tpl)
             else:
                 if config['definitions'].has_key('constructor'):
-                    tpl = Template(config['definitions']['constructor'],
-                                    searchList=[current_class, self])
+                    if not is_ctor:
+                        tpl = Template(config['definitions']['constructor'],
+                                        searchList=[current_class, self])
+                    else:
+                        tpl = Template(config['definitions']['ctor'],
+                                        searchList=[current_class, self])
                     self.signature_name = str(tpl)
             tpl = Template(file=os.path.join(gen.target, "templates", "ifunction_overloaded.c"),
                             searchList=[current_class, self])

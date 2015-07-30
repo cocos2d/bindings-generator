@@ -70,7 +70,7 @@ conversions:
     "Quaternion": "ok &= jsval_to_quaternion(cx, ${in_value}, &${out_value})"
     "Ray": "ok &= jsval_to_ray(cx, ${in_value}, &${out_value})"
     "NavMeshAgentParam": "ok &= jsval_to_NavMeshAgentParam(cx, ${in_value}, &${out_value})"
-    "Physics3DRigidBodyDes*": "cocos2d::Physics3DRigidBodyDes tempObj;${out_value}=&tempObj;ok &= jsval_to_Physics3DRigidBodyDes(cx, ${in_value}, ${out_value})"
+    "Physics3DRigidBodyDes*": "cocos2d::Physics3DRigidBodyDes tempObj;${out_value}=&tempObj;ok &= jsval_to_physics3DRigidBodyDes(cx, ${in_value}, ${out_value})"
     object: |
       do {
       ${($level + 1) * '    '}if (${in_value}.isNull()) { ${out_value} = nullptr; break; }

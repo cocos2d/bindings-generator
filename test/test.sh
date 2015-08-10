@@ -56,7 +56,7 @@ echo "    TO_JS_ROOT: $TO_JS_ROOT"
 # check clang include path
 OS_NAME=$('uname')
 NDK_LLVM_ROOT=$NDK_ROOT/toolchains/llvm-3.3/prebuilt
-if [ ! -d "$DIRECTORY" ]; then
+if [ ! -d "$NDK_LLVM_ROOT" ]; then
     NDK_LLVM_ROOT=$NDK_ROOT/toolchains/llvm-3.4/prebuilt
 fi
 case "$OS_NAME" in

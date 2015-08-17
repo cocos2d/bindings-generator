@@ -76,6 +76,8 @@ conversions:
     "NavMeshAgentParam": "ok &= jsval_to_NavMeshAgentParam(cx, ${in_value}, &${out_value})"
     "Physics3DRigidBodyDes*": "cocos2d::Physics3DRigidBodyDes tempObj;${out_value}=&tempObj;ok &= jsval_to_physics3DRigidBodyDes(cx, ${in_value}, ${out_value})"
     "TerrainData": "ok &= jsval_to_TerrainData(cx, ${in_value}, &${out_value})"
+    "TMXTileFlags_": "ok &= jsval_to_uint32(cx, ${in_value}, (uint32_t *)&${out_value})"
+    "TMXTileFlags_*": "uint32_t tempData;${out_value}=(cocos2d::TMXTileFlags_*)&tempData;ok &= jsval_to_uint32(cx, ${in_value}, (uint32_t *)&${out_value})"
     object: |
       do {
       ${($level + 1) * '    '}if (${in_value}.isNull()) { ${out_value} = nullptr; break; }

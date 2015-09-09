@@ -146,6 +146,7 @@ conversions:
     "spTrackEntry*": "${out_value} = sptrackentry_to_jsval(cx, *${in_value})"
     "Quaternion": "${out_value} = quaternion_to_jsval(cx, ${in_value})"
     "OffMeshLinkData": "${out_value} = offMeshLinkData_to_jsval(cx, ${in_value})"
+    "Uniform*": "${out_value} = uniform_to_jsval(cx, ${in_value})"
     object: |
       do {
       ${($level + 1) * '    '}if (${in_value}) {

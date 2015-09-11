@@ -152,6 +152,7 @@ class NativeType(object):
         self.is_object = False
         self.is_function = False
         self.is_enum = False
+        self.is_numeric = False
         self.not_supported = False
         self.param_types = []
         self.ret_type = None
@@ -252,6 +253,9 @@ class NativeType(object):
         # mark argument as not supported
         if nt.name == INVALID_NATIVE_TYPE:
             nt.not_supported = True
+
+        if re.search("(short|int|double|float|long|ssize_t)$", nt.name) != None:
+            nt.is_numeric = True;
 
         return nt
 

@@ -24,9 +24,15 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
         if (argc == $arg_idx) {
             #set $count = 0
             #while $count < $arg_idx
-            #set $arg = $func.arguments[$count]
-            #set $arg_type = arg.to_string($generator)
+                #set $arg = $func.arguments[$count]
+                #set $arg_type = arg.to_string($generator)
+                #if $arg.is_numeric
+            ${arg_type} arg${count} = 0;
+                #elif $arg.is_pointer
+            ${arg_type} arg${count} = nullptr;
+                #else
             ${arg_type} arg${count};
+                #end if
             ${arg.to_native({"generator": $generator,
                              "in_value": "args.get(" + str(count) + ")",
                              "out_value": "arg" + str(count),

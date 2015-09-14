@@ -36,8 +36,10 @@ bool ${signature_name}_set_${name}(JSContext *cx, uint32_t argc, jsval *vp)
     JSB_PRECONDITION2( cobj, cx, false, "${signature_name}_set_${name} : Invalid Native Object");
 
     bool ok = true;
-#if $ntype.is_object and not $ntype.object_can_convert($generator)
-    ${ntype.to_string($generator)}* arg0 = nullptr;
+#if $ntype.is_numeric
+    ${ntype.to_string($generator)} arg0 = 0;
+#elif $ntype.is_pointer
+    ${ntype.to_string($generator)} arg0 = nullptr;
 #else
     ${ntype.to_string($generator)} arg0;
 #end if

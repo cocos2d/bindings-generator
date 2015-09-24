@@ -560,6 +560,7 @@ class NativeFunction(object):
         return replaceStr
 
     def generate_code(self, current_class=None, generator=None, is_override=False, is_ctor=False):
+        self.is_ctor = is_ctor
         gen = current_class.generator if current_class else generator
         config = gen.config
         if not is_ctor:
@@ -621,6 +622,7 @@ class NativeOverloadedFunction(object):
         self.min_args = 100
         self.is_constructor = False
         self.is_overloaded = True
+        self.is_ctor = False
         for m in func_array:
             self.min_args = min(self.min_args, m.min_args)
 
@@ -659,6 +661,7 @@ class NativeOverloadedFunction(object):
         self.implementations.append(func)
 
     def generate_code(self, current_class=None, is_override=False, is_ctor=False):
+        self.is_ctor = is_ctor
         gen = current_class.generator
         config = gen.config
         static = self.implementations[0].static

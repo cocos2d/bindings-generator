@@ -1,11 +1,20 @@
 ## ===== instance function implementation template - for overloaded functions
 bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 {
+#if not $is_ctor   
+     JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+     bool ok = true;
+ 
+     JS::RootedObject obj(cx);
+     ${namespaced_class_name}* cobj = NULL;
+#end if
+#if $is_ctor
     JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+    JS::RootedObject obj(cx, args.thisv().toObjectOrNull());
     bool ok = true;
-
-    JS::RootedObject obj(cx);
     ${namespaced_class_name}* cobj = NULL;
+#end if
+
 #if not $is_constructor
     obj = args.thisv().toObjectOrNull();
     js_proxy_t *proxy = jsb_get_js_proxy(obj);
@@ -55,6 +64,8 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
                 _ccobj->autorelease();
             }
 #end if
+
+#if not $is_ctor
             TypeTest<${namespaced_class_name}> t;
             js_type_class_t *typeClass = nullptr;
             std::string typeName = t.s_name();
@@ -66,6 +77,7 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
             JS::RootedObject proto(cx, typeClass->proto.get());
             JS::RootedObject parent(cx, typeClass->parentProto.get());
             obj = JS_NewObject(cx, typeClass->jsclass, proto, parent);
+#end if
 
             js_proxy_t* p = jsb_new_proxy(cobj, obj);
 #if not $generator.script_control_cpp

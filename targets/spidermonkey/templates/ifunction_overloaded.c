@@ -1,24 +1,21 @@
 ## ===== instance function implementation template - for overloaded functions
 bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 {
+    bool ok = true;
+    ${namespaced_class_name}* cobj = nullptr;
+
 #if not $is_ctor   
-     JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
-     bool ok = true;
- 
-     JS::RootedObject obj(cx);
-     ${namespaced_class_name}* cobj = NULL;
+    JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+    JS::RootedObject obj(cx);
 #end if
 #if $is_ctor
     JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
     JS::RootedObject obj(cx, args.thisv().toObjectOrNull());
-    bool ok = true;
-    ${namespaced_class_name}* cobj = NULL;
 #end if
-
 #if not $is_constructor
     obj = args.thisv().toObjectOrNull();
     js_proxy_t *proxy = jsb_get_js_proxy(obj);
-    cobj = (${namespaced_class_name} *)(proxy ? proxy->ptr : NULL);
+    cobj = (${namespaced_class_name} *)(proxy ? proxy->ptr : nullptr);
     JSB_PRECONDITION2( cobj, cx, false, "${signature_name} : Invalid Native Object");
 #end if
 #for func in $implementations

@@ -994,6 +994,7 @@ class Generator(object):
         self.generated_classes = {}
         self.rename_functions = {}
         self.rename_classes = {}
+        self.replace_headers = {}
         self.out_file = opts['out_file']
         self.script_control_cpp = opts['script_control_cpp'] == "yes"
         self.script_type = opts['script_type']
@@ -1057,6 +1058,12 @@ class Generator(object):
             for rename in list_of_class_renames:
                 class_name, renamed_class_name = rename.split("::")
                 self.rename_classes[class_name] = renamed_class_name
+
+        if opts['replace_headers']:
+            list_of_replace_headers = re.split(",\n?", opts['replace_headers'])
+            for replace in list_of_replace_headers:
+                header, replaced_header = replace.split("::")
+                self.replace_headers[header] = replaced_header
 
 
     def should_rename_function(self, class_name, method_name):
@@ -1186,6 +1193,7 @@ class Generator(object):
 
         layout_h = Template(file=os.path.join(self.target, "templates", "layout_head.h"),
                             searchList=[self])
+        print os.path.basename('/Users/panda/StudyWork/Cocos/CocosFramework/cocos/scripting/js-bindings/manual/component/CCComponentJS.h')
         layout_c = Template(file=os.path.join(self.target, "templates", "layout_head.c"),
                             searchList=[self])
         apidoc_ns_script = Template(file=os.path.join(self.target, "templates", "apidoc_ns.script"),
@@ -1502,6 +1510,7 @@ def main():
             gen_opts = {
                 'prefix': config.get(s, 'prefix'),
                 'headers':    (config.get(s, 'headers'        , 0, dict(userconfig.items('DEFAULT')))),
+                'replace_headers': config.get(s, 'replace_headers') if config.has_option(s, 'replace_headers') else None,
                 'classes': config.get(s, 'classes').split(' '),
                 'classes_need_extend': config.get(s, 'classes_need_extend').split(' ') if config.has_option(s, 'classes_need_extend') else [],
                 'clang_args': (config.get(s, 'extra_arguments', 0, dict(userconfig.items('DEFAULT'))) or "").split(" "),

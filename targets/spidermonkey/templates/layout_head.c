@@ -4,7 +4,12 @@ $macro_judgement
 #end if 
 \#include "cocos2d_specifics.hpp"
 #for header in $headers
-\#include "${os.path.basename(header)}"
+    #set include_header = os.path.basename(header)
+    #if $replace_headers.has_key(include_header)
+\#include "${replace_headers[include_header]}"
+    #else
+\#include "${include_header}"
+    #end if
 #end for
 #if $cpp_headers
 #for header in $cpp_headers

@@ -1193,7 +1193,6 @@ class Generator(object):
 
         layout_h = Template(file=os.path.join(self.target, "templates", "layout_head.h"),
                             searchList=[self])
-        print os.path.basename('/Users/panda/StudyWork/Cocos/CocosFramework/cocos/scripting/js-bindings/manual/component/CCComponentJS.h')
         layout_c = Template(file=os.path.join(self.target, "templates", "layout_head.c"),
                             searchList=[self])
         apidoc_ns_script = Template(file=os.path.join(self.target, "templates", "apidoc_ns.script"),

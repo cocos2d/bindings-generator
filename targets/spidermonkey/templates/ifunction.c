@@ -48,14 +48,7 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
         #set $arg_list = ", ".join($arg_array)
         #if $is_constructor
         ${namespaced_class_name}* cobj = new (std::nothrow) ${namespaced_class_name}($arg_list);
-        #if $is_ref_class
-        cobj->autorelease();
-            #if $generator.script_control_cpp
-        cobj->retain();
-        retainCount++;
-        CCLOG("++++++RETAINED++++++ %d ref count: %d", retainCount, cobj->getReferenceCount());
-            #end if
-        #end if
+
         TypeTest<${namespaced_class_name}> t;
         js_type_class_t *typeClass = nullptr;
         std::string typeName = t.s_name();
@@ -66,8 +59,21 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
         JS::RootedObject proto(cx, typeClass->proto.get());
         JS::RootedObject parent(cx, typeClass->parentProto.get());
         JS::RootedObject obj(cx, JS_NewObject(cx, typeClass->jsclass, proto, parent));
+        jsval objVal = OBJECT_TO_JSVAL(obj);
         
-        args.rval().set(OBJECT_TO_JSVAL(obj));
+        #if $is_ref_class
+        cobj->autorelease();
+            #if $generator.script_control_cpp
+        cobj->retain();
+        retainCount++;
+        CCLOG("++++++RETAINED++++++ %d ref count: %d", retainCount, cobj->getReferenceCount());
+        JS::RootedObject hook(cx, JS_NewObject(cx, jsb_FinalizeHook_class, JS::RootedObject(cx, jsb_FinalizeHook_prototype), JS::NullPtr()));
+        JS_SetProperty(cx, hook, "owner", JS::RootedValue(cx, objVal));
+        JS_SetProperty(cx, obj, "__hook", JS::RootedValue(cx, OBJECT_TO_JSVAL(hook)));
+            #end if
+        #end if
+        
+        args.rval().set(objVal);
         // link the native object with the javascript object
         js_proxy_t* p = jsb_new_proxy(cobj, obj);
 #if not $generator.script_control_cpp

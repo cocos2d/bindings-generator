@@ -13,29 +13,6 @@ ${current_class.methods.constructor.generate_code($current_class)}
 extern JSObject *jsb_${current_class.parents[0].underlined_class_name}_prototype;
 
 #end if
-void js_${current_class.underlined_class_name}_finalize(JSFreeOp *fop, JSObject *obj) {
-    CCLOG("jsbindings: finalizing JS object %p (${current_class.class_name})", obj);
-#if (not $current_class.is_ref_class and $has_constructor) or ($generator.script_control_cpp and $has_constructor)
-    js_proxy_t* nproxy;
-    js_proxy_t* jsproxy;
-    jsproxy = jsb_get_js_proxy(obj);
-    if (jsproxy) {
-        ${current_class.namespaced_class_name} *nobj = static_cast<${current_class.namespaced_class_name} *>(jsproxy->ptr);
-        nproxy = jsb_get_native_proxy(jsproxy->ptr);
-
-        if (nobj) {
-    #if $current_class.is_ref_class
-            nobj->release();
-            retainCount--;
-            CCLOG("------RELEASED------ %d ref count: %d", retainCount, nobj->getReferenceCount());
-    #else
-            delete nobj;
-    #end if
-        }
-        jsb_remove_proxy(nproxy, jsproxy);
-    }
-#end if
-}
 #if $generator.in_listed_extend_classed($current_class.class_name) and $has_constructor
 #if not $constructor.is_overloaded
     ${constructor.generate_code($current_class, None, False, True)}
@@ -53,11 +30,9 @@ void js_register_${generator.prefix}_${current_class.class_name}(JSContext *cx, 
     jsb_${current_class.underlined_class_name}_class->enumerate = JS_EnumerateStub;
     jsb_${current_class.underlined_class_name}_class->resolve = JS_ResolveStub;
     jsb_${current_class.underlined_class_name}_class->convert = JS_ConvertStub;
-    jsb_${current_class.underlined_class_name}_class->finalize = js_${current_class.underlined_class_name}_finalize;
     jsb_${current_class.underlined_class_name}_class->flags = JSCLASS_HAS_RESERVED_SLOTS(2);
 
     static JSPropertySpec properties[] = {
-        JS_PSG("__nativeObj", js_is_native_obj, JSPROP_PERMANENT | JSPROP_ENUMERATE),
 #for m in public_fields
     #if $generator.should_bind_field($current_class.class_name, m.name)
         JS_PSGS("${m.name}", ${m.signature_name}_get_${m.name}, ${m.signature_name}_set_${m.name}, JSPROP_PERMANENT | JSPROP_ENUMERATE),
@@ -108,10 +83,15 @@ void js_register_${generator.prefix}_${current_class.class_name}(JSContext *cx, 
         funcs,
         NULL, // no static properties
         st_funcs);
-    // make the class enumerable in the registered namespace
-//  bool found;
-//FIXME: Removed in Firefox v27 
-//  JS_SetPropertyAttributes(cx, global, "${current_class.target_class_name}", JSPROP_ENUMERATE | JSPROP_READONLY, &found);
+    JS::RootedObject proto(cx, jsb_${current_class.underlined_class_name}_prototype);
+    JS::RootedValue className(cx, std_string_to_jsval(cx, "${current_class.class_name}"));
+    JS_SetProperty(cx, proto, "_className", className);
+    JS_SetProperty(cx, proto, "__nativeObj", JS::TrueHandleValue);
+#if $current_class.is_ref_class
+    JS_SetProperty(cx, proto, "__is_ref", JS::TrueHandleValue);
+#else
+    JS_SetProperty(cx, proto, "__is_ref", JS::FalseHandleValue);
+#end if
 
     // add the proto and JSClass to the type->js info hash table
     TypeTest<${current_class.namespaced_class_name}> t;

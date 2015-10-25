@@ -48,12 +48,14 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
         #set $arg_list = ", ".join($arg_array)
         #if $is_constructor
         ${namespaced_class_name}* cobj = new (std::nothrow) ${namespaced_class_name}($arg_list);
-#if not $generator.script_control_cpp
-        cocos2d::Ref *_ccobj = dynamic_cast<cocos2d::Ref *>(cobj);
-        if (_ccobj) {
-            _ccobj->autorelease();
-        }
-#end if
+        #if $is_ref_class
+        cobj->autorelease();
+            #if $generator.script_control_cpp
+        cobj->retain();
+        retainCount++;
+        CCLOG("++++++RETAINED++++++ %d ref count: %d", retainCount, cobj->getReferenceCount());
+            #end if
+        #end if
         TypeTest<${namespaced_class_name}> t;
         js_type_class_t *typeClass = nullptr;
         std::string typeName = t.s_name();
@@ -61,8 +63,6 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
         CCASSERT(typeMapIter != _js_global_type_map.end(), "Can't find the class type!");
         typeClass = typeMapIter->second;
         CCASSERT(typeClass, "The value is null.");
-
-        // JSObject *obj = JS_NewObject(cx, typeClass->jsclass, typeClass->proto, typeClass->parentProto);
         JS::RootedObject proto(cx, typeClass->proto.get());
         JS::RootedObject parent(cx, typeClass->parentProto.get());
         JS::RootedObject obj(cx, JS_NewObject(cx, typeClass->jsclass, proto, parent));

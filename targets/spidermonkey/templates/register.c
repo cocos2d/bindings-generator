@@ -14,19 +14,26 @@ extern JSObject *jsb_${current_class.parents[0].underlined_class_name}_prototype
 
 #end if
 void js_${current_class.underlined_class_name}_finalize(JSFreeOp *fop, JSObject *obj) {
-    CCLOGINFO("jsbindings: finalizing JS object %p (${current_class.class_name})", obj);
-#if (not $current_class.is_ref_class and $has_constructor) or $generator.script_control_cpp
+    CCLOG("jsbindings: finalizing JS object %p (${current_class.class_name})", obj);
+#if (not $current_class.is_ref_class and $has_constructor) or ($generator.script_control_cpp and $has_constructor)
     js_proxy_t* nproxy;
     js_proxy_t* jsproxy;
     jsproxy = jsb_get_js_proxy(obj);
     if (jsproxy) {
+        ${current_class.namespaced_class_name} *nobj = static_cast<${current_class.namespaced_class_name} *>(jsproxy->ptr);
         nproxy = jsb_get_native_proxy(jsproxy->ptr);
 
-        ${current_class.namespaced_class_name} *nobj = static_cast<${current_class.namespaced_class_name} *>(nproxy->ptr);
-        if (nobj)
+        if (nobj) {
+            jsb_remove_proxy(nproxy, jsproxy);
+    #if $current_class.is_ref_class
+            nobj->release();
+            retainCount--;
+            CCLOG("------RELEASED------ %d ref count: %d", retainCount, nobj->getReferenceCount());
+    #else
             delete nobj;
-        
-        jsb_remove_proxy(nproxy, jsproxy);
+    #end if
+        }
+        else jsb_remove_proxy(nullptr, jsproxy);
     }
 #end if
 }

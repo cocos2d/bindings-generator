@@ -1,4 +1,5 @@
 ## ===== ctor function implementation template
+
 static bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 {
     JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
@@ -40,14 +41,19 @@ static bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
     #end if
     #set $arg_list = ", ".join($arg_array)
     ${namespaced_class_name} *nobj = new (std::nothrow) ${namespaced_class_name}($arg_list);
-#if not $generator.script_control_cpp and $is_ref_class
-    if (nobj) {
-        nobj->autorelease();
-    }
-#end if
-    js_proxy_t* p = jsb_new_proxy(nobj, obj);
+    #if $is_ref_class
+    nobj->autorelease();
+        #if $generator.script_control_cpp
+    nobj->retain();
+    retainCount++;
+    CCLOG("++++++RETAINED++++++ %d ref count: %d", retainCount, nobj->getReferenceCount());
+        #end if
+    #end if
 #if not $generator.script_control_cpp
+    js_proxy_t* p = jsb_new_proxy(nobj, obj);
     AddNamedObjectRoot(cx, &p->obj, "${namespaced_class_name}");
+#else
+    jsb_new_proxy(nobj, obj);
 #end if
     bool isFound = false;
     if (JS_HasProperty(cx, obj, "_ctor", &isFound) && isFound)

@@ -24,7 +24,6 @@ void js_${current_class.underlined_class_name}_finalize(JSFreeOp *fop, JSObject 
         nproxy = jsb_get_native_proxy(jsproxy->ptr);
 
         if (nobj) {
-            jsb_remove_proxy(nproxy, jsproxy);
     #if $current_class.is_ref_class
             nobj->release();
             retainCount--;
@@ -33,7 +32,7 @@ void js_${current_class.underlined_class_name}_finalize(JSFreeOp *fop, JSObject 
             delete nobj;
     #end if
         }
-        else jsb_remove_proxy(nullptr, jsproxy);
+        jsb_remove_proxy(nproxy, jsproxy);
     }
 #end if
 }

@@ -20,13 +20,18 @@ void js_${current_class.underlined_class_name}_finalize(JSFreeOp *fop, JSObject 
     js_proxy_t* jsproxy;
     jsproxy = jsb_get_js_proxy(obj);
     if (jsproxy) {
+        ${current_class.namespaced_class_name} *nobj = static_cast<${current_class.namespaced_class_name} *>(jsproxy->ptr);
         nproxy = jsb_get_native_proxy(jsproxy->ptr);
 
-        ${current_class.namespaced_class_name} *nobj = static_cast<${current_class.namespaced_class_name} *>(nproxy->ptr);
-        if (nobj)
+        if (nobj) {
+            jsb_remove_proxy(nproxy, jsproxy);
+    #if $current_class.is_ref_class
+            nobj->release();
+    #else
             delete nobj;
-        
-        jsb_remove_proxy(nproxy, jsproxy);
+    #end if
+        }
+        else jsb_remove_proxy(nullptr, jsproxy);
     }
 #end if
 }

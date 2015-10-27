@@ -69,6 +69,7 @@ conversions:
     "Mat4": "ok &= jsval_to_matrix(cx, ${in_value}, &${out_value})"
     "Vec2": "ok &= jsval_to_vector2(cx, ${in_value}, &${out_value})"
     "Vec3": "ok &= jsval_to_vector3(cx, ${in_value}, &${out_value})"
+    "Vec2*": "std::vector<cocos2d::Vec2> tempData;ok &= jsval_to_vector_vec2(cx, ${in_value}, &tempData);${out_value}=tempData.data()"
     "BlendFunc": "ok &= jsval_to_blendfunc(cx, ${in_value}, &${out_value})"
     "AnimationInfo": "ok &= jsval_to_animationInfo(cx, ${in_value}, &${out_value})"
     "Quaternion": "ok &= jsval_to_quaternion(cx, ${in_value}, &${out_value})"

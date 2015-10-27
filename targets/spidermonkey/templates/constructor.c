@@ -61,9 +61,11 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
     #end if
     args.rval().set(objVal);
     // link the native object with the javascript object
-    js_proxy_t* p = jsb_new_proxy(cobj, obj);
 #if not $generator.script_control_cpp
+    js_proxy_t* p = jsb_new_proxy(cobj, obj);
     AddNamedObjectRoot(cx, &p->obj, "${namespaced_class_name}");
+#else
+    jsb_new_proxy(cobj, obj);
 #end if
     if (JS_HasProperty(cx, obj, "_ctor", &ok) && ok)
         ScriptingCore::getInstance()->executeFunctionWithOwner(OBJECT_TO_JSVAL(obj), "_ctor", args);

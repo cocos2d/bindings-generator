@@ -52,8 +52,8 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
     cobj->autorelease();
         #if $generator.script_control_cpp
     cobj->retain();
-    retainCount++;
-    CCLOG("++++++RETAINED++++++ %d ref count: %d", retainCount, cobj->getReferenceCount());
+    ScriptingCore::retainCount++;
+    CCLOG("++++++RETAINED++++++ %d ref count: %d", ScriptingCore::retainCount, cobj->getReferenceCount());
     JS::RootedObject hook(cx, JS_NewObject(cx, jsb_FinalizeHook_class, JS::RootedObject(cx, jsb_FinalizeHook_prototype), JS::NullPtr()));
     JS_SetProperty(cx, hook, "owner", JS::RootedValue(cx, objVal));
     JS_SetProperty(cx, obj, "__hook", JS::RootedValue(cx, OBJECT_TO_JSVAL(hook)));

@@ -40,11 +40,6 @@ static bool dummy_constructor(JSContext *cx, uint32_t argc, jsval *vp) {
         JS::RootedObject parent(cx, typeClass->parentProto.get());
         JS::RootedObject _tmp(cx, JS_NewObject(cx, typeClass->jsclass, proto, parent));
         
-    #if $script_control_cpp
-        T* cobj = new T();
-        js_proxy_t *pp = jsb_new_proxy(cobj, _tmp);
-        AddObjectRoot(cx, &pp->obj);
-    #end if
         args.rval().set(OBJECT_TO_JSVAL(_tmp));
         return true;
     }

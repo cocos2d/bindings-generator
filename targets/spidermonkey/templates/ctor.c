@@ -46,7 +46,7 @@ static bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
         #if $generator.script_control_cpp
     nobj->retain();
     ScriptingCore::retainCount++;
-    CCLOG("++++++RETAINED++++++ %d ref count: %d", ScriptingCore::retainCount, nobj->getReferenceCount());
+    CCLOG("++++++RETAINED++++++ %d ${namespaced_class_name} ref count: %d", ScriptingCore::retainCount, nobj->getReferenceCount());
     JS::RootedObject hook(cx, JS_NewObject(cx, jsb_FinalizeHook_class, JS::RootedObject(cx, jsb_FinalizeHook_prototype), JS::NullPtr()));
     JS_SetProperty(cx, hook, "owner", JS::RootedValue(cx, args.thisv()));
     JS_SetProperty(cx, obj, "__hook", JS::RootedValue(cx, OBJECT_TO_JSVAL(hook)));

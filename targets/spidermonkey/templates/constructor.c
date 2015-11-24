@@ -51,7 +51,7 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
     // link the native object with the javascript object
 #if $is_ref_class
     auto newproxy = jsb_new_proxy(cobj, obj);
-    jsb_ref_init(cx, &newproxy->obj, cobj);
+    jsb_ref_init(cx, &newproxy->obj, cobj, "${namespaced_class_name}");
 #else
     js_proxy_t* p = jsb_new_proxy(cobj, obj);
     AddNamedObjectRoot(cx, &p->obj, "${namespaced_class_name}");

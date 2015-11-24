@@ -48,12 +48,6 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
         #set $arg_list = ", ".join($arg_array)
         #if $is_constructor
         ${namespaced_class_name}* cobj = new (std::nothrow) ${namespaced_class_name}($arg_list);
-#if not $generator.script_control_cpp
-        cocos2d::Ref *_ccobj = dynamic_cast<cocos2d::Ref *>(cobj);
-        if (_ccobj) {
-            _ccobj->autorelease();
-        }
-#end if
         TypeTest<${namespaced_class_name}> t;
         js_type_class_t *typeClass = nullptr;
         std::string typeName = t.s_name();
@@ -70,9 +64,7 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
         args.rval().set(OBJECT_TO_JSVAL(obj));
         // link the native object with the javascript object
         js_proxy_t* p = jsb_new_proxy(cobj, obj);
-#if not $generator.script_control_cpp
-        AddNamedObjectRoot(cx, &p->obj, "${namespaced_class_name}");
-#end if
+        jsb_ref_init(cx, &p->obj, cobj, "${namespaced_class_name}");
         #else
             #if $ret_type.name != "void"
                 #if $ret_type.is_enum

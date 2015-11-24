@@ -55,12 +55,6 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
         #end if
         #if $is_constructor
             cobj = new (std::nothrow) ${namespaced_class_name}(${arg_list});
-            #if not $generator.script_control_cpp
-            cocos2d::Ref *_ccobj = dynamic_cast<cocos2d::Ref *>(cobj);
-            if (_ccobj) {
-                _ccobj->autorelease();
-            }
-            #end if
 
             #if not $is_ctor
             TypeTest<${namespaced_class_name}> t;
@@ -77,9 +71,7 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
             #end if
 
             js_proxy_t* p = jsb_new_proxy(cobj, obj);
-            #if not $generator.script_control_cpp
-            AddNamedObjectRoot(cx, &p->obj, "${namespaced_class_name}");
-            #end if
+            jsb_ref_init(cx, &p->obj, cobj, "${namespaced_class_name}");
         #else
             #if str($func.ret_type) != "void"
                 #if $func.ret_type.is_enum

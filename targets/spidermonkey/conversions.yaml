@@ -150,6 +150,8 @@ conversions:
     "OffMeshLinkData": "${out_value} = offMeshLinkData_to_jsval(cx, ${in_value})"
     "Uniform*": "${out_value} = uniform_to_jsval(cx, ${in_value})"
     "ResouceData": "${out_value} = resoucedata_to_jsval(cx, ${in_value})"
+    "TouchEventType": "${out_value} = int32_to_jsval(cx, (int)${in_value})"
+    "EventType": "${out_value} = int32_to_jsval(cx, (int)${in_value})"
     object: |
       do {
       ${($level + 1) * '    '}if (${in_value}) {

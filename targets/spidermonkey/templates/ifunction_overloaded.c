@@ -57,19 +57,12 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
             cobj = new (std::nothrow) ${namespaced_class_name}(${arg_list});
 
             #if not $is_ctor
-            TypeTest<${namespaced_class_name}> t;
-            js_type_class_t *typeClass = nullptr;
-            std::string typeName = t.s_name();
-            auto typeMapIter = _js_global_type_map.find(typeName);
-            CCASSERT(typeMapIter != _js_global_type_map.end(), "Can't find the class type!");
-            typeClass = typeMapIter->second;
-            CCASSERT(typeClass, "The value is null.");
+            js_type_class_t *typeClass = js_get_type_from_native<${namespaced_class_name}>(cobj);
             // obj = JS_NewObject(cx, typeClass->jsclass, typeClass->proto, typeClass->parentProto);
             JS::RootedObject proto(cx, typeClass->proto.get());
             JS::RootedObject parent(cx, typeClass->parentProto.get());
             obj = JS_NewObject(cx, typeClass->jsclass, proto, parent);
             #end if
-
             js_proxy_t* p = jsb_new_proxy(cobj, obj);
             jsb_ref_init(cx, &p->obj, cobj, "${namespaced_class_name}");
         #else

@@ -48,23 +48,10 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
         #set $arg_list = ", ".join($arg_array)
         #if $is_constructor
         ${namespaced_class_name}* cobj = new (std::nothrow) ${namespaced_class_name}($arg_list);
-        TypeTest<${namespaced_class_name}> t;
-        js_type_class_t *typeClass = nullptr;
-        std::string typeName = t.s_name();
-        auto typeMapIter = _js_global_type_map.find(typeName);
-        CCASSERT(typeMapIter != _js_global_type_map.end(), "Can't find the class type!");
-        typeClass = typeMapIter->second;
-        CCASSERT(typeClass, "The value is null.");
 
-        // JSObject *obj = JS_NewObject(cx, typeClass->jsclass, typeClass->proto, typeClass->parentProto);
-        JS::RootedObject proto(cx, typeClass->proto.get());
-        JS::RootedObject parent(cx, typeClass->parentProto.get());
-        JS::RootedObject obj(cx, JS_NewObject(cx, typeClass->jsclass, proto, parent));
-        
-        args.rval().set(OBJECT_TO_JSVAL(obj));
-        // link the native object with the javascript object
-        js_proxy_t* p = jsb_new_proxy(cobj, obj);
-        jsb_ref_init(cx, &p->obj, cobj, "${namespaced_class_name}");
+        js_type_class_t *typeClass = js_get_type_from_native<${namespaced_class_name}>(cobj);
+        JS::RootedObject jsobj(cx, jsb_ref_create_jsobject(cx, cobj, typeClass, "${namespaced_class_name}"));
+        args.rval().set(OBJECT_TO_JSVAL(jsobj));
         #else
             #if $ret_type.name != "void"
                 #if $ret_type.is_enum

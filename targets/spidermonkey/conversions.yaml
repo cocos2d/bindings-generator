@@ -85,7 +85,7 @@ conversions:
       ${($level + 1) * '    '}if (${in_value}.isNull()) { ${out_value} = nullptr; break; }
       ${($level + 1) * '    '}if (!${in_value}.isObject()) { ok = false; break; }
       ${($level + 1) * '    '}js_proxy_t *jsProxy;
-      ${($level + 1) * '    '}JSObject *tmpObj = ${in_value}.toObjectOrNull();
+      ${($level + 1) * '    '}JS::RootedObject tmpObj(cx, ${in_value}.toObjectOrNull());
       ${($level + 1) * '    '}jsProxy = jsb_get_js_proxy(tmpObj);
       ${($level + 1) * '    '}${out_value} = (${ntype})(jsProxy ? jsProxy->ptr : NULL);
       ${($level + 1) * '    '}JSB_PRECONDITION2( ${out_value}, cx, false, "Invalid Native Object");

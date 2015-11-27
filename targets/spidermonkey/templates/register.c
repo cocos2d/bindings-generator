@@ -64,12 +64,15 @@ void js_register_${generator.prefix}_${current_class.class_name}(JSContext *cx, 
     JSFunctionSpec *st_funcs = NULL;
     #end if
 
+#if len($current_class.parents) > 0
+    JS::RootedObject parent_proto(cx, jsb_${current_class.parents[0].underlined_class_name}_prototype);
+#end if
     jsb_${current_class.underlined_class_name}_prototype = JS_InitClass(
         cx, global,
 #if len($current_class.parents) > 0
-        JS::RootedObject(cx, jsb_${current_class.parents[0].underlined_class_name}_prototype),
+        parent_proto,
 #else
-        JS::NullPtr(), // parent proto
+        JS::NullPtr(),
 #end if
         jsb_${current_class.underlined_class_name}_class,
 #if has_constructor
@@ -83,6 +86,7 @@ void js_register_${generator.prefix}_${current_class.class_name}(JSContext *cx, 
         funcs,
         NULL, // no static properties
         st_funcs);
+
     JS::RootedObject proto(cx, jsb_${current_class.underlined_class_name}_prototype);
     JS::RootedValue className(cx, std_string_to_jsval(cx, "${current_class.class_name}"));
     JS_SetProperty(cx, proto, "_className", className);
@@ -94,21 +98,11 @@ void js_register_${generator.prefix}_${current_class.class_name}(JSContext *cx, 
 #end if
 
     // add the proto and JSClass to the type->js info hash table
-    TypeTest<${current_class.namespaced_class_name}> t;
-    js_type_class_t *p;
-    std::string typeName = t.s_name();
-    if (_js_global_type_map.find(typeName) == _js_global_type_map.end())
-    {
-        p = (js_type_class_t *)malloc(sizeof(js_type_class_t));
-        p->jsclass = jsb_${current_class.underlined_class_name}_class;
-        p->proto = jsb_${current_class.underlined_class_name}_prototype;
 #if len($current_class.parents) > 0
-        p->parentProto = jsb_${current_class.parents[0].underlined_class_name}_prototype;
+    jsb_register_class<${current_class.namespaced_class_name}>(cx, jsb_${current_class.underlined_class_name}_class, proto, parent_proto);
 #else
-        p->parentProto = NULL;
+    jsb_register_class<${current_class.namespaced_class_name}>(cx, jsb_${current_class.underlined_class_name}_class, proto, JS::NullPtr());
 #end if
-        _js_global_type_map.insert(std::make_pair(typeName, p));
-    }
 #if $generator.in_listed_extend_classed($current_class.class_name) and not $current_class.is_abstract
     anonEvaluate(cx, global, "(function () { ${generator.target_ns}.${current_class.target_class_name}.extend = cc.Class.extend; })()");
 #end if

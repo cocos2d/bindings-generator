@@ -1,7 +1,8 @@
 do {
     if(JS_TypeOfValue(cx, ${in_value}) == JSTYPE_FUNCTION)
     {
-        std::shared_ptr<JSFunctionWrapper> func(new JSFunctionWrapper(cx, JS::RootedObject(cx, args.thisv().toObjectOrNull()), ${in_value}));
+        JS::RootedObject jstarget(cx, args.thisv().toObjectOrNull());
+        std::shared_ptr<JSFunctionWrapper> func(new JSFunctionWrapper(cx, jstarget, ${in_value}));
         auto lambda = [=](${lambda_parameters}) -> ${ret_type.name} {
             JSB_AUTOCOMPARTMENT_WITH_GLOBAL_OBJCET
             #set arg_count = len($param_types)

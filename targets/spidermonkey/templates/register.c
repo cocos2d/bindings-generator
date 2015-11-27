@@ -18,7 +18,9 @@ void js_${current_class.underlined_class_name}_finalize(JSFreeOp *fop, JSObject 
 #if (not $current_class.is_ref_class and $has_constructor) or $generator.script_control_cpp
     js_proxy_t* nproxy;
     js_proxy_t* jsproxy;
-    jsproxy = jsb_get_js_proxy(obj);
+    JSContext *cx = ScriptingCore::getInstance()->getGlobalContext();
+    JS::RootedObject jsobj(cx, obj);
+    jsproxy = jsb_get_js_proxy(jsobj);
     if (jsproxy) {
         ${current_class.namespaced_class_name} *nobj = static_cast<${current_class.namespaced_class_name} *>(jsproxy->ptr);
         nproxy = jsb_get_native_proxy(jsproxy->ptr);

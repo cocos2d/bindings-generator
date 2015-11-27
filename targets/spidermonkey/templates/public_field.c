@@ -2,7 +2,8 @@
 bool ${signature_name}_get_${name}(JSContext *cx, uint32_t argc, jsval *vp)
 {
     JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
-    js_proxy_t *proxy = jsb_get_js_proxy(args.thisv().toObjectOrNull());
+    JS::RootedObject jsthis(cx, args.thisv().toObjectOrNull());
+    js_proxy_t *proxy = jsb_get_js_proxy(jsthis);
     ${namespaced_class_name}* cobj = (${namespaced_class_name} *)(proxy ? proxy->ptr : NULL);
     JSB_PRECONDITION2( cobj, cx, false, "${signature_name}_get_${name} : Invalid Native Object");
 
@@ -31,7 +32,8 @@ bool ${signature_name}_get_${name}(JSContext *cx, uint32_t argc, jsval *vp)
 bool ${signature_name}_set_${name}(JSContext *cx, uint32_t argc, jsval *vp)
 {
     JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
-    js_proxy_t *proxy = jsb_get_js_proxy(args.thisv().toObjectOrNull());
+    JS::RootedObject jsthis(cx, args.thisv().toObjectOrNull());
+    js_proxy_t *proxy = jsb_get_js_proxy(jsthis);
     ${namespaced_class_name}* cobj = (${namespaced_class_name} *)(proxy ? proxy->ptr : NULL);
     JSB_PRECONDITION2( cobj, cx, false, "${signature_name}_set_${name} : Invalid Native Object");
 

@@ -13,7 +13,7 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
     JS::RootedObject obj(cx, args.thisv().toObjectOrNull());
 #end if
 #if not $is_constructor
-    obj = args.thisv().toObjectOrNull();
+    obj.set(args.thisv().toObjectOrNull());
     js_proxy_t *proxy = jsb_get_js_proxy(obj);
     cobj = (${namespaced_class_name} *)(proxy ? proxy->ptr : nullptr);
     JSB_PRECONDITION2( cobj, cx, false, "${signature_name} : Invalid Native Object");
@@ -59,8 +59,8 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
             #if not $is_ctor
             js_type_class_t *typeClass = js_get_type_from_native<${namespaced_class_name}>(cobj);
             // obj = JS_NewObject(cx, typeClass->jsclass, typeClass->proto, typeClass->parentProto);
-            JS::RootedObject proto(cx, typeClass->proto.get());
-            JS::RootedObject parent(cx, typeClass->parentProto.get());
+            JS::RootedObject proto(cx, typeClass->proto.ref());
+            JS::RootedObject parent(cx, typeClass->parentProto.ref());
             obj = JS_NewObject(cx, typeClass->jsclass, proto, parent);
             #end if
             js_proxy_t* p = jsb_new_proxy(cobj, obj);

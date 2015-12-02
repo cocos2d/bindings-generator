@@ -13,9 +13,9 @@ ${current_class.methods.constructor.generate_code($current_class)}
 extern JSObject *jsb_${current_class.parents[0].underlined_class_name}_prototype;
 
 #end if
+#if (not $current_class.is_ref_class and $has_constructor)
 void js_${current_class.underlined_class_name}_finalize(JSFreeOp *fop, JSObject *obj) {
     CCLOGINFO("jsbindings: finalizing JS object %p (${current_class.class_name})", obj);
-#if (not $current_class.is_ref_class and $has_constructor) or $generator.script_control_cpp
     js_proxy_t* nproxy;
     js_proxy_t* jsproxy;
     JSContext *cx = ScriptingCore::getInstance()->getGlobalContext();
@@ -27,16 +27,13 @@ void js_${current_class.underlined_class_name}_finalize(JSFreeOp *fop, JSObject 
 
         if (nobj) {
             jsb_remove_proxy(nproxy, jsproxy);
-    #if $current_class.is_ref_class
-            nobj->release();
-    #else
             delete nobj;
-    #end if
         }
-        else jsb_remove_proxy(nullptr, jsproxy);
+        else
+            jsb_remove_proxy(nullptr, jsproxy);
     }
-#end if
 }
+#end if
 #if $generator.in_listed_extend_classed($current_class.class_name) and $has_constructor
 #if not $constructor.is_overloaded
     ${constructor.generate_code($current_class, None, False, True)}
@@ -54,7 +51,11 @@ void js_register_${generator.prefix}_${current_class.class_name}(JSContext *cx, 
     jsb_${current_class.underlined_class_name}_class->enumerate = JS_EnumerateStub;
     jsb_${current_class.underlined_class_name}_class->resolve = JS_ResolveStub;
     jsb_${current_class.underlined_class_name}_class->convert = JS_ConvertStub;
+#if (not $current_class.is_ref_class and $has_constructor)
     jsb_${current_class.underlined_class_name}_class->finalize = js_${current_class.underlined_class_name}_finalize;
+#else
+    jsb_${current_class.underlined_class_name}_class->finalize = jsb_ref_finalize;
+#end if
     jsb_${current_class.underlined_class_name}_class->flags = JSCLASS_HAS_RESERVED_SLOTS(2);
 
     static JSPropertySpec properties[] = {

@@ -41,11 +41,18 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
         #end if
         #set $arg_list = ", ".join($arg_array)
     #if str($ret_type) != "void"
-        #if $ret_type.is_enum
-        int ret = (int)${namespaced_class_name}::${func_name}($arg_list);
+
+        #if str($signature_name).endswith("create")
+        auto ret = ${namespaced_class_name}::create($arg_list);
+        js_type_class_t *typeClass = js_get_type_from_native<${namespaced_class_name}>(ret);
+        JS::RootedObject jsret(cx, jsb_ref_autoreleased_create_jsobject(cx, ret, typeClass, "${namespaced_class_name}"));
+        args.rval().set(OBJECT_TO_JSVAL(jsret));
         #else
+          #if $ret_type.is_enum
+        int ret = (int)${namespaced_class_name}::${func_name}($arg_list);
+          #else
         ${ret_type.get_whole_name($generator)} ret = ${namespaced_class_name}::${func_name}($arg_list);
-        #end if
+          #end if
         jsval jsret = JSVAL_NULL;
         ${ret_type.from_native({"generator": $generator,
                                 "in_value": "ret",
@@ -53,6 +60,7 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
                                 "ntype": str($ret_type),
                                 "level": 1})};
         args.rval().set(jsret);
+        #end if
     #else
         ${namespaced_class_name}::${func_name}($arg_list);
         args.rval().setUndefined();

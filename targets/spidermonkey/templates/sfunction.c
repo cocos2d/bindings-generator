@@ -42,8 +42,8 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
         #set $arg_list = ", ".join($arg_array)
     #if str($ret_type) != "void"
 
-        #if str($signature_name).endswith("create")
-        auto ret = ${namespaced_class_name}::create($arg_list);
+        #if $func_name.startswith("create") and $is_ref_class
+        auto ret = ${namespaced_class_name}::${func_name}($arg_list);
         js_type_class_t *typeClass = js_get_type_from_native<${namespaced_class_name}>(ret);
         JS::RootedObject jsret(cx, jsb_ref_autoreleased_create_jsobject(cx, ret, typeClass, "${namespaced_class_name}"));
         args.rval().set(OBJECT_TO_JSVAL(jsret));

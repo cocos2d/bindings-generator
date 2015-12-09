@@ -153,11 +153,8 @@ conversions:
     "TouchEventType": "${out_value} = int32_to_jsval(cx, (int)${in_value})"
     "EventType": "${out_value} = int32_to_jsval(cx, (int)${in_value})"
     object: |
-      do {
-      ${($level + 1) * '    '}if (${in_value}) {
-      ${($level + 2) * '    '}js_proxy_t *jsProxy = js_get_or_create_proxy<${ntype.replace("*", "").replace("const ", "")}>(cx, (${ntype.replace("const ", "")})${in_value});
-      ${($level + 2) * '    '}${out_value} = OBJECT_TO_JSVAL(jsProxy->obj);
-      ${($level + 1) * '    '}} else {
-      ${($level + 2) * '    '}${out_value} = JSVAL_NULL;
-      ${($level + 1) * '    '}}
-      ${($level) * '    '}} while (0)
+      if (${in_value}) {
+      ${($level + 1) * '    '}${out_value} = OBJECT_TO_JSVAL(js_get_or_create_jsobject<${ntype.replace("*", "").replace("const ", "")}>(cx, (${ntype.replace("const ", "")})${in_value}));
+      ${($level    ) * '    '}} else {
+      ${($level + 1) * '    '}${out_value} = JSVAL_NULL;
+      ${($level    ) * '    '}}

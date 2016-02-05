@@ -44,11 +44,7 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 #if $is_ref_class
     JS::RootedObject jsobj(cx, jsb_ref_create_jsobject(cx, cobj, typeClass, "${namespaced_class_name}"));
 #else
-    JS::RootedObject proto(cx, typeClass->proto.ref());
-    JS::RootedObject parent(cx, typeClass->parentProto.ref());
-    JS::RootedObject jsobj(cx, JS_NewObject(cx, typeClass->jsclass, proto, parent));
-    js_proxy_t* p = jsb_new_proxy(cobj, jsobj);
-    AddNamedObjectRoot(cx, &p->obj, "${namespaced_class_name}");
+    JS::RootedObject jsobj(cx, jsb_create_weak_jsobject(cx, cobj, typeClass, "${namespaced_class_name}"));
 #end if
     args.rval().set(OBJECT_TO_JSVAL(jsobj));
     if (JS_HasProperty(cx, jsobj, "_ctor", &ok) && ok)

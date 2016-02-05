@@ -53,13 +53,10 @@ void js_register_${generator.prefix}_${current_class.class_name}(JSContext *cx, 
     jsb_${current_class.underlined_class_name}_class->convert = JS_ConvertStub;
 #if (not $current_class.is_ref_class and $has_constructor)
     jsb_${current_class.underlined_class_name}_class->finalize = js_${current_class.underlined_class_name}_finalize;
-#else
-    jsb_${current_class.underlined_class_name}_class->finalize = jsb_ref_finalize;
 #end if
     jsb_${current_class.underlined_class_name}_class->flags = JSCLASS_HAS_RESERVED_SLOTS(2);
 
     static JSPropertySpec properties[] = {
-        JS_PSG("__nativeObj", js_is_native_obj, JSPROP_PERMANENT | JSPROP_ENUMERATE),
 #for m in public_fields
     #if $generator.should_bind_field($current_class.class_name, m.name)
         JS_PSGS("${m.name}", ${m.signature_name}_get_${m.name}, ${m.signature_name}_set_${m.name}, JSPROP_PERMANENT | JSPROP_ENUMERATE),
@@ -114,8 +111,16 @@ void js_register_${generator.prefix}_${current_class.class_name}(JSContext *cx, 
         NULL, // no static properties
         st_funcs);
 
-    // add the proto and JSClass to the type->js info hash table
     JS::RootedObject proto(cx, jsb_${current_class.underlined_class_name}_prototype);
+    JS::RootedValue className(cx, std_string_to_jsval(cx, "${current_class.class_name}"));
+    JS_SetProperty(cx, proto, "_className", className);
+    JS_SetProperty(cx, proto, "__nativeObj", JS::TrueHandleValue);
+#if $current_class.is_ref_class
+    JS_SetProperty(cx, proto, "__is_ref", JS::TrueHandleValue);
+#else
+    JS_SetProperty(cx, proto, "__is_ref", JS::FalseHandleValue);
+#end if
+    // add the proto and JSClass to the type->js info hash table
 #if len($current_class.parents) > 0
     jsb_register_class<${current_class.namespaced_class_name}>(cx, jsb_${current_class.underlined_class_name}_class, proto, parent_proto);
 #else

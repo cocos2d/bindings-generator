@@ -58,7 +58,6 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 
             #if not $is_ctor
             js_type_class_t *typeClass = js_get_type_from_native<${namespaced_class_name}>(cobj);
-            // obj = JS_NewObject(cx, typeClass->jsclass, typeClass->proto, typeClass->parentProto);
             JS::RootedObject proto(cx, typeClass->proto.ref());
             JS::RootedObject parent(cx, typeClass->parentProto.ref());
             obj = JS_NewObject(cx, typeClass->jsclass, proto, parent);

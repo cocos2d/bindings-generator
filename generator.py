@@ -1220,13 +1220,19 @@ class Generator(object):
 
 
     def _pretty_print(self, diagnostics):
+        errors=[]
+        for idx, d in enumerate(diagnostics):
+            if d.severity > 2:
+                errors.append(d)
+        if len(errors) == 0:
+            return
         print("====\nErrors in parsing headers:")
         severities=['Ignored', 'Note', 'Warning', 'Error', 'Fatal']
-        for idx, d in enumerate(diagnostics):
+        for idx, d in enumerate(errors):
             print "%s. <severity = %s,\n    location = %r,\n    details = %r>" % (
                 idx+1, severities[d.severity], d.location, d.spelling)
         print("====\n")
-        
+
     def _parse_headers(self):
         for header in self.headers:
             tu = self.index.parse(header, self.clang_args)

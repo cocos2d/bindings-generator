@@ -7,7 +7,7 @@ $macro_judgement
     #if not '..' in relative
 \#include "${relative.replace(os.path.sep, '/')}"
     #else
-\#include "${include_header}"
+\#include "${header}"
     #end if
 #end for
 \#include "scripting/lua-bindings/manual/tolua_fix.h"

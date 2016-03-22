@@ -241,7 +241,7 @@ class NativeType(object):
                 nt.is_enum = ntype.get_canonical().kind == cindex.TypeKind.ENUM
 
                 if nt.name == "std::function":
-                    nt.namespaced_name = get_namespaced_name(cdecl)                    
+                    nt.namespaced_name = get_namespaced_name(cdecl)
                     r = re.compile('function<(.+) .*\((.*)\)>').search(cdecl.displayname)
                     (ret_type, params) = r.groups()
                     params = filter(None, params.split(", "))
@@ -545,9 +545,9 @@ class NativeFunction(object):
             ("\r\n", "\n"),
             ("\n(\s)*\*", "\n"),
             ("\n(\s)*@","\n"),
-            ("\n(\s)*","\n"), 
+            ("\n(\s)*","\n"),
             ("\n(\s)*\n", "\n"),
-            ("^(\s)*\n",""), 
+            ("^(\s)*\n",""),
             ("\n(\s)*$", ""),
             ("\n","<br>\n"),
             ("\n", "\n-- ")
@@ -643,9 +643,9 @@ class NativeOverloadedFunction(object):
             ("\r\n", "\n"),
             ("\n(\s)*\*", "\n"),
             ("\n(\s)*@","\n"),
-            ("\n(\s)*","\n"), 
+            ("\n(\s)*","\n"),
             ("\n(\s)*\n", "\n"),
-            ("^(\s)*\n",""), 
+            ("^(\s)*\n",""),
             ("\n(\s)*$", ""),
             ("\n","<br>\n"),
             ("\n", "\n-- ")
@@ -824,7 +824,7 @@ class NativeClass(object):
             m['impl'].generate_code(self)
         for m in self.static_methods_clean():
             m['impl'].generate_code(self)
-        if self.generator.script_type == "lua":  
+        if self.generator.script_type == "lua":
             for m in self.override_methods_clean():
                 m['impl'].generate_code(self, is_override = True)
         for m in self.public_fields:
@@ -1187,7 +1187,7 @@ class Generator(object):
             docfilepath = os.path.join(docfiledir, self.out_file + "_api.lua")
         else:
             docfilepath = os.path.join(docfiledir, self.out_file + "_api.js")
-        
+
         self.impl_file = open(implfilepath, "w+")
         self.head_file = open(headfilepath, "w+")
         self.doc_file = open(docfilepath, "w+")
@@ -1525,7 +1525,7 @@ def main():
                 'clang_args': (config.get(s, 'extra_arguments', 0, dict(userconfig.items('DEFAULT'))) or "").split(" "),
                 'target': os.path.join(workingdir, "targets", t),
                 'outdir': outdir,
-                'search_path': os.path.join(userconfig.get('DEFAULT', 'cocosdir'), 'cocos'),
+                'search_path': os.path.normcase(os.path.abspath(os.path.join(userconfig.get('DEFAULT', 'cocosdir'), 'cocos'))),
                 'remove_prefix': config.get(s, 'remove_prefix'),
                 'target_ns': config.get(s, 'target_namespace'),
                 'cpp_ns': config.get(s, 'cpp_namespace').split(' ') if config.has_option(s, 'cpp_namespace') else None,

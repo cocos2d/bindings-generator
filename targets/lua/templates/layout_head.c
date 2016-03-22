@@ -3,7 +3,7 @@
 $macro_judgement
 #end if
 #for header in $headers
-    #if os.path.samefile(os.path.commonprefix([header, $search_path]), $search_path)
+    #if os.path.normcase(os.path.commonprefix([header, $search_path])) == $search_path
 \#include "${os.path.relpath(header, $search_path).replace(os.path.sep, '/')}"
     #else
 \#include "${os.path.basename(header)}"

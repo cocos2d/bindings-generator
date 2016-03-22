@@ -3,10 +3,11 @@
 $macro_judgement
 #end if
 #for header in $headers
-    #if os.path.normcase(os.path.commonprefix([header, $search_path])) == $search_path
-\#include "${os.path.relpath(header, $search_path).replace(os.path.sep, '/')}"
+    #set relative = os.path.relpath(header, $search_path)
+    #if not '..' in relative
+\#include "${relative.replace(os.path.sep, '/')}"
     #else
-\#include "${os.path.basename(header)}"
+\#include "${include_header}"
     #end if
 #end for
 \#include "scripting/lua-bindings/manual/tolua_fix.h"

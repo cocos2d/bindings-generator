@@ -8,7 +8,7 @@ $macro_judgement
     #if $replace_headers.has_key(include_header)
 \#include "${replace_headers[include_header]}"
     #else
-        #if os.path.samefile(os.path.commonprefix([header, $search_path]), $search_path)
+        #if os.path.normcase(os.path.commonprefix([header, $search_path])) == $search_path
 \#include "${os.path.relpath(header, $search_path).replace(os.path.sep, '/')}"
         #else
 \#include "${include_header}"
@@ -19,7 +19,7 @@ $macro_judgement
 #for header in $cpp_headers
 \#include "${header}"
 #end for
-#end if 
+#end if
 
 template<class T>
 static bool dummy_constructor(JSContext *cx, uint32_t argc, jsval *vp)
@@ -36,5 +36,5 @@ static bool js_is_native_obj(JSContext *cx, uint32_t argc, jsval *vp)
 {
     JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
     args.rval().setBoolean(true);
-    return true;    
+    return true;
 }

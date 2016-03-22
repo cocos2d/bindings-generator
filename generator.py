@@ -975,6 +975,7 @@ class Generator(object):
     def __init__(self, opts):
         self.index = cindex.Index.create()
         self.outdir = opts['outdir']
+        self.search_path = opts['search_path']
         self.prefix = opts['prefix']
         self.headers = opts['headers'].split(' ')
         self.classes = opts['classes']
@@ -1524,6 +1525,7 @@ def main():
                 'clang_args': (config.get(s, 'extra_arguments', 0, dict(userconfig.items('DEFAULT'))) or "").split(" "),
                 'target': os.path.join(workingdir, "targets", t),
                 'outdir': outdir,
+                'search_path': os.path.join(userconfig.get('DEFAULT', 'cocosdir'), 'cocos'),
                 'remove_prefix': config.get(s, 'remove_prefix'),
                 'target_ns': config.get(s, 'target_namespace'),
                 'cpp_ns': config.get(s, 'cpp_namespace').split(' ') if config.has_option(s, 'cpp_namespace') else None,

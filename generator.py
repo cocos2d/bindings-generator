@@ -1460,6 +1460,9 @@ def main():
     userconfig.read('userconf.ini')
     print 'Using userconfig \n ', userconfig.items('DEFAULT')
 
+    clang_lib_path = os.path.join(userconfig.get('DEFAULT', 'cxxgeneratordir'), 'libclang')
+    cindex.Config.set_library_path(clang_lib_path);
+
     config = ConfigParser.SafeConfigParser()
     config.read(args[0])
 

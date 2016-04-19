@@ -63,5 +63,5 @@ static bool js_is_native_obj(JSContext *cx, uint32_t argc, jsval *vp)
 {
     JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
     args.rval().setBoolean(true);
-    return true;    
+    return true;
 }

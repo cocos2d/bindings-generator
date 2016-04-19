@@ -16,24 +16,21 @@ extern JSObject *jsb_${current_class.parents[0].underlined_class_name}_prototype
 void js_${current_class.underlined_class_name}_finalize(JSFreeOp *fop, JSObject *obj) {
     CCLOGINFO("jsbindings: finalizing JS object %p (${current_class.class_name})", obj);
 #if (not $current_class.is_ref_class and $has_constructor) or $generator.script_control_cpp
-    js_proxy_t* nproxy;
-    js_proxy_t* jsproxy;
     JSContext *cx = ScriptingCore::getInstance()->getGlobalContext();
     JS::RootedObject jsobj(cx, obj);
-    jsproxy = jsb_get_js_proxy(jsobj);
-    if (jsproxy) {
-        ${current_class.namespaced_class_name} *nobj = static_cast<${current_class.namespaced_class_name} *>(jsproxy->ptr);
-        nproxy = jsb_get_native_proxy(jsproxy->ptr);
+    auto proxy = jsb_get_js_proxy(jsobj);
+    if (proxy) {
+        ${current_class.namespaced_class_name} *nobj = static_cast<${current_class.namespaced_class_name} *>(proxy->ptr);
 
         if (nobj) {
-            jsb_remove_proxy(nproxy, jsproxy);
+            jsb_remove_proxy(proxy);
     #if $current_class.is_ref_class
             nobj->release();
     #else
             delete nobj;
     #end if
         }
-        else jsb_remove_proxy(nullptr, jsproxy);
+        else jsb_remove_proxy(proxy);
     }
 #end if
 }
@@ -124,4 +121,3 @@ void js_register_${generator.prefix}_${current_class.class_name}(JSContext *cx, 
     anonEvaluate(cx, global, "(function () { ${generator.target_ns}.${current_class.target_class_name}.extend = cc.Class.extend; })()");
 #end if
 }
-

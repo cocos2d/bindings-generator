@@ -65,4 +65,3 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
     JS_ReportError(cx, "${signature_name} : wrong number of arguments");
     return false;
 }
-

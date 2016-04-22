@@ -31,6 +31,9 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
         #if not $is_constructor and $arg_idx > 0
         bool ok = true;
         #end if
+        #if $is_constructor
+        ok = true;
+        #end if
         #if $func.min_args >= 0
         if (argc == $arg_idx) {
             #set $count = 0

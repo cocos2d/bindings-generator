@@ -2,7 +2,6 @@
 bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 {
     JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
-    bool ok = true;
     #for func in $implementations
     
     #if len($func.arguments) >= $func.min_args
@@ -10,6 +9,9 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
     #set arg_idx = $func.min_args
     #while $arg_idx <= $arg_count
     do {
+        #if $arg_idx > 0
+        bool ok = true;
+        #end if
         if (argc == ${arg_idx}) {
             #set arg_list = ""
             #set arg_array = []
@@ -23,6 +25,9 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
                 #else
             ${arg.to_string($generator)} arg${count};
                 #end if
+            #if $count > 0
+            ok = true;
+            #end if
             ${arg.to_native({"generator": $generator,
                              "in_value": "args.get(" + str(count) + ")",
                              "out_value": "arg" + str(count),
@@ -32,7 +37,7 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
             #set $arg_array += ["arg"+str(count)]
             #set $count = $count + 1
             #if $arg_idx > 0
-            if (!ok) { ok = true; break; }
+            if (!ok) { break; }
             #end if
             #end while
             #set $arg_list = ", ".join($arg_array)

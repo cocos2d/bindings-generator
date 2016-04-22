@@ -1,7 +1,9 @@
 ## ===== instance function implementation template - for overloaded functions
 bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
 {
+    #if $is_constructor
     bool ok = true;
+    #end if
     ${namespaced_class_name}* cobj = nullptr;
 
 #if not $is_ctor   
@@ -26,6 +28,9 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
     #set arg_list = ""
     #set arg_array = []
     do {
+        #if not $is_constructor and $arg_idx > 0
+        bool ok = true;
+        #end if
         #if $func.min_args >= 0
         if (argc == $arg_idx) {
             #set $count = 0
@@ -39,6 +44,9 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
                 #else
             ${arg_type} arg${count};
                 #end if
+            #if $count > 0 and arg_type != "bool"
+            ok = true;
+            #end if
             ${arg.to_native({"generator": $generator,
                              "in_value": "args.get(" + str(count) + ")",
                              "out_value": "arg" + str(count),
@@ -48,7 +56,7 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
                 #set $arg_array += ["arg"+str(count)]
                 #set $count = $count + 1
             #if $arg_idx > 0 and arg_type != "bool"
-            if (!ok) { ok = true; break; }
+            if (!ok) { break; }
             #end if
             #end while
             #set $arg_list = ", ".join($arg_array)

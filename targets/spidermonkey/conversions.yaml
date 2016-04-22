@@ -80,6 +80,8 @@ conversions:
     "TMXTileFlags_": "ok &= jsval_to_uint32(cx, ${in_value}, (uint32_t *)&${out_value})"
     "TMXTileFlags_*": "uint32_t tempData;${out_value}=(cocos2d::TMXTileFlags_*)&tempData;ok &= jsval_to_uint32(cx, ${in_value}, (uint32_t *)&${out_value})"
     "ResouceData": "ok &= jsval_to_resoucedata(cx, ${in_value}, &${out_value})"
+    "_ttfConfig": "ok &= jsval_to_TTFConfig(cx, ${in_value}, &${out_value})"
+    "TTFConfig": "ok &= jsval_to_TTFConfig(cx, ${in_value}, &${out_value})"
     object: |
       do {
       ${($level + 1) * '    '}if (${in_value}.isNull()) { ${out_value} = nullptr; break; }

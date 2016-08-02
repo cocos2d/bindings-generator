@@ -47,9 +47,6 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
                 #else
             ${arg_type} arg${count};
                 #end if
-            #if $count > 0 and arg_type != "bool"
-            ok = true;
-            #end if
             ${arg.to_native({"generator": $generator,
                              "in_value": "args.get(" + str(count) + ")",
                              "out_value": "arg" + str(count),
@@ -59,38 +56,22 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
                 #set $arg_array += ["arg"+str(count)]
                 #set $count = $count + 1
             #if $arg_idx > 0 and arg_type != "bool"
-            if (!ok) { break; }
+            if (!ok) { ok = true; break; }
             #end if
             #end while
             #set $arg_list = ", ".join($arg_array)
         #end if
         #if $is_constructor
             cobj = new (std::nothrow) ${namespaced_class_name}(${arg_list});
-            #if not $generator.script_control_cpp
-            cocos2d::Ref *_ccobj = dynamic_cast<cocos2d::Ref *>(cobj);
-            if (_ccobj) {
-                _ccobj->autorelease();
-            }
-            #end if
 
             #if not $is_ctor
-            TypeTest<${namespaced_class_name}> t;
-            js_type_class_t *typeClass = nullptr;
-            std::string typeName = t.s_name();
-            auto typeMapIter = _js_global_type_map.find(typeName);
-            CCASSERT(typeMapIter != _js_global_type_map.end(), "Can't find the class type!");
-            typeClass = typeMapIter->second;
-            CCASSERT(typeClass, "The value is null.");
-            
+            js_type_class_t *typeClass = js_get_type_from_native<${namespaced_class_name}>(cobj);
             JS::RootedObject proto(cx, typeClass->proto.ref());
             JS::RootedObject parent(cx, typeClass->parentProto.ref());
             obj = JS_NewObject(cx, typeClass->jsclass, proto, parent);
             #end if
-
             js_proxy_t* p = jsb_new_proxy(cobj, obj);
-            #if not $generator.script_control_cpp
-            AddNamedObjectRoot(cx, &p->obj, "${namespaced_class_name}");
-            #end if
+            jsb_ref_init(cx, &p->obj, cobj, "${namespaced_class_name}");
         #else
             #if str($func.ret_type) != "void"
                 #if $func.ret_type.is_enum

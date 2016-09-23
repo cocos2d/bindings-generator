@@ -7,14 +7,14 @@ bool ${signature_name}_get_${name}(JSContext *cx, uint32_t argc, jsval *vp)
     ${namespaced_class_name}* cobj = (${namespaced_class_name} *)(proxy ? proxy->ptr : NULL);
     JSB_PRECONDITION2( cobj, cx, false, "${signature_name}_get_${name} : Invalid Native Object");
 
+    JS::RootedValue jsret(cx);
     #if $ntype.is_object and not $ntype.object_can_convert($generator, False)
     ${ntype.from_native({"generator": $generator,
                          "type_name": $ntype.namespaced_name.replace("*", ""),
-                         "ntype": $ntype.get_whole_name($generator)+"*",
+                         "ntype": $ntype.get_whole_name($generator),
                          "level": 2,
-                         "scriptname": $generator.scriptname_from_native($ntype.namespaced_name, $ntype.namespace_name),
-                         "in_value": "&cobj->" + $pretty_name,
-                         "out_value": "jsval jsret"
+                         "in_value": "cobj->" + $pretty_name,
+                         "out_value": "jsret"
                         })};
     #else
     ${ntype.from_native({"generator": $generator,
@@ -23,7 +23,7 @@ bool ${signature_name}_get_${name}(JSContext *cx, uint32_t argc, jsval *vp)
                          "level": 2,
                          "scriptname": $generator.scriptname_from_native($ntype.namespaced_name, $ntype.namespace_name),
                          "in_value":"cobj->" + $pretty_name,
-                         "out_value": "jsval jsret"
+                         "out_value": "jsret"
                          })};
     #end if
     args.rval().set(jsret);
@@ -45,6 +45,17 @@ bool ${signature_name}_set_${name}(JSContext *cx, uint32_t argc, jsval *vp)
 #else
     ${ntype.to_string($generator)} arg0;
 #end if
+#if $ntype.is_object and not $ntype.object_can_convert($generator)
+    ${ntype.to_native({"generator": $generator,
+                        "arg_idx": 2,
+                        "ntype": $ntype.get_whole_name($generator),
+                        "in_value": "args.get(0)",
+                        "out_value": "arg0",
+                        "func_name": $name,
+                        "level": 2,
+                        "arg":$ntype,
+                    })};
+#else
     ${ntype.to_native({"generator": $generator,
                         "arg_idx": 2,
                         "in_value": "args.get(0)",
@@ -54,11 +65,8 @@ bool ${signature_name}_set_${name}(JSContext *cx, uint32_t argc, jsval *vp)
                         "level": 2,
                         "arg":$ntype,
                     })};
-    JSB_PRECONDITION2(ok, cx, false, "${signature_name}_set_${name} : Error processing new value");
-#if $ntype.is_object and not $ntype.object_can_convert($generator)
-    cobj->$pretty_name = *arg0;
-#else
-    cobj->$pretty_name = arg0;
 #end if
+    JSB_PRECONDITION2(ok, cx, false, "${signature_name}_set_${name} : Error processing new value");
+    cobj->$pretty_name = arg0;
     return true;
 }

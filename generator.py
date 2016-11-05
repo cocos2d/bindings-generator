@@ -763,6 +763,7 @@ class NativeClass(object):
                 if self.generator.should_skip(self.class_name, name):
                     should_skip = True
             if not should_skip:
+                name = self.generator.should_rename_function(self.class_name, name) or name
                 ret.append({"name": name, "impl": impl})
         return ret
 
@@ -774,6 +775,7 @@ class NativeClass(object):
         for name, impl in self.static_methods.iteritems():
             should_skip = self.generator.should_skip(self.class_name, name)
             if not should_skip:
+                name = self.generator.should_rename_function(self.class_name, name) or name
                 ret.append({"name": name, "impl": impl})
         return ret
 
@@ -785,6 +787,7 @@ class NativeClass(object):
         for name, impl in self.override_methods.iteritems():
             should_skip = self.generator.should_skip(self.class_name, name)
             if not should_skip:
+                name = self.generator.should_rename_function(self.class_name, name) or name
                 ret.append({"name": name, "impl": impl})
         return ret
 
@@ -908,7 +911,7 @@ class NativeClass(object):
             # skip if variadic
             if self._current_visibility == cindex.AccessSpecifierKind.PUBLIC and not cursor.type.is_function_variadic():
                 m = NativeFunction(cursor)
-                registration_name = self.generator.should_rename_function(self.class_name, m.func_name) or m.func_name
+                registration_name = m.func_name
                 # bail if the function is not supported (at least one arg not supported)
                 if m.not_supported:
                     return False

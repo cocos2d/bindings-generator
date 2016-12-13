@@ -80,6 +80,7 @@ conversions:
     "TMXTileFlags_": "ok &= jsval_to_uint32(cx, ${in_value}, (uint32_t *)&${out_value})"
     "TMXTileFlags_*": "uint32_t tempData;${out_value}=(cocos2d::TMXTileFlags_*)&tempData;ok &= jsval_to_uint32(cx, ${in_value}, (uint32_t *)&${out_value})"
     "ResourceData": "ok &= jsval_to_resourcedata(cx, ${in_value}, &${out_value})"
+    "ListenerID": "ok &= jsval_to_std_string(cx, ${in_value}, &${out_value})"
     object: |
       do {
       ${($level + 1) * '    '}if (${in_value}.isNull()) { ${out_value} = nullptr; break; }

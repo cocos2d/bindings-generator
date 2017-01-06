@@ -22,9 +22,9 @@ do {
             #end while
             JS::RootedValue rval(cx);
             #if $arg_count > 0
-            bool succeed = func->invoke(${arg_count}, &largv[0], &rval);
+            bool succeed = func->invoke(JS::HandleValueArray::fromMarkedLocation(${arg_count}, largv), &rval);
             #else
-            bool succeed = func->invoke(${arg_count}, nullptr, &rval);
+            bool succeed = func->invoke(JS::HandleValueArray::empty(), &rval);
             #end if
             if (!succeed && JS_IsExceptionPending(cx)) {
                 JS_ReportPendingException(cx);

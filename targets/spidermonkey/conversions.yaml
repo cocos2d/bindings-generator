@@ -153,6 +153,7 @@ conversions:
     "ResourceData": "${out_value} = resourcedata_to_jsval(cx, ${in_value})"
     "TouchEventType": "${out_value} = int32_to_jsval(cx, (int)${in_value})"
     "EventType": "${out_value} = int32_to_jsval(cx, (int)${in_value})"
+    "ManifestAsset": "${out_value} = asset_to_jsval(cx, ${in_value})"
     object: |
       if (${in_value}) {
       ${($level + 1) * '    '}${out_value} = OBJECT_TO_JSVAL(js_get_or_create_jsobject<${ntype.replace("*", "").replace("const ", "")}>(cx, (${ntype.replace("const ", "")})${in_value}));

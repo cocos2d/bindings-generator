@@ -71,7 +71,11 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
             obj = JS_NewObject(cx, typeClass->jsclass, proto, parent);
             #end if
             js_proxy_t* p = jsb_new_proxy(cobj, obj);
+            #if $is_ref_class
             jsb_ref_init(cx, &p->obj, cobj, "${namespaced_class_name}");
+            #else
+            jsb_non_ref_init(cx, &p->obj, cobj, "${namespaced_class_name}");
+            #end if
         #else
             #if str($func.ret_type) != "void"
                 #if $func.ret_type.is_enum

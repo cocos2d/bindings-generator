@@ -94,7 +94,7 @@ conversions:
     short: "tolua_pushnumber(tolua_S,(lua_Number)${in_value})"
     char: "tolua_pushnumber(tolua_S,(lua_Number)${in_value})"
     "long long": "tolua_pushnumber(tolua_S,(lua_Number)${in_value})"
-    "std::string": "tolua_pushcppstring(tolua_S,${in_value})"
+    "std::string": "lua_pushlstring(tolua_S,${in_value}.c_str(),${in_value}.length())"
     "char*": "tolua_pushstring(tolua_S,(const char*)${in_value})"
     "String*": "tolua_pushstring(tolua_S, ${in_value}->getCString())"
     bool: "tolua_pushboolean(tolua_S,(bool)${in_value})"

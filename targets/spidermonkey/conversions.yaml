@@ -84,6 +84,8 @@ conversions:
     "TTFConfig": "ok &= jsval_to_TTFConfig(cx, ${in_value}, &${out_value})"
     "ListenerID": "ok &= jsval_to_std_string(cx, ${in_value}, &${out_value})"
     "DownloaderHints": "ok &= jsval_to_DownloaderHints(cx, ${in_value}, &${out_value})"
+    "b2Vec2": "ok &= jsval_to_b2Vec2(cx, ${in_value}, &${out_value})"
+    "b2AABB": "ok &= jsval_to_b2AABB(cx, ${in_value}, &${out_value})"
     object: |
       do {
       ${($level + 1) * '    '}if (${in_value}.isNull()) { ${out_value} = nullptr; break; }
@@ -159,6 +161,8 @@ conversions:
     "ManifestAsset": "${out_value} = asset_to_jsval(cx, ${in_value})"
     "@DownloadTask.*": "${out_value} = downloadTask_to_jsval(cx, ${in_value})"
     "@shared_ptr<.*DownloadTask.*": "${out_value} = downloadTask_to_jsval(cx, *${in_value})"
+    "b2Vec2": "${out_value} = b2Vec2_to_jsval(cx, ${in_value})"
+    "b2Manifold*": "${out_value} = b2Manifold_to_jsval(cx, ${in_value})"
     object: |
       if (${in_value}) {
       ${($level + 1) * '    '}${out_value} = OBJECT_TO_JSVAL(js_get_or_create_jsobject<${ntype.replace("*", "").replace("const ", "")}>(cx, (${ntype.replace("const ", "")})${in_value}));

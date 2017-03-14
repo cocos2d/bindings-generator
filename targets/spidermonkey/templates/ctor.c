@@ -40,11 +40,10 @@ static bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
     #end if
     #set $arg_list = ", ".join($arg_array)
     ${namespaced_class_name} *nobj = new (std::nothrow) ${namespaced_class_name}($arg_list);
-#if $is_ref_class
-    auto newproxy = jsb_new_proxy(nobj, obj);
-    jsb_ref_init(cx, &newproxy->obj, nobj, "${namespaced_class_name}");
-#else
     js_proxy_t* p = jsb_new_proxy(nobj, obj);
+#if $is_ref_class
+    jsb_ref_init(cx, &p->obj, nobj, "${namespaced_class_name}");
+#else
     AddNamedObjectRoot(cx, &p->obj, "${namespaced_class_name}");
 #end if
     bool isFound = false;

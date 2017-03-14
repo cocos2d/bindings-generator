@@ -30,12 +30,14 @@ do {
                 JS_ReportPendingException(cx);
             }
             #if $ret_type.name != "void"
+            bool ok = true;
             ${ret_type.get_whole_name($generator)} ret;
             ${ret_type.to_native({"generator": $generator,
                                  "in_value": "rval",
                                  "out_value": "ret",
                                  "ntype": str($ret_type),
                                  "level": 2})};
+            JSB_PRECONDITION2(ok, cx, false, "lambda function : Error processing return value with type ${ret_type.name}");
             return ret;
             #end if
         };

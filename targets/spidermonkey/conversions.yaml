@@ -165,6 +165,7 @@ conversions:
     "@shared_ptr<.*DownloadTask.*": "${out_value} = downloadTask_to_jsval(cx, *${in_value})"
     "b2Vec2": "${out_value} = b2Vec2_to_jsval(cx, ${in_value})"
     "b2Manifold*": "${out_value} = b2Manifold_to_jsval(cx, ${in_value})"
+    "b2AABB": "${out_value} = b2AABB_to_jsval(cx, ${in_value})"
     object: |
       if (${in_value}) {
       ${($level + 1) * '    '}${out_value} = OBJECT_TO_JSVAL(js_get_or_create_jsobject<${ntype.replace("*", "").replace("const ", "")}>(cx, (${ntype.replace("const ", "")})${in_value}));

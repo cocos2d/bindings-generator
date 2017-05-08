@@ -41,7 +41,7 @@ do {
             return ret;
             #end if
         };
-        ${out_value} = lambda;
+        ${out_value} = std::move(lambda);
     }
     else
     {

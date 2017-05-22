@@ -33,7 +33,8 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
             "class_name": $class_name,
             "level": 2,
             "ntype": str($arg)})};
-	    #if arg.is_numeric or arg.is_pointer
+            #set arg_type = arg.to_string($generator)
+            #if arg.is_pointer or arg.is_numeric or arg.is_enum or arg_type == "bool"
                 #set $arg_array += ["arg"+str($count)]
             #else
                 #set $arg_array += ["std::move(arg"+str($count)+")"]

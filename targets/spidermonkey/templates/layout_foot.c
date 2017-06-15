@@ -1,18 +1,27 @@
-void register_all_${prefix}(JSContext* cx, JS::HandleObject obj) {
-    #if $target_ns
+bool register_all_${prefix}(se::Object* obj)
+{
+#if $target_ns
     // Get the ns
-    JS::RootedObject ns(cx);
-    get_or_create_js_obj(cx, obj, "${target_ns}", &ns);
-    #else 
+    se::Value nsVal;
+    if (!obj->getProperty("${target_ns}", &nsVal))
+    {
+        se::Object* jsobj = se::Object::createPlainObject(false);
+        nsVal.setObject(jsobj);
+        obj->setProperty("${target_ns}", nsVal);
+        jsobj->release();
+    }
+    se::Object* ns = nsVal.toObject();
+#else 
     // Get the global ns
-    JS::RootedObject ns(cx, ScriptingCore::getInstance()->getGlobalObject());
-    #end if
+    se::Object* ns = ScriptEngine::getInstance()->getGlobalObject();
+#end if
 
-    #for jsclass in $sorted_classes
+#for jsclass in $sorted_classes
     #if $in_listed_classes(jsclass)
-    js_register_${prefix}_${jsclass}(cx, ns);
+    js_register_${prefix}_${jsclass}(ns);
     #end if
-    #end for
+#end for
+    return true;
 }
 
 #if $macro_judgement

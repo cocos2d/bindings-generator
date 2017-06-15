@@ -1,14 +1,14 @@
 ## ===== ctor function implementation template
-static bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
+
+static bool ${signature_name}(se::State& s)
 {
-    JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
-    JS::RootedObject obj(cx, args.thisv().toObjectOrNull());
 #if len($arguments) >= $min_args
     #set arg_count = len($arguments)
     #set arg_idx = $min_args
     #set $count = 0
     #if $arg_idx > 0
-    bool ok = true;
+    CC_UNUSED bool ok = true;
+    const auto& args = s.args();
     #end if
     #while $count < $arg_idx
         #set $arg = $arguments[$count]
@@ -27,29 +27,24 @@ static bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
     #while $count < $arg_idx
         #set $arg = $arguments[$count]
     ${arg.to_native({"generator": $generator,
-                         "in_value": "args.get(" + str(count) + ")",
+                         "in_value": "args[" + str(count) + "]",
                          "out_value": "arg" + str(count),
                          "class_name": $class_name,
                          "level": 2,
+                         "is_static": False,
+                         "is_persistent": $is_persistent,
                          "ntype": str($arg)})};
         #set $arg_array += ["arg"+str(count)]
         #set $count = $count + 1
     #end while
     #if $arg_idx > 0
-    JSB_PRECONDITION2(ok, cx, false, "js_${underlined_class_name}_ctor : Error processing arguments");
+    JSB_PRECONDITION2(ok, false, "${signature_name} : Error processing arguments");
     #end if
     #set $arg_list = ", ".join($arg_array)
-    ${namespaced_class_name} *nobj = new (std::nothrow) ${namespaced_class_name}($arg_list);
-    js_proxy_t* p = jsb_new_proxy(nobj, obj);
-#if $is_ref_class
-    jsb_ref_init(cx, &p->obj, nobj, "${namespaced_class_name}");
-#else
-    AddNamedObjectRoot(cx, &p->obj, "${namespaced_class_name}");
+    ${namespaced_class_name}* cobj = new (std::nothrow) ${namespaced_class_name}($arg_list);
+    s.thisObject()->setPrivateData(cobj);
+    s.thisObject()->addRef();
 #end if
-    bool isFound = false;
-    if (JS_HasProperty(cx, obj, "_ctor", &isFound) && isFound)
-        ScriptingCore::getInstance()->executeFunctionWithOwner(OBJECT_TO_JSVAL(obj), "_ctor", args);
-    args.rval().setUndefined();
     return true;
-#end if
 }
+SE_BIND_SUB_CLS_CTOR(${signature_name}, __jsb_${underlined_class_name}_class, js_${underlined_class_name}_finalize)

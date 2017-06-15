@@ -1,48 +1,56 @@
 do {
-    if(JS_TypeOfValue(cx, ${in_value}) == JSTYPE_FUNCTION)
+    if (${in_value}.isObject() && ${in_value}.toObject()->isFunction())
     {
-        JS::RootedObject jstarget(cx);
-        if (args.thisv().isObject())
-        {
-            jstarget = args.thisv().toObjectOrNull();
-        }
-        std::shared_ptr<JSFunctionWrapper> func(new JSFunctionWrapper(cx, jstarget, ${in_value}, args.thisv()));
+        se::Value jsThis(s.thisObject());
+        se::Value jsFunc(${in_value});
+        #if $is_static or $is_persistent
+        jsFunc.toObject()->setKeepRootedUntilDie(true);
+        #else
+        jsThis.toObject()->attachChild(jsFunc.toObject());
+        #end if
         auto lambda = [=](${lambda_parameters}) -> ${ret_type.name} {
-            JSB_AUTOCOMPARTMENT_WITH_GLOBAL_OBJCET
+            se::ScriptEngine::getInstance()->clearException();
+            se::AutoHandleScope hs;
+
             #set arg_count = len($param_types)
+            #if $arg_count > 0 or $ret_type.name != "void"
+            CC_UNUSED bool ok = true;
+            #end if
             #if $arg_count > 0
-            jsval largv[${arg_count}];
+            se::ValueArray args;
+            args.resize($arg_count);
             #end if
             #set $count = 0
             #while $count < $arg_count
                 #set $arg = $param_types[$count]
             ${arg.from_native({"generator": $generator,
                                  "in_value": "larg" + str(count),
-                                 "out_value": "largv[" + str(count) + "]",
+                                 "out_value": "args[" + str(count) + "]",
                                  "class_name": $class_name,
                                  "level": 2,
                                  "ntype": str($arg)})};
                 #set $count = $count + 1
             #end while
-            JS::RootedValue rval(cx);
+            se::Value rval;
+            se::Object* thisObj = jsThis.isObject() ? jsThis.toObject() : nullptr;
+            se::Object* funcObj = jsFunc.toObject();
             #if $arg_count > 0
-            bool succeed = func->invoke(JS::HandleValueArray::fromMarkedLocation(${arg_count}, largv), &rval);
+            bool succeed = funcObj->call(args, thisObj, &rval);
             #else
-            bool succeed = func->invoke(JS::HandleValueArray::empty(), &rval);
+            bool succeed = funcObj->call(se::EmptyValueArray, thisObj, &rval);
             #end if
-            if (!succeed && JS_IsExceptionPending(cx)) {
-                JS_ReportPendingException(cx);
+            if (!succeed) {
+                se::ScriptEngine::getInstance()->clearException();
             }
             #if $ret_type.name != "void"
-            bool ok = true;
-            ${ret_type.get_whole_name($generator)} ret;
+            ${ret_type.get_whole_name($generator)} result;
             ${ret_type.to_native({"generator": $generator,
                                  "in_value": "rval",
-                                 "out_value": "ret",
+                                 "out_value": "result",
                                  "ntype": str($ret_type),
                                  "level": 2})};
-            JSB_PRECONDITION2(ok, cx, false, "lambda function : Error processing return value with type ${ret_type.name}");
-            return ret;
+            JSB_PRECONDITION2(ok, result, "lambda function : Error processing return value with type ${ret_type.name}");
+            return result;
             #end if
         };
         ${out_value} = lambda;
@@ -51,4 +59,4 @@ do {
     {
         ${out_value} = nullptr;
     }
-} while(0)
+} while(false)

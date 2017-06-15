@@ -1,17 +1,16 @@
 ## ===== static function implementation template - for overloaded functions
-bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
+
+static bool ${signature_name}(se::State& s)
 {
-    JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+    CC_UNUSED bool ok = true;
+    const auto& args = s.args();
+    size_t argc = args.size();
     #for func in $implementations
-    
     #if len($func.arguments) >= $func.min_args
     #set arg_count = len($func.arguments)
     #set arg_idx = $func.min_args
     #while $arg_idx <= $arg_count
     do {
-        #if $arg_idx > 0
-        bool ok = true;
-        #end if
         if (argc == ${arg_idx}) {
             #set arg_list = ""
             #set arg_array = []
@@ -26,10 +25,12 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
             ${arg.to_string($generator)} arg${count};
                 #end if
             ${arg.to_native({"generator": $generator,
-                             "in_value": "args.get(" + str(count) + ")",
+                             "in_value": "args[" + str(count) + "]",
                              "out_value": "arg" + str(count),
                              "class_name": $class_name,
                              "level": 3,
+                             "is_static": True,
+                             "is_persistent": $is_persistent,
                              "ntype": str($arg)})};
             #set $arg_array += ["arg"+str(count)]
             #set $count = $count + 1
@@ -40,27 +41,28 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
             #set $arg_list = ", ".join($arg_array)
             #if str($func.ret_type) != "void"
                 #if $func.ret_type.is_enum
-            int ret = (int)${namespaced_class_name}::${func.func_name}($arg_list);
+            int result = (int)${namespaced_class_name}::${func.func_name}($arg_list);
                 #else
-            ${func.ret_type.get_whole_name($generator)} ret = ${namespaced_class_name}::${func.func_name}($arg_list);
+            ${func.ret_type.get_whole_name($generator)} result = ${namespaced_class_name}::${func.func_name}($arg_list);
                 #end if
-            jsval jsret = JSVAL_NULL;
             ${func.ret_type.from_native({"generator": $generator,
-                                         "in_value": "ret",
-                                         "out_value": "jsret",
+                                         "in_value": "result",
+                                         "out_value": "s.rval()",
+                                         "class_name": $func.ret_type.get_class_name($generator),
                                          "ntype": str($func.ret_type),
                                          "level": 3})};
-            args.rval().set(jsret);
+            JSB_PRECONDITION2(ok, false, "${signature_name} : Error processing arguments");
             #else
             ${namespaced_class_name}::${func.func_name}($arg_list);
             #end if
             return true;
         }
         #set $arg_idx = $arg_idx + 1
-    } while (0);
+    } while (false);
     #end while
     #end if
     #end for
-    JS_ReportError(cx, "${signature_name} : wrong number of arguments");
+    SE_REPORT_ERROR("wrong number of arguments: %d", (int)argc);
     return false;
 }
+SE_BIND_FUNC(${signature_name})

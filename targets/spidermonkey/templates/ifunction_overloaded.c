@@ -1,25 +1,12 @@
 ## ===== instance function implementation template - for overloaded functions
-bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
-{
-    #if $is_constructor
-    bool ok = true;
-    #end if
-    ${namespaced_class_name}* cobj = nullptr;
 
-#if not $is_ctor   
-    JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
-    JS::RootedObject obj(cx);
-#end if
-#if $is_ctor
-    JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
-    JS::RootedObject obj(cx, args.thisv().toObjectOrNull());
-#end if
-#if not $is_constructor
-    obj.set(args.thisv().toObjectOrNull());
-    js_proxy_t *proxy = jsb_get_js_proxy(obj);
-    cobj = (${namespaced_class_name} *)(proxy ? proxy->ptr : nullptr);
-    JSB_PRECONDITION2( cobj, cx, false, "${signature_name} : Invalid Native Object");
-#end if
+static bool ${signature_name}(se::State& s)
+{
+    CC_UNUSED bool ok = true;
+    ${namespaced_class_name}* cobj = (${namespaced_class_name}*)s.nativeThisObject();
+    JSB_PRECONDITION2( cobj, false, "${signature_name} : Invalid Native Object");
+    const auto& args = s.args();
+    size_t argc = args.size();
 #for func in $implementations
 #if len($func.arguments) >= $func.min_args
     #set arg_count = len($func.arguments)
@@ -28,12 +15,6 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
     #set arg_list = ""
     #set arg_array = []
     do {
-        #if not $is_constructor and $arg_idx > 0
-        bool ok = true;
-        #end if
-        #if $is_constructor
-        ok = true;
-        #end if
         #if $func.min_args >= 0
         if (argc == $arg_idx) {
             #set $count = 0
@@ -48,10 +29,12 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
             ${arg_type} arg${count};
                 #end if
             ${arg.to_native({"generator": $generator,
-                             "in_value": "args.get(" + str(count) + ")",
+                             "in_value": "args[" + str(count) + "]",
                              "out_value": "arg" + str(count),
                              "class_name": $class_name,
                              "level": 3,
+                             "is_static": False,
+                             "is_persistent": $is_persistent,
                              "ntype": str($arg)})};
                 #set $arg_array += ["arg"+str(count)]
                 #set $count = $count + 1
@@ -61,57 +44,31 @@ bool ${signature_name}(JSContext *cx, uint32_t argc, jsval *vp)
             #end while
             #set $arg_list = ", ".join($arg_array)
         #end if
-        #if $is_constructor
-            cobj = new (std::nothrow) ${namespaced_class_name}(${arg_list});
-
-            #if not $is_ctor
-            js_type_class_t *typeClass = js_get_type_from_native<${namespaced_class_name}>(cobj);
-            JS::RootedObject proto(cx, typeClass->proto.ref());
-            JS::RootedObject parent(cx, typeClass->parentProto.ref());
-            obj = JS_NewObject(cx, typeClass->jsclass, proto, parent);
-            #end if
-            js_proxy_t* p = jsb_new_proxy(cobj, obj);
-            #if $is_ref_class
-            jsb_ref_init(cx, &p->obj, cobj, "${namespaced_class_name}");
+        #if str($func.ret_type) != "void"
+            #if $func.ret_type.is_enum
+            int result = (int)cobj->${func.func_name}($arg_list);
             #else
-            jsb_non_ref_init(cx, &p->obj, cobj, "${namespaced_class_name}");
+            ${func.ret_type.get_whole_name($generator)} result = cobj->${func.func_name}($arg_list);
             #end if
-        #else
-            #if str($func.ret_type) != "void"
-                #if $func.ret_type.is_enum
-            int ret = (int)cobj->${func.func_name}($arg_list);
-                #else
-            ${func.ret_type.get_whole_name($generator)} ret = cobj->${func.func_name}($arg_list);
-                #end if
-            jsval jsret = JSVAL_NULL;
             ${func.ret_type.from_native({"generator": $generator,
-                                                      "in_value": "ret",
-                                                      "out_value": "jsret",
+                                                      "in_value": "result",
+                                                      "out_value": "s.rval()",
+                                                      "class_name": $func.ret_type.get_class_name($generator),
                                                       "ntype": str($func.ret_type),
                                                       "level": 2})};
-            args.rval().set(jsret);
-            #else
+            JSB_PRECONDITION2(ok, false, "${signature_name} : Error processing arguments");
+        #else
             cobj->${func.func_name}($arg_list);
-            args.rval().setUndefined();
-            #end if
-            return true;
         #end if
+            return true;
         }
-    } while(0);
+    } while(false);
 
     #set $arg_idx = $arg_idx + 1
     #end while
 #end if
 #end for
-#if $is_constructor
-    if (cobj) {
-        if (JS_HasProperty(cx, obj, "_ctor", &ok) && ok)
-                ScriptingCore::getInstance()->executeFunctionWithOwner(OBJECT_TO_JSVAL(obj), "_ctor", args);
-
-        args.rval().set(OBJECT_TO_JSVAL(obj));
-        return true;
-    }
-#end if
-    JS_ReportError(cx, "${signature_name} : wrong number of arguments");
+    SE_REPORT_ERROR("wrong number of arguments: %d", (int)argc);
     return false;
 }
+SE_BIND_FUNC(${signature_name})

@@ -66,6 +66,7 @@ conversions:
     "@vector<std::basic_string.*>": "ok &= seval_to_std_vector_string(${in_value}, &${out_value})"
     "@vector<int.*>": "ok &= seval_to_std_vector_int(${in_value}, &${out_value})"
     "@vector<float.*>": "ok &= seval_to_std_vector_float(${in_value}, &${out_value})"
+    "@vector<.*Touch.*>": "ok &= seval_to_std_vector_Touch(${in_value}, &${out_value})"
     "Acceleration": "ok &= seval_to_Acceleration(${in_value}, &${out_value})"
     "Mat4": "ok &= seval_to_Mat4(${in_value}, &${out_value})"
     "Vec2": "ok &= seval_to_Vec2(${in_value}, &${out_value})"

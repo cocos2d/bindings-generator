@@ -40,6 +40,13 @@ bool js_${current_class.underlined_class_name}_finalize(se::State& s)
     return true;
 }
 SE_BIND_FINALIZE_FUNC(js_${current_class.underlined_class_name}_finalize)
+#else
+bool js_${current_class.underlined_class_name}_finalize(se::State& s)
+{
+    cocos2d::log("jsbindings: finalizing JS object %p (${current_class.namespaced_class_name})", s.nativeThisObject());
+    return true;
+}
+SE_BIND_FINALIZE_FUNC(js_${current_class.underlined_class_name}_finalize)
 #end if
 
 bool js_register_${generator.prefix}_${current_class.class_name}(se::Object* obj)
@@ -76,9 +83,7 @@ bool js_register_${generator.prefix}_${current_class.class_name}(se::Object* obj
     cls->defineStaticFunction("${m['name']}", _SE(${fn.signature_name}));
     #end for
 #end if
-#if $has_constructor
     cls->defineFinalizedFunction(_SE(js_${current_class.underlined_class_name}_finalize));
-#end if
     cls->install();
     JSBClassType::registerClass<${current_class.namespaced_class_name}>(cls);
 

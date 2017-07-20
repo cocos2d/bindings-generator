@@ -43,7 +43,6 @@ static bool ${signature_name}(se::State& s)
     #set $arg_list = ", ".join($arg_array)
     ${namespaced_class_name}* cobj = new (std::nothrow) ${namespaced_class_name}($arg_list);
     s.thisObject()->setPrivateData(cobj);
-    s.thisObject()->addRef();
 #end if
     return true;
 }

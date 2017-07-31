@@ -44,6 +44,12 @@ SE_BIND_FINALIZE_FUNC(js_${current_class.underlined_class_name}_finalize)
 bool js_${current_class.underlined_class_name}_finalize(se::State& s)
 {
     cocos2d::log("jsbindings: finalizing JS object %p (${current_class.namespaced_class_name})", s.nativeThisObject());
+#if $current_class.is_ref_class
+    if (cobj->getReferenceCount() == 1)
+        cobj->autorelease();
+    else
+        cobj->release();
+#end if
     return true;
 }
 SE_BIND_FINALIZE_FUNC(js_${current_class.underlined_class_name}_finalize)

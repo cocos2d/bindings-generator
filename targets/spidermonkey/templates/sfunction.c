@@ -55,7 +55,7 @@ static bool ${signature_name}(se::State& s)
         auto result = ${namespaced_class_name}::${func_name}($arg_list);
         se::Value instanceVal;
         native_ptr_to_seval<${namespaced_class_name}>(result, __jsb_${underlined_class_name}_class, &instanceVal);
-        instanceVal.toObject()->switchToRooted();
+        instanceVal.toObject()->root();
         s.rval() = instanceVal;
         #else
           #if $ret_type.is_enum

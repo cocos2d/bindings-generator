@@ -3,7 +3,7 @@
 static bool ${signature_name}(se::State& s)
 {
     ${namespaced_class_name}* cobj = (${namespaced_class_name}*)s.nativeThisObject();
-    JSB_PRECONDITION2(cobj, false, "${signature_name} : Invalid Native Object");
+    SE_PRECONDITION2(cobj, false, "${signature_name} : Invalid Native Object");
 #if len($arguments) >= $min_args
     const auto& args = s.args();
     size_t argc = args.size();
@@ -43,7 +43,7 @@ static bool ${signature_name}(se::State& s)
             #set $count = $count + 1
         #end while
         #if $arg_idx > 0
-        JSB_PRECONDITION2(ok, false, "${signature_name} : Error processing arguments");
+        SE_PRECONDITION2(ok, false, "${signature_name} : Error processing arguments");
         #end if
         #set $arg_list = ", ".join($arg_array)
         #if $ret_type.name != "void"
@@ -58,7 +58,7 @@ static bool ${signature_name}(se::State& s)
                                     "class_name": $ret_type.get_class_name($generator),
                                     "ntype": str($ret_type),
                                     "level": 2})};
-        JSB_PRECONDITION2(ok, false, "${signature_name} : Error processing arguments");
+        SE_PRECONDITION2(ok, false, "${signature_name} : Error processing arguments");
         #else
         cobj->${func_name}($arg_list);
         #end if

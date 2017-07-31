@@ -3,7 +3,7 @@
 static bool ${signature_name}_get_${name}(se::State& s)
 {
     ${namespaced_class_name}* cobj = (${namespaced_class_name}*)s.nativeThisObject();
-    JSB_PRECONDITION2(cobj, false, "${signature_name}_get_${name} : Invalid Native Object");
+    SE_PRECONDITION2(cobj, false, "${signature_name}_get_${name} : Invalid Native Object");
 
     CC_UNUSED bool ok = true;
     se::Value jsret;
@@ -34,7 +34,7 @@ static bool ${signature_name}_set_${name}(se::State& s)
 {
     const auto& args = s.args();
     ${namespaced_class_name}* cobj = (${namespaced_class_name}*)s.nativeThisObject();
-    JSB_PRECONDITION2(cobj, false, "${signature_name}_set_${name} : Invalid Native Object");
+    SE_PRECONDITION2(cobj, false, "${signature_name}_set_${name} : Invalid Native Object");
 
     CC_UNUSED bool ok = true;
 #if $ntype.is_numeric
@@ -65,7 +65,7 @@ static bool ${signature_name}_set_${name}(se::State& s)
                         "arg":$ntype,
                     })};
 #end if
-    JSB_PRECONDITION2(ok, false, "${signature_name}_set_${name} : Error processing new value");
+    SE_PRECONDITION2(ok, false, "${signature_name}_set_${name} : Error processing new value");
     cobj->$pretty_name = arg0;
     return true;
 }

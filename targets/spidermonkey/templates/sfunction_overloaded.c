@@ -51,7 +51,7 @@ static bool ${signature_name}(se::State& s)
                                          "class_name": $func.ret_type.get_class_name($generator),
                                          "ntype": str($func.ret_type),
                                          "level": 3})};
-            JSB_PRECONDITION2(ok, false, "${signature_name} : Error processing arguments");
+            SE_PRECONDITION2(ok, false, "${signature_name} : Error processing arguments");
             #else
             ${namespaced_class_name}::${func.func_name}($arg_list);
             #end if

@@ -38,7 +38,7 @@ static bool ${signature_name}(se::State& s)
         #set $count = $count + 1
     #end while
     #if $arg_idx > 0
-    JSB_PRECONDITION2(ok, false, "${signature_name} : Error processing arguments");
+    SE_PRECONDITION2(ok, false, "${signature_name} : Error processing arguments");
     #end if
     #set $arg_list = ", ".join($arg_array)
     ${namespaced_class_name}* cobj = new (std::nothrow) ${namespaced_class_name}($arg_list);

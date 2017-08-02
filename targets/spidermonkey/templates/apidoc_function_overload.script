@@ -25,7 +25,7 @@
             #for $arg in $func.arguments
                 #if $loop_index < len($func.arguments)
                     #if $loop_index == $arg_idx
-                        #set $tip = $tip + $generator.js_typename_from_natve($arg.namespaced_name)
+                        #set $tip = $tip + $generator.js_typename_from_natve($arg.namespaced_class_name)
                         #set $is_find = True
                         #if $is_sub_tip_set == False
                             #set $is_sub_tip_set = True
@@ -55,7 +55,7 @@
 #set $have_ret = False
 #for func in $implementations
     #if str($func.ret_type) != "void"
-        #set $ret_tip = $ret_tip + $generator.js_typename_from_natve($func.ret_type.namespaced_name) + "|"
+        #set $ret_tip = $ret_tip + $generator.js_typename_from_natve($func.ret_type.namespaced_class_name) + "|"
         #set $have_ret = True
     #end if
     #set $func_index = $func_index + 1
@@ -95,7 +95,7 @@ $generator.api_param_name_from_native(argname)
 {
 #if str($selected_func.ret_type) != "void"
     #set $is_enum = $selected_func.ret_type.is_enum
-    #set $ret = $selected_func.ret_type.namespaced_name.replace("*", "").replace("const ", "")
+    #set $ret = $selected_func.ret_type.namespaced_class_name.replace("*", "").replace("const ", "")
     return $generator.js_ret_name_from_native($ret,$is_enum);
 #end if
 },

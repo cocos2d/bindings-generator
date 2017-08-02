@@ -80,7 +80,7 @@ def native_name_from_type(ntype, underlying=False):
     const = "" #"const " if ntype.is_const_qualified() else ""
     if not underlying and kind == cindex.TypeKind.ENUM:
         decl = ntype.get_declaration()
-        return get_namespaced_name(decl)
+        return get_namespaced_class_name(decl)
     elif kind in type_map:
         return const + type_map[kind]
     elif kind == cindex.TypeKind.RECORD:
@@ -117,7 +117,7 @@ def build_namespace(cursor, namespaces=[]):
     return namespaces
 
 
-def get_namespaced_name(declaration_cursor):
+def get_namespaced_class_name(declaration_cursor):
     ns_list = build_namespace(declaration_cursor, [])
     ns_list.reverse()
     ns = "::".join(ns_list)
@@ -150,7 +150,8 @@ def get_namespace_name(declaration_cursor):
 
 
 class NativeType(object):
-    def __init__(self):
+    def __init__(self, generator):
+        self.generator = generator
         self.is_object = False
         self.is_function = False
         self.is_enum = False
@@ -158,7 +159,7 @@ class NativeType(object):
         self.not_supported = False
         self.param_types = []
         self.ret_type = None
-        self.namespaced_name = ""
+        self.namespaced_class_name = ""
         self.namespace_name  = ""
         self.name = ""
         self.whole_name = None
@@ -167,27 +168,27 @@ class NativeType(object):
         self.canonical_type = None
 
     @staticmethod
-    def from_type(ntype):
+    def from_type(ntype, generator):
         if ntype.kind == cindex.TypeKind.POINTER:
-            nt = NativeType.from_type(ntype.get_pointee())
+            nt = NativeType.from_type(ntype.get_pointee(), generator)
 
             if None != nt.canonical_type:
                 nt.canonical_type.name += "*"
-                nt.canonical_type.namespaced_name += "*"
+                nt.canonical_type.namespaced_class_name += "*"
                 nt.canonical_type.whole_name += "*"
 
             nt.name += "*"
-            nt.namespaced_name += "*"
-            nt.whole_name = nt.namespaced_name
+            nt.namespaced_class_name += "*"
+            nt.whole_name = nt.namespaced_class_name
             nt.is_enum = False
             nt.is_const = ntype.get_pointee().is_const_qualified()
             nt.is_pointer = True
             if nt.is_const:
                 nt.whole_name = "const " + nt.whole_name
         elif ntype.kind == cindex.TypeKind.LVALUEREFERENCE:
-            nt = NativeType.from_type(ntype.get_pointee())
+            nt = NativeType.from_type(ntype.get_pointee(), generator)
             nt.is_const = ntype.get_pointee().is_const_qualified()
-            nt.whole_name = nt.namespaced_name + "&"
+            nt.whole_name = nt.namespaced_class_name + "&"
 
             if nt.is_const:
                 nt.whole_name = "const " + nt.whole_name
@@ -195,34 +196,34 @@ class NativeType(object):
             if None != nt.canonical_type:
                 nt.canonical_type.whole_name += "&"
         else:
-            nt = NativeType()
+            nt = NativeType(generator)
             decl = ntype.get_declaration()
 
             if ntype.kind == cindex.TypeKind.RECORD:
                 if decl.kind == cindex.CursorKind.CLASS_DECL:
                     nt.is_object = True
                 nt.name = decl.displayname
-                nt.namespaced_name = get_namespaced_name(decl)
+                nt.namespaced_class_name = get_namespaced_class_name(decl)
                 nt.namespace_name  = get_namespace_name(decl)
-                nt.whole_name = nt.namespaced_name
+                nt.whole_name = nt.namespaced_class_name
             else:
                 if decl.kind == cindex.CursorKind.NO_DECL_FOUND:
                     nt.name = native_name_from_type(ntype)
                 else:
                     nt.name = decl.spelling
-                nt.namespaced_name = get_namespaced_name(decl)
+                nt.namespaced_class_name = get_namespaced_class_name(decl)
                 nt.namespace_name  = get_namespace_name(decl)
 
-                if nt.namespaced_name == "std::string":
-                    nt.name = nt.namespaced_name
+                if nt.namespaced_class_name == "std::string":
+                    nt.name = nt.namespaced_class_name
 
-                if nt.namespaced_name.startswith("std::function"):
+                if nt.namespaced_class_name.startswith("std::function"):
                     nt.name = "std::function"
 
-                if len(nt.namespaced_name) == 0 or nt.namespaced_name.find("::") == -1:
-                    nt.namespaced_name = nt.name
+                if len(nt.namespaced_class_name) == 0 or nt.namespaced_class_name.find("::") == -1:
+                    nt.namespaced_class_name = nt.name
 
-                nt.whole_name = nt.namespaced_name
+                nt.whole_name = nt.namespaced_class_name
                 nt.is_const = ntype.is_const_qualified()
                 if nt.is_const:
                     nt.whole_name = "const " + nt.whole_name
@@ -234,7 +235,7 @@ class NativeType(object):
 
                 if nt.name != INVALID_NATIVE_TYPE and nt.name != "std::string" and nt.name != "std::function":
                     if ntype.kind == cindex.TypeKind.UNEXPOSED or ntype.kind == cindex.TypeKind.TYPEDEF:
-                        ret = NativeType.from_type(ntype.get_canonical())
+                        ret = NativeType.from_type(ntype.get_canonical(), generator)
                         if ret.name != "":
                             if decl.kind == cindex.CursorKind.TYPEDEF_DECL:
                                 ret.canonical_type = nt
@@ -243,14 +244,14 @@ class NativeType(object):
                 nt.is_enum = ntype.get_canonical().kind == cindex.TypeKind.ENUM
 
                 if nt.name == "std::function":
-                    nt.namespaced_name = get_namespaced_name(cdecl)
+                    nt.namespaced_class_name = get_namespaced_class_name(cdecl)
                     r = re.compile('function<(.+) .*\((.*)\)>').search(cdecl.displayname)
                     (ret_type, params) = r.groups()
                     params = filter(None, params.split(", "))
 
                     nt.is_function = True
-                    nt.ret_type = NativeType.from_string(ret_type)
-                    nt.param_types = [NativeType.from_string(string) for string in params]
+                    nt.ret_type = NativeType.from_string(ret_type, generator)
+                    nt.param_types = [NativeType.from_string(string, generator) for string in params]
 
         # mark argument as not supported
         if nt.name == INVALID_NATIVE_TYPE:
@@ -262,13 +263,13 @@ class NativeType(object):
         return nt
 
     @staticmethod
-    def from_string(displayname):
+    def from_string(displayname, generator):
         displayname = displayname.replace(" *", "*")
 
-        nt = NativeType()
+        nt = NativeType(generator)
         nt.name = displayname.split("::")[-1]
-        nt.namespaced_name = displayname
-        nt.whole_name = nt.namespaced_name
+        nt.namespaced_class_name = displayname
+        nt.whole_name = nt.namespaced_class_name
         nt.is_object = True
         return nt
 
@@ -329,11 +330,20 @@ class NativeType(object):
             keys.append(self.canonical_type.name)
         keys.append(self.name)
 
+        class_name = self.name.replace('*', '').replace('const ', '')
+        if class_name in self.generator.classes_owned_by_cpp:
+            print("cpp control: from_native: self.name: " + self.name)
+        else:
+            print("js control: from_native: self.name: " + self.name)            
+
         from_native_dict = generator.config['conversions']['from_native']
 
         if self.is_object:
             if not NativeType.dict_has_key_re(from_native_dict, keys):
-                keys.append("object")
+                if class_name in self.generator.classes_owned_by_cpp:
+                    keys.append("rooted_object")
+                else:
+                    keys.append("object")
         elif self.is_enum:
             keys.append("int")
 
@@ -377,10 +387,10 @@ class NativeType(object):
         conversions = generator.config['conversions']
         if conversions.has_key('native_types'):
             native_types_dict = conversions['native_types']
-            if NativeType.dict_has_key_re(native_types_dict, [self.namespaced_name]):
-                return NativeType.dict_get_value_re(native_types_dict, [self.namespaced_name])
+            if NativeType.dict_has_key_re(native_types_dict, [self.namespaced_class_name]):
+                return NativeType.dict_get_value_re(native_types_dict, [self.namespaced_class_name])
 
-        name = self.namespaced_name
+        name = self.namespaced_class_name
 
         to_native_dict = generator.config['conversions']['to_native']
         from_native_dict = generator.config['conversions']['from_native']
@@ -393,7 +403,7 @@ class NativeType(object):
                 use_typedef = True
 
         if use_typedef and self.canonical_type:
-            name = self.canonical_type.namespaced_name
+            name = self.canonical_type.namespaced_class_name
         return "const " + name if (self.is_pointer and self.is_const) else name
 
     def get_whole_name(self, generator):
@@ -453,7 +463,7 @@ class NativeType(object):
         return  self.canonical_type.whole_name if None != self.canonical_type else self.whole_name
 
 class NativeField(object):
-    def __init__(self, cursor):
+    def __init__(self, cursor, generator):
         cursor = cursor.canonical
         self.cursor = cursor
         self.name = cursor.displayname
@@ -462,15 +472,15 @@ class NativeField(object):
         member_field_re = re.compile('m_(\w+)')
         match = member_field_re.match(self.name)
         self.signature_name = self.name
-        self.ntype  = NativeType.from_type(cursor.type)
+        self.ntype  = NativeType.from_type(cursor.type, generator)
         if match:
             self.pretty_name = match.group(1)
         else:
             self.pretty_name = self.name
 
     @staticmethod
-    def can_parse(ntype):
-        native_type = NativeType.from_type(ntype)
+    def can_parse(ntype, generator):
+        native_type = NativeType.from_type(ntype, generator)
         if ntype.kind == cindex.TypeKind.UNEXPOSED and native_type.name != "std::string":
             return False
         return True
@@ -500,7 +510,7 @@ def iterate_param_node(param_node, depth=1):
     return False
 
 class NativeFunction(object):
-    def __init__(self, cursor):
+    def __init__(self, cursor, generator):
         self.cursor = cursor
         self.func_name = cursor.spelling
         self.signature_name = self.func_name
@@ -512,7 +522,7 @@ class NativeFunction(object):
         self.is_constructor = False
         self.not_supported = False
         self.is_override = False
-        self.ret_type = NativeType.from_type(cursor.result_type)
+        self.ret_type = NativeType.from_type(cursor.result_type, generator)
         self.comment = self.get_comment(cursor.getRawComment())
 
         # parse the arguments
@@ -522,7 +532,7 @@ class NativeFunction(object):
             self.argumtntTips.append(arg.spelling)
 
         for arg in cursor.type.argument_types():
-            nt = NativeType.from_type(arg)
+            nt = NativeType.from_type(arg, generator)
             self.arguments.append(nt)
             # mark the function as not supported if at least one argument is not supported
             if nt.not_supported:
@@ -750,6 +760,8 @@ class NativeClass(object):
         self.generator = generator
         self.is_abstract = self.class_name in generator.abstract_classes
         self.is_persistent = self.class_name in generator.persistent_classes
+        self.is_class_owned_by_cpp = self.class_name in self.generator.classes_owned_by_cpp
+        print("class_name:" + self.class_name + ", is_class_owned_by_cpp:" + str(self.is_class_owned_by_cpp))
         self._current_visibility = cindex.AccessSpecifierKind.PRIVATE
         #for generate lua api doc
         self.override_methods = {}
@@ -761,8 +773,9 @@ class NativeClass(object):
             self.target_class_name = re.sub('^' + generator.remove_prefix, '', registration_name)
         else:
             self.target_class_name = registration_name
-        self.namespaced_class_name = get_namespaced_name(cursor)
+        self.namespaced_class_name = get_namespaced_class_name(cursor)
         self.namespace_name        = get_namespace_name(cursor)
+
         self.parse()
 
     @property
@@ -924,15 +937,15 @@ class NativeClass(object):
                 self.is_ref_class = True
 
         elif cursor.kind == cindex.CursorKind.FIELD_DECL:
-            self.fields.append(NativeField(cursor))
-            if self._current_visibility == cindex.AccessSpecifierKind.PUBLIC and NativeField.can_parse(cursor.type):
-                self.public_fields.append(NativeField(cursor))
+            self.fields.append(NativeField(cursor, self.generator))
+            if self._current_visibility == cindex.AccessSpecifierKind.PUBLIC and NativeField.can_parse(cursor.type, self.generator):
+                self.public_fields.append(NativeField(cursor, self.generator))
         elif cursor.kind == cindex.CursorKind.CXX_ACCESS_SPEC_DECL:
             self._current_visibility = cursor.get_access_specifier()
         elif cursor.kind == cindex.CursorKind.CXX_METHOD and cursor.get_availability() != cindex.AvailabilityKind.DEPRECATED:
             # skip if variadic
             if self._current_visibility == cindex.AccessSpecifierKind.PUBLIC and not cursor.type.is_function_variadic():
-                m = NativeFunction(cursor)
+                m = NativeFunction(cursor, self.generator)
                 registration_name = self.generator.should_rename_function(self.class_name, m.func_name) or m.func_name
                 # bail if the function is not supported (at least one arg not supported)
                 if m.not_supported:
@@ -976,7 +989,7 @@ class NativeClass(object):
                 # print "Skip copy constructor: " + cursor.displayname
                 return True
 
-            m = NativeFunction(cursor)
+            m = NativeFunction(cursor, self.generator)
             m.is_constructor = True
             self.has_constructor = True
             if not self.methods.has_key('constructor'):
@@ -1007,6 +1020,7 @@ class Generator(object):
         self.base_classes_to_skip = opts['base_classes_to_skip'].split(' ')
         self.abstract_classes = opts['abstract_classes'].split(' ')
         self.persistent_classes = opts['persistent_classes'].split(' ') if opts['persistent_classes'] != None else []
+        self.classes_owned_by_cpp = opts['classes_owned_by_cpp'].split(' ') if opts['classes_owned_by_cpp'] != None else []
         self.clang_args = opts['clang_args']
         self.target = opts['target']
         self.remove_prefix = opts['remove_prefix']
@@ -1021,7 +1035,6 @@ class Generator(object):
         self.rename_classes = {}
         self.replace_headers = {}
         self.out_file = opts['out_file']
-        self.script_control_cpp = opts['script_control_cpp'] == "yes"
         self.script_type = opts['script_type']
         self.macro_judgement = opts['macro_judgement']
         self.hpp_headers = opts['hpp_headers']
@@ -1280,9 +1293,9 @@ class Generator(object):
                 is_targeted_class = True
                 if self.cpp_ns:
                     is_targeted_class = False
-                    namespaced_name = get_namespaced_name(cursor)
+                    namespaced_class_name = get_namespaced_class_name(cursor)
                     for ns in self.cpp_ns:
-                        if namespaced_name.startswith(ns):
+                        if namespaced_class_name.startswith(ns):
                             is_targeted_class = True
                             break
 
@@ -1558,12 +1571,12 @@ def main():
                 'base_classes_to_skip': config.get(s, 'base_classes_to_skip'),
                 'abstract_classes': config.get(s, 'abstract_classes'),
                 'persistent_classes': config.get(s, 'persistent_classes') if config.has_option(s, 'persistent_classes') else None,
+                'classes_owned_by_cpp': config.get(s, 'classes_owned_by_cpp') if config.has_option(s, 'classes_owned_by_cpp') else None,
                 'skip': config.get(s, 'skip'),
                 'field': config.get(s, 'field') if config.has_option(s, 'field') else None,
                 'rename_functions': config.get(s, 'rename_functions'),
                 'rename_classes': config.get(s, 'rename_classes'),
                 'out_file': opts.out_file or config.get(s, 'prefix'),
-                'script_control_cpp': config.get(s, 'script_control_cpp') if config.has_option(s, 'script_control_cpp') else 'no',
                 'script_type': t,
                 'macro_judgement': config.get(s, 'macro_judgement') if config.has_option(s, 'macro_judgement') else None,
                 'hpp_headers': config.get(s, 'hpp_headers', 0, dict(userconfig.items('DEFAULT'))).split(' ') if config.has_option(s, 'hpp_headers') else None,

@@ -5,10 +5,9 @@ bool register_all_${prefix}(se::Object* obj)
     se::Value nsVal;
     if (!obj->getProperty("${target_ns}", &nsVal))
     {
-        se::Object* jsobj = se::Object::createPlainObject(false);
+        se::HandleObject jsobj(se::Object::createPlainObject());
         nsVal.setObject(jsobj);
         obj->setProperty("${target_ns}", nsVal);
-        jsobj->release();
     }
     se::Object* ns = nsVal.toObject();
 #else 

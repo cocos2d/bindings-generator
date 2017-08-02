@@ -21,35 +21,27 @@ ${current_class.methods.constructor.generate_code($current_class)}
 extern se::Object* __jsb_${current_class.parents[0].underlined_class_name}_proto;
 #end if
 
-#if $has_constructor
-bool js_${current_class.underlined_class_name}_finalize(se::State& s)
-{
-    if (s.nativeThisObject() != nullptr)
-    {
-        cocos2d::log("jsbindings: finalizing JS object %p (${current_class.namespaced_class_name})", s.nativeThisObject());
-        ${current_class.namespaced_class_name}* cobj = (${current_class.namespaced_class_name}*)s.nativeThisObject();
-        #if $current_class.is_ref_class
-        if (cobj->getReferenceCount() == 1)
-            cobj->autorelease();
-        else
-            cobj->release();
-        #else
-        delete cobj;
-        #end if
-    }
-    return true;
-}
-SE_BIND_FINALIZE_FUNC(js_${current_class.underlined_class_name}_finalize)
-#else
-bool js_${current_class.underlined_class_name}_finalize(se::State& s)
+#if not $current_class.is_abstract
+static bool js_${current_class.underlined_class_name}_finalize(se::State& s)
 {
     cocos2d::log("jsbindings: finalizing JS object %p (${current_class.namespaced_class_name})", s.nativeThisObject());
-#if $current_class.is_ref_class
+    #if $current_class.is_ref_class
+    ${current_class.namespaced_class_name}* cobj = (${current_class.namespaced_class_name}*)s.nativeThisObject();
     if (cobj->getReferenceCount() == 1)
         cobj->autorelease();
     else
         cobj->release();
-#end if
+    #else
+        #if not $current_class.is_class_owned_by_cpp
+    auto iter = se::__nonRefNativeObjectCreatedByCtorMap.find(s.nativeThisObject());
+    if (iter != se::__nonRefNativeObjectCreatedByCtorMap.end())
+    {
+        se::__nonRefNativeObjectCreatedByCtorMap.erase(iter);
+        ${current_class.namespaced_class_name}* cobj = (${current_class.namespaced_class_name}*)s.nativeThisObject();
+        delete cobj;
+    }
+        #end if
+    #end if
     return true;
 }
 SE_BIND_FINALIZE_FUNC(js_${current_class.underlined_class_name}_finalize)
@@ -89,7 +81,9 @@ bool js_register_${generator.prefix}_${current_class.class_name}(se::Object* obj
     cls->defineStaticFunction("${m['name']}", _SE(${fn.signature_name}));
     #end for
 #end if
+#if not $current_class.is_abstract
     cls->defineFinalizedFunction(_SE(js_${current_class.underlined_class_name}_finalize));
+#end if
     cls->install();
     JSBClassType::registerClass<${current_class.namespaced_class_name}>(cls);
 

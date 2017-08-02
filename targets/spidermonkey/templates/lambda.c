@@ -4,7 +4,7 @@ do {
         se::Value jsThis(s.thisObject());
         se::Value jsFunc(${in_value});
         #if $is_static or $is_persistent
-        jsFunc.toObject()->setKeepRootedUntilDie(true);
+        jsFunc.toObject()->root();
         #else
         jsThis.toObject()->attachChild(jsFunc.toObject());
         #end if

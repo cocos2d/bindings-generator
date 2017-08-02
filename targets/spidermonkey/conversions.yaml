@@ -165,3 +165,4 @@ conversions:
     "b2Manifold*": "ok &= b2Manifold_to_seval(${in_value}, &${out_value})"
     "b2AABB": "ok &= b2AABB_to_seval(${in_value}, &${out_value})"
     object: "ok &= native_ptr_to_seval<${ntype.replace('*', '').replace('const ', '')}>((${ntype.replace('const ', '')})${in_value}, &${out_value})"
+    rooted_object: "ok &= native_ptr_to_rooted_seval<${ntype.replace('*', '').replace('const ', '')}>((${ntype.replace('const ', '')})${in_value}, &${out_value})"

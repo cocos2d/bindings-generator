@@ -9,7 +9,7 @@ static bool ${signature_name}_get_${name}(se::State& s)
     se::Value jsret;
     #if $ntype.is_object and not $ntype.object_can_convert($generator, False)
     ${ntype.from_native({"generator": $generator,
-                         "type_name": $ntype.namespaced_name.replace("*", ""),
+                         "type_name": $ntype.namespaced_class_name.replace("*", ""),
                          "ntype": $ntype.get_whole_name($generator),
                          "level": 2,
                          "in_value": "cobj->" + $pretty_name,
@@ -17,10 +17,10 @@ static bool ${signature_name}_get_${name}(se::State& s)
                         })};
     #else
     ${ntype.from_native({"generator": $generator,
-                         "type_name": $ntype.namespaced_name.replace("*", ""),
+                         "type_name": $ntype.namespaced_class_name.replace("*", ""),
                          "ntype": $ntype.get_whole_name($generator),
                          "level": 2,
-                         "scriptname": $generator.scriptname_from_native($ntype.namespaced_name, $ntype.namespace_name),
+                         "scriptname": $generator.scriptname_from_native($ntype.namespaced_class_name, $ntype.namespace_name),
                          "in_value":"cobj->" + $pretty_name,
                          "out_value": "jsret"
                          })};
@@ -60,7 +60,7 @@ static bool ${signature_name}_set_${name}(se::State& s)
                         "in_value": "args[0]",
                         "out_value": "arg0",
                         "func_name": $name,
-                        "scriptname": $generator.scriptname_from_native($ntype.namespaced_name, $ntype.namespace_name),
+                        "scriptname": $generator.scriptname_from_native($ntype.namespaced_class_name, $ntype.namespace_name),
                         "level": 2,
                         "arg":$ntype,
                     })};

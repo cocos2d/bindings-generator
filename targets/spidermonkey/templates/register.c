@@ -82,7 +82,7 @@ bool js_register_${generator.prefix}_${current_class.class_name}(se::Object* obj
     #end for
 #end if
 #if not $current_class.is_abstract
-    cls->defineFinalizedFunction(_SE(js_${current_class.underlined_class_name}_finalize));
+    cls->defineFinalizeFunction(_SE(js_${current_class.underlined_class_name}_finalize));
 #end if
     cls->install();
     JSBClassType::registerClass<${current_class.namespaced_class_name}>(cls);

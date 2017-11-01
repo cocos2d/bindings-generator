@@ -42,12 +42,7 @@ int ${signature_name}(lua_State* tolua_S)
                          "arg":$arg,
                          "ntype": $arg.namespaced_name.replace("*", ""),
                          "scriptname": $generator.scriptname_from_native($arg.namespaced_name, $arg.namespace_name)})};
-                #set arg_type = arg.to_string($generator)
-                #if arg.is_pointer or arg.is_numeric or arg.is_enum or arg_type == "bool"
-                    #set $arg_array += ["arg"+str(count)]
-                #else
-                    #set $arg_array += ["std::move(arg"+str(count)+")"]
-                #end if
+                #set $arg_array += ["arg"+str($count)]
                 #set $count = $count + 1
         #end while
         #if $arg_idx >= 0

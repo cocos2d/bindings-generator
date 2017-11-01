@@ -143,6 +143,7 @@ conversions:
     "spSkeleton*": "${out_value} = spskeleton_to_jsval(cx, *${in_value})"
     "spAttachment*": "${out_value} = spattachment_to_jsval(cx, *${in_value})"
     "spSlotData*": "${out_value} = spslotdata_to_jsval(cx, *${in_value})"
+    "spColor*": "${out_value} = spColor_to_jsval(cx, *${in_value})"
     "spSlot*": "${out_value} = spslot_to_jsval(cx, *${in_value})"
     "spTimeline*": "${out_value} = sptimeline_to_jsval(cx, *${in_value})"
     "spAnimationState*": "${out_value} = spanimationstate_to_jsval(cx, *${in_value})"

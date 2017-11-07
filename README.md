@@ -1,6 +1,6 @@
 # What's new
 * Add a prebuilt libclang3.4 in `libclang/`for mac, linux and windows.
-* If you want use the prebuilt licbclang3.4 work with Android NDK, then `only the NDK r9b is can work corrently` with it.
+* If you want to use the prebuilt libclang3.4 with Android NDK, then **only the NDK r9b can work corrently** with it.
 
 # Requirements
 

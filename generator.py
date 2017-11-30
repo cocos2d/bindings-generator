@@ -6,7 +6,6 @@
 
 from clang import cindex
 import sys
-import pdb
 import ConfigParser
 import yaml
 import re
@@ -68,10 +67,166 @@ cindex.CursorKind.CXX_BOOL_LITERAL_EXPR,
 # [C++0x 2.14.7] C++ Pointer Literal.
 cindex.CursorKind.CXX_NULL_PTR_LITERAL_EXPR,
 
+cindex.CursorKind.GNU_NULL_EXPR,
+
 # An expression that refers to some value declaration, such as a function,
 # varible, or enumerator.
 cindex.CursorKind.DECL_REF_EXPR
 ]
+
+stl_type_map = {
+    'std_function_args': 1000,
+    'std::unordered_map': 2,
+    'std::unordered_multimap': 2,
+    'std::map': 2,
+    'std::multimap': 2,
+    'std::vector': 1,
+    'std::list': 1,
+    'std::forward_list': 1,
+    'std::priority_queue': 1,
+    'std::set': 1,
+    'std::multiset': 1,
+    'std::unordered_set': 1,
+    'std::unordered_multiset': 1,
+    'std::stack': 1,
+    'std::queue': 1,
+    'std::deque': 1,
+    'std::array': 1,
+
+    'unordered_map': 2,
+    'unordered_multimap': 2,
+    'map': 2,
+    'multimap': 2,
+    'vector': 1,
+    'list': 1,
+    'forward_list': 1,
+    'priority_queue': 1,
+    'set': 1,
+    'multiset': 1,
+    'unordered_set': 1,
+    'unordered_multiset': 1,
+    'stack': 1,
+    'queue': 1,
+    'deque': 1,
+    'array': 1
+}
+
+def find_sub_string_count(s, start, end, substr):
+    count = 0
+    pos = s.find(substr, start, end)
+    if pos != -1:
+        next_count = find_sub_string_count(s, pos + 1, end, substr)
+        count = next_count + 1
+    return count
+
+def split_container_name(name):
+    name = name.strip()
+    left = name.find('<')
+    right = name.rfind('>')
+
+    if left == -1 or right == -1:
+        return [name]
+
+    first = name[:left]
+    results = [first]
+    # if first == 'std::basic_string' or first == 'basic_string' or first == 'const std::basic_string' or first == 'const basic_string':
+    #     return ['std::string']
+
+    comma = name.find(',', left + 1, right)
+    if comma == -1:
+        results.append(name[left+1:right].strip())
+        return results
+
+
+    left += 1
+    while comma != -1:
+        lt_count = find_sub_string_count(name, left, comma, '<')
+        gt_count = find_sub_string_count(name, left, comma, '>')
+        if lt_count == gt_count:
+            results.append(name[left:comma].strip())
+            left = comma + 1
+        comma = name.find(',', comma + 1, right)
+
+    if left < right:
+        results.append(name[left:right].strip())
+    name_len = len(name)
+    if right < name_len - 1:
+        results.append(name[right+1:].strip())
+
+    return results
+
+
+def normalize_type_name_by_sections(sections):
+    container_name = sections[0]
+    suffix = ''
+
+    index = len(sections) - 1
+    while sections[index] == '*' or sections[index] == '&':
+        suffix += sections[index]
+        index -= 1
+
+    name_for_search = container_name.replace('const ', '').replace('&', '').replace('*', '').strip()
+    if name_for_search in stl_type_map:
+        normalized_name = container_name + '<' + ','.join(sections[1:1+stl_type_map[name_for_search]]) + '>' + suffix
+    else:
+        normalized_name = container_name + '<' + ','.join(sections[1:]) + '>'
+
+    return normalized_name
+
+
+def normalize_std_function_by_sections(sections):
+    normalized_name = ''
+    if sections[0] == 'std_function_args':
+        normalized_name = '(' + ', '.join(sections[1:]) + ')'
+    elif sections[0] == 'std::function' or sections[0] == 'function':
+        normalized_name = 'std::function<' + sections[1] + ' ' + sections[2] + '>'
+    else:
+        assert(False)
+    return normalized_name
+
+
+def normalize_type_str(s, depth=1):
+    if s.find('std::function') == 0 or s.find('function') == 0:
+        start = s.find('<')
+        assert(start > 0)
+        sections = [s[:start]] # std::function
+        start += 1
+        ret_pos = s.find('(', start)
+        sections.append(s[start:ret_pos].strip()) # return type
+        end = s.find(')', ret_pos + 1)
+        sections.append('std_function_args<' + s[ret_pos+1:end].strip() + '>')
+    else:
+        sections = split_container_name(s)
+    section_len = len(sections)
+    if section_len == 1:
+        return sections[0]
+
+    # for section in sections:
+    #     print('>' * depth + section)
+
+    if sections[0] == 'const std::basic_string' or sections[0] == 'const basic_string':
+        last_section = sections[len(sections)-1]
+        if last_section == '&' or last_section == '*':
+            return 'const std::string' + last_section
+        else:
+            return 'const std::string'
+
+    elif sections[0] == 'std::basic_string' or sections[0] == 'basic_string':
+        last_section = sections[len(sections)-1]
+        if last_section == '&' or last_section == '*':
+            return 'std::string' + last_section
+        else:
+            return 'std::string'
+
+    for i in range(1, section_len):
+        sections[i] = normalize_type_str(sections[i], depth+1)
+
+    if sections[0] == 'std::function' or sections[0] == 'function' or sections[0] == 'std_function_args':
+        normalized_name = normalize_std_function_by_sections(sections)
+    else:
+        normalized_name = normalize_type_name_by_sections(sections)
+    return normalized_name
+
 
 class BaseEnumeration(object):
     """
@@ -193,9 +348,11 @@ def get_namespaced_name(declaration_cursor):
     ns_list = build_namespace(declaration_cursor, [])
     ns_list.reverse()
     ns = "::".join(ns_list)
+    display_name = declaration_cursor.displayname.replace("::__ndk1", "")
     if len(ns) > 0:
-        return ns + "::" + declaration_cursor.displayname
-    return declaration_cursor.displayname
+        ns = ns.replace("::__ndk1", "")
+        return ns + "::" + display_name
+    return display_name
 
 def generate_namespace_list(cursor, namespaces=[]):
     '''
@@ -216,6 +373,7 @@ def get_namespace_name(declaration_cursor):
     ns = "::".join(ns_list)
 
     if len(ns) > 0:
+        ns = ns.replace("::__ndk1", "")
         return ns + "::"
 
     return declaration_cursor.displayname
@@ -270,11 +428,13 @@ class NativeType(object):
             nt = NativeType()
             decl = ntype.get_declaration()
 
-            if ntype.kind == cindex.TypeKind.RECORD:
-                if decl.kind == cindex.CursorKind.CLASS_DECL:
-                    nt.is_object = True
-                nt.name = decl.displayname
-                nt.namespaced_name = get_namespaced_name(decl)
+            nt.namespaced_name = get_namespaced_name(decl).replace('::__ndk1', '')
+
+            if decl.kind == cindex.CursorKind.CLASS_DECL and not nt.namespaced_name.startswith('std::function') and not nt.namespaced_name.startswith('std::string'):
+                nt.is_object = True
+                displayname = decl.displayname.replace('::__ndk1', '')
+                nt.name = normalize_type_str(displayname)
+                nt.namespaced_name = normalize_type_str(nt.namespaced_name)
                 nt.namespace_name  = get_namespace_name(decl)
                 nt.whole_name = nt.namespaced_name
             else:
@@ -285,8 +445,8 @@ class NativeType(object):
                 nt.namespaced_name = get_namespaced_name(decl)
                 nt.namespace_name  = get_namespace_name(decl)
 
-                if nt.namespaced_name == "std::string":
-                    nt.name = nt.namespaced_name
+                if len(nt.namespaced_name) > 0:
+                    nt.namespaced_name = normalize_type_str(nt.namespaced_name)
 
                 if nt.namespaced_name.startswith("std::function"):
                     nt.name = "std::function"
@@ -315,8 +475,12 @@ class NativeType(object):
                 nt.is_enum = ntype.get_canonical().kind == cindex.TypeKind.ENUM
 
                 if nt.name == "std::function":
-                    nt.namespaced_name = get_namespaced_name(cdecl)
-                    r = re.compile('function<(.+) .*\((.*)\)>').search(cdecl.displayname)
+                    nt.is_object = False
+                    lambda_display_name = get_namespaced_name(cdecl)
+                    lambda_display_name = lambda_display_name.replace("::__ndk1", "")
+                    lambda_display_name = normalize_type_str(lambda_display_name)
+                    nt.namespaced_name = lambda_display_name
+                    r = re.compile('function<([^\s]+).*\((.*)\)>').search(nt.namespaced_name)
                     (ret_type, params) = r.groups()
                     params = filter(None, params.split(", "))
 

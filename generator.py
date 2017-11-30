@@ -73,6 +73,80 @@ cindex.CursorKind.CXX_NULL_PTR_LITERAL_EXPR,
 cindex.CursorKind.DECL_REF_EXPR
 ]
 
+class BaseEnumeration(object):
+    """
+    Common base class for named enumerations held in sync with Index.h values.
+
+    Subclasses must define their own _kinds and _name_map members, as:
+    _kinds = []
+    _name_map = None
+    These values hold the per-subclass instances and value-to-name mappings,
+    respectively.
+
+    """
+
+    def __init__(self, value):
+        if value >= len(self.__class__._kinds):
+            self.__class__._kinds += [None] * (value - len(self.__class__._kinds) + 1)
+        if self.__class__._kinds[value] is not None:
+            raise ValueError('{0} value {1} already loaded'.format(
+                str(self.__class__), value))
+        self.value = value
+        self.__class__._kinds[value] = self
+        self.__class__._name_map = None
+
+
+    def from_param(self):
+        return self.value
+
+    @property
+    def name(self):
+        """Get the enumeration name of this cursor kind."""
+        if self._name_map is None:
+            self._name_map = {}
+            for key, value in self.__class__.__dict__.items():
+                if isinstance(value, self.__class__):
+                    self._name_map[value] = key
+        return self._name_map[self]
+
+    @classmethod
+    def from_id(cls, id):
+        if id >= len(cls._kinds) or cls._kinds[id] is None:
+            raise ValueError('Unknown template argument kind %d' % id)
+        return cls._kinds[id]
+
+    def __repr__(self):
+        return '%s.%s' % (self.__class__, self.name,)
+
+### Availability Kinds ###
+
+class AvailabilityKind(BaseEnumeration):
+    """
+    Describes the availability of an entity.
+    """
+
+    # The unique kind objects, indexed by id.
+    _kinds = []
+    _name_map = None
+
+    def __repr__(self):
+        return 'AvailabilityKind.%s' % (self.name,)
+
+AvailabilityKind.AVAILABLE = AvailabilityKind(0)
+AvailabilityKind.DEPRECATED = AvailabilityKind(1)
+AvailabilityKind.NOT_AVAILABLE = AvailabilityKind(2)
+AvailabilityKind.NOT_ACCESSIBLE = AvailabilityKind(3)
+
+def get_availability(cursor):
+    """
+    Retrieves the availability of the entity pointed at by the cursor.
+    """
+    if not hasattr(cursor, '_availability'):
+        cursor._availability = cindex.conf.lib.clang_getCursorAvailability(cursor)
+
+    return AvailabilityKind.from_id(cursor._availability)
+
+
 def native_name_from_type(ntype, underlying=False):
     kind = ntype.kind #get_canonical().kind
     const = "" #"const " if ntype.is_const_qualified() else ""
@@ -156,8 +230,8 @@ class NativeType(object):
         self.not_supported = False
         self.param_types = []
         self.ret_type = None
-        self.namespaced_name = ""
-        self.namespace_name  = ""
+        self.namespaced_name = "" # with namespace and class name
+        self.namespace_name  = "" # only contains namespace
         self.name = ""
         self.whole_name = None
         self.is_const = False
@@ -499,7 +573,7 @@ class NativeFunction(object):
         self.not_supported = False
         self.is_override = False
         self.ret_type = NativeType.from_type(cursor.result_type)
-        self.comment = self.get_comment(cursor.getRawComment())
+        self.comment = self.get_comment(cursor.raw_comment)
 
         # parse the arguments
         # if self.func_name == "spriteWithFile":
@@ -624,7 +698,7 @@ class NativeOverloadedFunction(object):
         for m in func_array:
             self.min_args = min(self.min_args, m.min_args)
 
-        self.comment = self.get_comment(func_array[0].cursor.getRawComment())
+        self.comment = self.get_comment(func_array[0].cursor.raw_comment)
 
     def get_comment(self, comment):
         replaceStr = comment
@@ -725,7 +799,7 @@ class NativeClass(object):
         self.static_methods = {}
         self.generator = generator
         self.is_abstract = self.class_name in generator.abstract_classes
-        self._current_visibility = cindex.AccessSpecifierKind.PRIVATE
+        self._current_visibility = cindex.AccessSpecifier.PRIVATE
         #for generate lua api doc
         self.override_methods = {}
         self.has_constructor  = False
@@ -900,13 +974,13 @@ class NativeClass(object):
 
         elif cursor.kind == cindex.CursorKind.FIELD_DECL:
             self.fields.append(NativeField(cursor))
-            if self._current_visibility == cindex.AccessSpecifierKind.PUBLIC and NativeField.can_parse(cursor.type):
+            if self._current_visibility == cindex.AccessSpecifier.PUBLIC and NativeField.can_parse(cursor.type):
                 self.public_fields.append(NativeField(cursor))
         elif cursor.kind == cindex.CursorKind.CXX_ACCESS_SPEC_DECL:
-            self._current_visibility = cursor.get_access_specifier()
-        elif cursor.kind == cindex.CursorKind.CXX_METHOD and cursor.get_availability() != cindex.AvailabilityKind.DEPRECATED:
+            self._current_visibility = cursor.access_specifier
+        elif cursor.kind == cindex.CursorKind.CXX_METHOD and get_availability(cursor) != AvailabilityKind.DEPRECATED:
             # skip if variadic
-            if self._current_visibility == cindex.AccessSpecifierKind.PUBLIC and not cursor.type.is_function_variadic():
+            if self._current_visibility == cindex.AccessSpecifier.PUBLIC and not cursor.type.is_function_variadic():
                 m = NativeFunction(cursor)
                 registration_name = self.generator.should_rename_function(self.class_name, m.func_name) or m.func_name
                 # bail if the function is not supported (at least one arg not supported)
@@ -945,7 +1019,7 @@ class NativeClass(object):
                             self.methods[registration_name] = NativeOverloadedFunction([m, previous_m])
             return True
 
-        elif self._current_visibility == cindex.AccessSpecifierKind.PUBLIC and cursor.kind == cindex.CursorKind.CONSTRUCTOR and not self.is_abstract:
+        elif self._current_visibility == cindex.AccessSpecifier.PUBLIC and cursor.kind == cindex.CursorKind.CONSTRUCTOR and not self.is_abstract:
             # Skip copy constructor
             if cursor.displayname == self.class_name + "(const " + self.namespaced_class_name + " &)":
                 # print "Skip copy constructor: " + cursor.displayname
@@ -1247,9 +1321,16 @@ class Generator(object):
             self._deep_iterate(tu.cursor)
 
     def _deep_iterate(self, cursor, depth=0):
+
+        def get_children_array_from_iter(iter):
+            children = []
+            for child in iter:
+                children.append(child)
+            return children
+
         # get the canonical type
         if cursor.kind == cindex.CursorKind.CLASS_DECL:
-            if cursor == cursor.type.get_declaration() and len(cursor.get_children_array()) > 0:
+            if cursor == cursor.type.get_declaration() and len(get_children_array_from_iter(cursor.get_children())) > 0:
                 is_targeted_class = True
                 if self.cpp_ns:
                     is_targeted_class = False

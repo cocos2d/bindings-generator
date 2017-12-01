@@ -205,15 +205,15 @@ def normalize_type_str(s, depth=1):
     #     print('>' * depth + section)
 
     if sections[0] == 'const std::basic_string' or sections[0] == 'const basic_string':
-        last_section = sections[len(sections)-1]
-        if last_section == '&' or last_section == '*':
+        last_section = sections[len(sections) - 1]
+        if last_section == '&' or last_section == '*' or last_section.startswith('::'):
             return 'const std::string' + last_section
         else:
             return 'const std::string'
 
     elif sections[0] == 'std::basic_string' or sections[0] == 'basic_string':
-        last_section = sections[len(sections)-1]
-        if last_section == '&' or last_section == '*':
+        last_section = sections[len(sections) - 1]
+        if last_section == '&' or last_section == '*' or last_section.startswith('::'):
             return 'std::string' + last_section
         else:
             return 'std::string'
@@ -435,15 +435,14 @@ class NativeType(object):
                 displayname = decl.displayname.replace('::__ndk1', '')
                 nt.name = normalize_type_str(displayname)
                 nt.namespaced_name = normalize_type_str(nt.namespaced_name)
-                nt.namespace_name  = get_namespace_name(decl)
+                nt.namespace_name = get_namespace_name(decl)
                 nt.whole_name = nt.namespaced_name
             else:
                 if decl.kind == cindex.CursorKind.NO_DECL_FOUND:
                     nt.name = native_name_from_type(ntype)
                 else:
                     nt.name = decl.spelling
-                nt.namespaced_name = get_namespaced_name(decl)
-                nt.namespace_name  = get_namespace_name(decl)
+                nt.namespace_name = get_namespace_name(decl)
 
                 if len(nt.namespaced_name) > 0:
                     nt.namespaced_name = normalize_type_str(nt.namespaced_name)
@@ -492,8 +491,8 @@ class NativeType(object):
         if nt.name == INVALID_NATIVE_TYPE:
             nt.not_supported = True
 
-        if re.search("(short|int|double|float|long|ssize_t)$", nt.name) != None:
-            nt.is_numeric = True;
+        if re.search("(short|int|double|float|long|size_t)$", nt.name) is not None:
+            nt.is_numeric = True
 
         return nt
 
@@ -1686,6 +1685,19 @@ class Generator(object):
         else:
             return namespace_class_name
 def main():
+
+    #teststr = 'std::map<std::basic_string<char, std::char_traits<char>, std::allocator<char> >*, const std::map<const std::basic_string<char, std::char_traits<char>, std::allocator<char> >, float *, std::less<std::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<const std::basic_string<char, std::char_traits<char>, std::allocator<char> >, float> > >, std::hash<int *>, std::equal_to<int *>, std::allocator<std::pair<int *const, std::map<std::basic_string<char, std::char_traits<char>, std::allocator<char> >, float, std::less<std::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<const std::basic_string<char, std::char_traits<char>, std::allocator<char> >, float> > > > > >'
+    #teststr = 'std::basic_string<char, std::char_traits<char>, std::allocator<char> >'
+    #teststr = "std::vector<std::basic_string<char, std::char_traits<char>, std::allocator<char> >>"
+    # teststr = 'unordered_map<std::basic_string<char, std::char_traits<char>, std::allocator<char> >, int, std::hash<std::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::equal_to<std::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<const std::basic_string<char, std::char_traits<char>, std::allocator<char> >, int> > >'
+    #teststr = 'function<const std::basic_string<char, std::char_traits<char>, std::allocator<char> >& (int**, const std::basic_string<char, std::char_traits<char>, std::allocator<char> > &)>'
+
+    # s = normalize_type_str(teststr)
+    # print(s)
+    # return
+
+
+
     from optparse import OptionParser
 
     parser = OptionParser("usage: %prog [options] {configfile}")

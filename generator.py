@@ -122,15 +122,16 @@ def find_sub_string_count(s, start, end, substr):
 def split_container_name(name):
     name = name.strip()
     left = name.find('<')
-    right = name.rfind('>')
+    right = -1
+
+    if left != -1:
+        right = name.rfind('>')
 
     if left == -1 or right == -1:
         return [name]
 
     first = name[:left]
     results = [first]
-    # if first == 'std::basic_string' or first == 'basic_string' or first == 'const std::basic_string' or first == 'const basic_string':
-    #     return ['std::string']
 
     comma = name.find(',', left + 1, right)
     if comma == -1:
@@ -167,9 +168,9 @@ def normalize_type_name_by_sections(sections):
 
     name_for_search = container_name.replace('const ', '').replace('&', '').replace('*', '').strip()
     if name_for_search in stl_type_map:
-        normalized_name = container_name + '<' + ','.join(sections[1:1+stl_type_map[name_for_search]]) + '>' + suffix
+        normalized_name = container_name + '<' + ', '.join(sections[1:1+stl_type_map[name_for_search]]) + '>' + suffix
     else:
-        normalized_name = container_name + '<' + ','.join(sections[1:]) + '>'
+        normalized_name = container_name + '<' + ', '.join(sections[1:]) + '>'
 
     return normalized_name
 
@@ -430,7 +431,10 @@ class NativeType(object):
 
             nt.namespaced_name = get_namespaced_name(decl).replace('::__ndk1', '')
 
-            if decl.kind == cindex.CursorKind.CLASS_DECL and not nt.namespaced_name.startswith('std::function') and not nt.namespaced_name.startswith('std::string'):
+            if decl.kind == cindex.CursorKind.CLASS_DECL \
+                and not nt.namespaced_name.startswith('std::function') \
+                and not nt.namespaced_name.startswith('std::string') \
+                and not nt.namespaced_name.startswith('std::basic_string'):
                 nt.is_object = True
                 displayname = decl.displayname.replace('::__ndk1', '')
                 nt.name = normalize_type_str(displayname)
@@ -1632,7 +1636,7 @@ class Generator(object):
 
     def api_param_name_from_native(self,native_name):
         lower_name = native_name.lower()
-        if lower_name == "std::string":
+        if lower_name == "std::string" or lower_name == 'string' or lower_name == 'basic_string' or lower_name == 'std::basic_string':
             return "str"
 
         if lower_name.find("unsigned ") >= 0 :

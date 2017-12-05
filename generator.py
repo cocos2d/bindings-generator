@@ -1690,18 +1690,6 @@ class Generator(object):
             return namespace_class_name
 def main():
 
-    #teststr = 'std::map<std::basic_string<char, std::char_traits<char>, std::allocator<char> >*, const std::map<const std::basic_string<char, std::char_traits<char>, std::allocator<char> >, float *, std::less<std::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<const std::basic_string<char, std::char_traits<char>, std::allocator<char> >, float> > >, std::hash<int *>, std::equal_to<int *>, std::allocator<std::pair<int *const, std::map<std::basic_string<char, std::char_traits<char>, std::allocator<char> >, float, std::less<std::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<const std::basic_string<char, std::char_traits<char>, std::allocator<char> >, float> > > > > >'
-    #teststr = 'std::basic_string<char, std::char_traits<char>, std::allocator<char> >'
-    #teststr = "std::vector<std::basic_string<char, std::char_traits<char>, std::allocator<char> >>"
-    # teststr = 'unordered_map<std::basic_string<char, std::char_traits<char>, std::allocator<char> >, int, std::hash<std::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::equal_to<std::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<const std::basic_string<char, std::char_traits<char>, std::allocator<char> >, int> > >'
-    #teststr = 'function<const std::basic_string<char, std::char_traits<char>, std::allocator<char> >& (int**, const std::basic_string<char, std::char_traits<char>, std::allocator<char> > &)>'
-
-    # s = normalize_type_str(teststr)
-    # print(s)
-    # return
-
-
-
     from optparse import OptionParser
 
     parser = OptionParser("usage: %prog [options] {configfile}")

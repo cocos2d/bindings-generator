@@ -136,6 +136,9 @@ def split_container_name(name):
     comma = name.find(',', left + 1, right)
     if comma == -1:
         results.append(name[left+1:right].strip())
+        last_char = name[len(name)-1];
+        if (last_char == '*' or last_char == '&'):
+            results.append(last_char)
         return results
 
 
@@ -487,9 +490,21 @@ class NativeType(object):
                     (ret_type, params) = r.groups()
                     params = filter(None, params.split(", "))
 
+                    newParams = []
+                    argTmp = ''
+                    for ntstr in (params):
+                        if 0 < len(re.compile(r'std::map<').findall(ntstr)):
+                            argTmp = "%s, " % (ntstr)
+                        else:
+                            if (0 < len(argTmp)):
+                                argTmp = argTmp + ntstr
+                                newParams.append(argTmp)
+                            else:
+                                newParams.append(ntstr)
+                            argTmp = ''
                     nt.is_function = True
                     nt.ret_type = NativeType.from_string(ret_type)
-                    nt.param_types = [NativeType.from_string(string) for string in params]
+                    nt.param_types = [NativeType.from_string(string) for string in newParams]
 
         # mark argument as not supported
         if nt.name == INVALID_NATIVE_TYPE:
@@ -505,7 +520,10 @@ class NativeType(object):
         displayname = displayname.replace(" *", "*")
 
         nt = NativeType()
-        nt.name = displayname.split("::")[-1]
+        if 0 < len(re.compile(r'std::map<').findall(displayname)):
+            nt.name = displayname.replace('std::map', 'map', 1)
+        else:
+            nt.name = displayname.split("::")[-1]
         nt.namespaced_name = displayname
         nt.whole_name = nt.namespaced_name
         nt.is_object = True

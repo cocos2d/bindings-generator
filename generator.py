@@ -186,7 +186,7 @@ def normalize_std_function_by_sections(sections):
         normalized_name = 'std::function<' + sections[1] + ' ' + sections[2] + '>'
     else:
         assert(False)
-    return normalized_name
+    return normalized_name.replace('>>', '> >');
 
 
 def normalize_type_str(s, depth=1):
@@ -518,6 +518,7 @@ class NativeType(object):
     @staticmethod
     def from_string(displayname):
         displayname = displayname.replace(" *", "*")
+        displayname = displayname.replace(">>", "> >")
 
         nt = NativeType()
         if 0 < len(re.compile(r'std::map<').findall(displayname)):

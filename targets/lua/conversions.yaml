@@ -25,6 +25,7 @@ conversions:
     "cocosbuilder::": "cc."
     "CocosDenshion::": "cc."
     "cocos2d::tweenfunc::": "cc."
+    "cocos2d::backend::": "cc."
 
   to_native:
     # lua to native

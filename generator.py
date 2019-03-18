@@ -1247,11 +1247,15 @@ class Generator(object):
 
         for clang_arg in self.clang_args:
             if not os.path.exists(clang_arg.replace("-I","")):
-                pos = clang_arg.find("lib/clang/3.3/include")
-                if -1 != pos:
-                    extend_clang_arg = clang_arg.replace("3.3", "3.4")
-                    if os.path.exists(extend_clang_arg.replace("-I","")):
-                        extend_clang_args.append(extend_clang_arg)
+                find_ret = re.search(r"lib(\d+)?/clang/\d+(\.\d+)*/include", clang_arg)
+                if None != find_ret:
+                    clang_versions = os.path.abspath(os.path.join(clang_arg,"../.."))
+                    clang_folders = os.listdir(clang_versions)
+                    if 0 != len(clang_folders):
+                        #simply pickup first installed clang version
+                        clang_arg = os.path.join(clang_versions, clang_folders[0], "include")
+                        extend_clang_args.append("-I"+clang_arg)
+                        print("  => apend %s"%clang_arg)
 
         if len(extend_clang_args) > 0:
             self.clang_args.extend(extend_clang_args)

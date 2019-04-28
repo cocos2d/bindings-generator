@@ -25,7 +25,7 @@ conversions:
     "cocosbuilder::": "cc."
     "CocosDenshion::": "cc."
     "cocos2d::tweenfunc::": "cc."
-    "cocos2d::backend::": "ccbakend."
+    "cocos2d::backend::": "ccbackend."
 
   to_native:
     # lua to native
@@ -139,6 +139,7 @@ conversions:
     "NavMeshAgentParam": "navmeshagentparam_to_luaval(tolua_S, ${in_value})"
     "OffMeshLinkData": "offmeshlinkdata_to_luaval(tolua_S, ${in_value})"
     "UniformLocation": "uniformLocation_to_luaval(tolua_S, ${in_value})"
+    "@.*map<std::string.*,\\s*.*AttributeBindInfo>": "program_activeattrs_to_luaval(tolua_S, ${in_value})"
 
     object: "object_to_luaval<${ntype.replace(\"*\", \"\").replace(\"const \", \"\")}>(tolua_S, \"${scriptname}\",(${ntype.replace(\"const \", \"\")})${in_value})"
 

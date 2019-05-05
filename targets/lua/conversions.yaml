@@ -25,7 +25,7 @@ conversions:
     "cocosbuilder::": "cc."
     "CocosDenshion::": "cc."
     "cocos2d::tweenfunc::": "cc."
-    "cocos2d::backend::": "cc."
+    "cocos2d::backend::": "ccbackend."
 
   to_native:
     # lua to native
@@ -81,7 +81,8 @@ conversions:
     "OffMeshLinkData": "ok &= luaval_to_offmeshlinkdata(tolua_S, ${arg_idx}, &${out_value}, \"${lua_namespaced_class_name}:${func_name}\")"
     "ListenerID": "ok &= luaval_to_std_string(tolua_S, ${arg_idx},&${out_value}, \"${lua_namespaced_class_name}:${func_name}\")"
     "VertexLayout": "ok &= luaval_to_vertexLayout(tolua_S, ${arg_idx}, ${out_value}, \"${lua_namespaced_class_name}:${func_name}\")"
-
+    "SamplerDescriptor": "ok &= luaval_to_samplerDescriptor(tolua_S, ${arg_idx}, ${out_value}, \"${lua_namespaced_class_name}:${func_name}\")"
+    "UniformLocation": "ok &= luaval_to_uniformLocation(tolua_S, ${arg_idx}, ${out_value}, \"${lua_namespaced_class_name}:${func_name}\")"
 
     object: "ok &= luaval_to_object<${arg.to_string($generator).replace(\"*\", \"\")}>(tolua_S, ${arg_idx}, \"${scriptname}\",&${out_value}, \"${lua_namespaced_class_name}:${func_name}\")"
   from_native:
@@ -137,6 +138,8 @@ conversions:
     "TexParams": "texParams_to_luaval(tolua_S, ${in_value})"
     "NavMeshAgentParam": "navmeshagentparam_to_luaval(tolua_S, ${in_value})"
     "OffMeshLinkData": "offmeshlinkdata_to_luaval(tolua_S, ${in_value})"
+    "UniformLocation": "uniformLocation_to_luaval(tolua_S, ${in_value})"
+    "@.*map<std::string.*,\\s*.*AttributeBindInfo>": "program_activeattrs_to_luaval(tolua_S, ${in_value})"
 
     object: "object_to_luaval<${ntype.replace(\"*\", \"\").replace(\"const \", \"\")}>(tolua_S, \"${scriptname}\",(${ntype.replace(\"const \", \"\")})${in_value})"
 

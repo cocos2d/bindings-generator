@@ -1210,6 +1210,57 @@ class NativeClass(object):
             # print >> sys.stderr, "unknown cursor: %s - %s" % (cursor.kind, cursor.displayname)
         return False
 
+class NativeEnum(object):
+    def __init__(self, cursor, generator):
+        # the cursor to the implementation
+        self.cursor = cursor
+        self.class_name = cursor.displayname
+        self.namespaced_class_name = self.class_name
+        self.parents = []
+        self.fields = []
+        self.public_fields = []
+        self.methods = {}
+        self.static_methods = {}
+        self.generator = generator
+        self._current_visibility = cindex.AccessSpecifier.PRIVATE
+        #for generate lua api doc
+
+        registration_name = generator.get_class_or_rename_class(self.class_name)
+        if generator.remove_prefix:
+            self.target_class_name = re.sub('^' + generator.remove_prefix, '', registration_name)
+        else:
+            self.target_class_name = registration_name
+        self.namespaced_class_name = get_namespaced_name(cursor)
+        self.namespace_name        = get_namespace_name(cursor)
+        self.parse()
+
+    def parse(self):
+        self._deep_iterate(self.cursor, 0)
+
+    def _deep_iterate(self, cursor=None, depth=0):
+        for node in cursor.get_children():
+            #print("%s%s - %s" % ("> " * depth, node.displayname, node.kind))
+            if self._process_node(node):
+                self._deep_iterate(node, depth + 1)
+
+    def _process_node(self, node):
+        if node.kind == cindex.CursorKind.ENUM_CONSTANT_DECL:
+            field = {}
+            field["name"] = node.displayname
+            field["value"] = node.enum_value
+            self.fields.append(field)
+            
+
+    def generate_code(self):
+        '''
+        actually generate the code. it uses the current target templates/rules in order to
+        generate the right code
+        '''
+        # generate register section
+        register = Template(file=os.path.join(self.generator.target, "templates", "enum.c"),
+                            searchList=[{"current_class": self, "generator": self.generator}])
+        self.generator.impl_file.write(str(register))
+
 class Generator(object):
     def __init__(self, opts):
         self.index = cindex.Index.create()
@@ -1375,6 +1426,15 @@ class Generator(object):
                 return True
         return False
 
+    def in_listed_classes_exactly(self, class_name):
+        """
+        returns True if the class is in the list of required classes and it's not in the skip list
+        """
+        for key in self.classes:
+            if key == class_name:
+                return True
+        return False
+
     def in_listed_extend_classed(self, class_name):
         """
         returns True if the class is in the list of required classes that need to extend
@@ -1475,6 +1535,7 @@ class Generator(object):
 
     def _parse_headers(self):
         for header in self.headers:
+            print("parsing header => %s" % header)
             tu = self.index.parse(header, self.clang_args)
             if len(tu.diagnostics) > 0:
                 self._pretty_print(tu.diagnostics)
@@ -1495,6 +1556,8 @@ class Generator(object):
                 children.append(child)
             return children
 
+        #print("cursor kind is %s"%cursor.kind)
+
         # get the canonical type
         if cursor.kind == cindex.CursorKind.CLASS_DECL:
             if cursor == cursor.type.get_declaration() and len(get_children_array_from_iter(cursor.get_children())) > 0:
@@ -1510,6 +1573,23 @@ class Generator(object):
                 if is_targeted_class and self.in_listed_classes(cursor.displayname):
                     if not self.generated_classes.has_key(cursor.displayname):
                         nclass = NativeClass(cursor, self)
+                        nclass.generate_code()
+                        self.generated_classes[cursor.displayname] = nclass
+                    return
+        elif cursor.kind == cindex.CursorKind.ENUM_DECL :
+            if cursor == cursor.type.get_declaration() and len(get_children_array_from_iter(cursor.get_children())) > 0:
+                is_targeted_class = True
+                if self.cpp_ns:
+                    is_targeted_class = False
+                    namespaced_name = get_namespaced_name(cursor)
+                    for ns in self.cpp_ns:
+                        if namespaced_name.startswith(ns):
+                            is_targeted_class = True
+                            break
+
+                if is_targeted_class and  len(cursor.displayname) > 0 and self.in_listed_classes_exactly(cursor.displayname):
+                    if not self.generated_classes.has_key(cursor.displayname):
+                        nclass = NativeEnum(cursor, self)
                         nclass.generate_code()
                         self.generated_classes[cursor.displayname] = nclass
                     return

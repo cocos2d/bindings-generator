@@ -14,8 +14,6 @@ conversions:
     "unsigned char": "uint16_t"
     "char": "int32_t"
   ns_map:
-    "cocos2d::experimental::ui::": "ccexp."
-    "cocos2d::experimental::": "ccexp."
     "cocos2d::extension::": "cc."
     "cocos2d::ui::": "ccui."
     "cocos2d::": "cc."

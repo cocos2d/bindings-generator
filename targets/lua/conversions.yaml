@@ -121,7 +121,7 @@ conversions:
     "FontDefinition": "fontdefinition_to_luaval(tolua_S, ${in_value})"
     "@Vector<.*>": "ccvector_to_luaval(tolua_S, ${in_value})"
     "@Map<std::string.*>": "ccmap_string_key_to_luaval(tolua_S, ${in_value})"
-    "@map<std::string.*,\\s*std::string.*>": "${out_value} = std_map_string_string_to_luaval(tolua_S, ${in_value})"
+    "@map<std::string.*,\\s*std::string.*>": "std_map_string_string_to_luaval(tolua_S, ${in_value})"
     "Value": "ccvalue_to_luaval(tolua_S, ${in_value})"
     "ValueMap": "ccvaluemap_to_luaval(tolua_S, ${in_value})"
     "ValueMapIntKey": "ccvaluemapintkey_to_luaval(tolua_S, ${in_value})"
